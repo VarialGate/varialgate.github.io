@@ -1,0 +1,17 @@
+#EXTM3U url-tvg="https://varialgate.github.io/iptv-varial-player/demo/guia.xml"
+#EXTINF:-1 tvg-id="demo1" tvg-name="Demo Directo 1" group-title="Directo de demostración",Demo Directo 1
+https://demo.unified-streaming.com/k8s/live/stable/live.isml/.m3u8
+#EXTINF:-1 tvg-id="demo2" tvg-name="Demo Directo 2" group-title="Directo de demostración",Demo Directo 2
+https://demo.unified-streaming.com/k8s/live/stable/scte35.isml/.m3u8
+#EXTINF:635 group-title="Películas de demostración",Big Buck Bunny (2008)
+https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8
+#EXTINF:734 group-title="Películas de demostración",Tears of Steel (2012)
+https://demo.unified-streaming.com/k8s/features/stable/video/tears-of-steel/tears-of-steel.ism/.m3u8
+#EXTINF:60 group-title="Películas de demostración",Angel One (varios idiomas)
+https://storage.googleapis.com/shaka-demo-assets/angel-one-hls/hls.m3u8
+#EXTINF:1800 group-title="Series de demostración",Pruebas de vídeo S01E01
+https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_16x9/bipbop_16x9_variant.m3u8
+#EXTINF:600 group-title="Series de demostración",Pruebas de vídeo S01E02
+https://devstreaming-cdn.apple.com/videos/streaming/examples/img_bipbop_adv_example_fmp4/master.m3u8
+#EXTINF:600 group-title="Series de demostración",Pruebas de vídeo S01E03
+https://storage.googleapis.com/shaka-demo-assets/apple-advanced-stream-ts/master.m3u8
