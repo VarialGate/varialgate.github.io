@@ -3,17 +3,163 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Varial Gate</title>
+<title>Varial Gate · Estudio de juegos</title>
+<meta name="description" content="Varial Gate es un estudio independiente que crea juegos para móvil: partidas cortas, mucho carácter.">
+<meta name="theme-color" content="#0b0a14">
+<meta property="og:title" content="Varial Gate">
+<meta property="og:description" content="Estudio independiente de juegos para móvil.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b0a14'/%3E%3Cpath d='M18 52V30a14 14 0 0 1 28 0v22' fill='none' stroke='%23f6c768' stroke-width='6' stroke-linecap='round'/%3E%3Ccircle cx='32' cy='38' r='4' fill='%23ff5d8f'/%3E%3C/svg%3E">
 <style>
-  html { background:#100607; }
-  body { margin:0; padding:48px 16px; font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color:#fff0da; text-align:center; }
-  h1 { color:#f4c660; }
-  a { color:#ffe9a8; }
+  *, *::before, *::after { box-sizing: border-box; }
+  :root {
+    --bg: #0b0a14;
+    --text: #f3f1ff;
+    --muted: #a9a5c9;
+    --line: rgba(255, 255, 255, .08);
+    --gold: #f6c768;
+    --pink: #ff5d8f;
+    --violet: #8b6cff;
+  }
+  html { background: var(--bg); color-scheme: dark; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font: 17px/1.6 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: var(--text);
+    background:
+      radial-gradient(60rem 40rem at 85% -10%, rgba(139, 108, 255, .28), transparent 60%),
+      radial-gradient(50rem 35rem at -10% 30%, rgba(255, 93, 143, .18), transparent 60%),
+      radial-gradient(40rem 30rem at 50% 110%, rgba(246, 199, 104, .14), transparent 60%),
+      var(--bg);
+    overflow-x: hidden;
+  }
+  /* Rejilla sutil de fondo */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse at 50% 30%, #000 30%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse at 50% 30%, #000 30%, transparent 75%);
+    pointer-events: none;
+  }
+  .wrap { position: relative; max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+
+  header { display: flex; align-items: center; gap: 12px; padding: 28px 0; }
+  .logo { width: 40px; height: 40px; flex: none; }
+  .brand { font-weight: 800; letter-spacing: .16em; text-transform: uppercase; font-size: .9rem; }
+
+  .hero { padding: 9vh 0 10vh; max-width: 760px; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px;
+    background: rgba(255, 255, 255, .04);
+    color: var(--muted); font-size: .85rem;
+  }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--pink); box-shadow: 0 0 12px var(--pink); }
+  h1 {
+    margin: 22px 0 18px;
+    font-size: clamp(2.4rem, 7vw, 4.6rem);
+    line-height: 1.04;
+    letter-spacing: -.03em;
+    font-weight: 800;
+  }
+  .grad {
+    background: linear-gradient(100deg, var(--gold), var(--pink) 55%, var(--violet));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .lead { color: var(--muted); font-size: clamp(1.05rem, 2.4vw, 1.25rem); max-width: 600px; margin: 0; }
+
+  .cards {
+    display: grid; gap: 16px;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    padding-bottom: 12vh;
+  }
+  .card {
+    padding: 24px;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, .06), rgba(255, 255, 255, .02));
+    backdrop-filter: blur(6px);
+  }
+  .card svg { width: 36px; height: 36px; margin-bottom: 14px; }
+  .card h2 { margin: 0 0 6px; font-size: 1.1rem; letter-spacing: -.01em; }
+  .card p { margin: 0; color: var(--muted); font-size: .97rem; }
+
+  footer {
+    border-top: 1px solid var(--line);
+    padding: 24px 0 36px;
+    color: var(--muted);
+    font-size: .85rem;
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .hero > * { animation: rise .8s cubic-bezier(.2, .7, .2, 1) both; }
+    .hero > :nth-child(2) { animation-delay: .08s; }
+    .hero > :nth-child(3) { animation-delay: .16s; }
+    .card { animation: rise .8s cubic-bezier(.2, .7, .2, 1) both; animation-delay: .25s; }
+    .card:nth-child(2) { animation-delay: .32s; }
+    .card:nth-child(3) { animation-delay: .39s; }
+    .dot { animation: pulse 2.4s ease-in-out infinite; }
+    @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+    @keyframes pulse { 50% { opacity: .35; } }
+  }
 </style>
 </head>
 <body>
-<h1>Varial Gate</h1>
-<p>Juegos para móvil.</p>
-<p><a href="cheating-on-me/privacidad/">¿Me engañas? · Política de privacidad</a></p>
+<div class="wrap">
+  <header>
+    <svg class="logo" viewBox="0 0 64 64" aria-hidden="true">
+      <defs>
+        <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#f6c768"/>
+          <stop offset=".6" stop-color="#ff5d8f"/>
+          <stop offset="1" stop-color="#8b6cff"/>
+        </linearGradient>
+      </defs>
+      <rect width="64" height="64" rx="16" fill="#14122a"/>
+      <path d="M18 52V30a14 14 0 0 1 28 0v22" fill="none" stroke="url(#g)" stroke-width="6" stroke-linecap="round"/>
+      <circle cx="32" cy="38" r="4" fill="#ff5d8f"/>
+    </svg>
+    <span class="brand">Varial Gate</span>
+  </header>
+
+  <main>
+    <section class="hero">
+      <span class="eyebrow"><span class="dot"></span>Estudio independiente</span>
+      <h1>Juegos pequeños,<br><span class="grad">historias que se quedan.</span></h1>
+      <p class="lead">Varial Gate crea juegos para móvil con personalidad: partidas cortas, mucho carácter y el cuidado de quien hace las cosas a mano.</p>
+    </section>
+
+    <section class="cards" aria-label="Cómo trabajamos">
+      <article class="card">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#f6c768" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="3"/><path d="M11 18h2"/></svg>
+        <h2>Pensado para el móvil</h2>
+        <p>Diseñamos para la pantalla que llevas en el bolsillo: se juega con una mano, en cualquier rato.</p>
+      </article>
+      <article class="card">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#ff5d8f" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6L3.3 9.3l6.1-.7z"/></svg>
+        <h2>Ideas con chispa</h2>
+        <p>Nos gustan las propuestas diferentes, el humor y los giros que no ves venir.</p>
+      </article>
+      <article class="card">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#8b6cff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v6c0 4.5-3 7.8-7 9-4-1.2-7-4.5-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg>
+        <h2>Respeto por quien juega</h2>
+        <p>Sin cuentas obligatorias ni rastreo innecesario. Tu partida es tuya.</p>
+      </article>
+    </section>
+  </main>
+
+  <footer>
+    <span>© <span id="year">2026</span> Varial Gate</span>
+    <span>Hecho con cariño.</span>
+  </footer>
+</div>
+<script>document.getElementById('year').textContent = new Date().getFullYear();</script>
 </body>
 </html>
