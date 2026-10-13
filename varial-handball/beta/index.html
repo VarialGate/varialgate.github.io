@@ -7,6 +7,12 @@
   <meta name="robots" content="noindex, nofollow">
   <title>Varial Handball · beta</title>
   <link rel="icon" type="image/png" href="favicon.png">
+  <!-- Añadida a la pantalla de inicio, se abre sin las barras del navegador (manifest.json de la app). -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0f1b2d">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <style>
     html, body { margin: 0; height: 100%; background: #0f1b2d; color: #eef4e6; }
     body { font: 16px/1.4 system-ui, sans-serif; display: flex; align-items: center; justify-content: center; }
@@ -33,6 +39,17 @@
   <script>
     const iterations = 600000, saved = 'vg-beta:varial-handball';
     const $ = (id) => document.getElementById(id);
+
+    // En el móvil, a pantalla completa (sin las barras del navegador ni las del sistema): al entrar y, si se
+    // ha salido, con el siguiente toque. El navegador solo lo permite al tocar. En el iPhone no hay
+    // pantalla completa para páginas: allí, «Añadir a pantalla de inicio».
+    const touch = matchMedia('(pointer: coarse)').matches;
+    function fullscreen() {
+      const el = document.documentElement;
+      if (!touch || document.fullscreenElement || !el.requestFullscreen) return;
+      el.requestFullscreen({ navigationUI: 'hide' }).catch(() => {});
+    }
+    document.addEventListener('pointerup', fullscreen, true);
 
     async function decrypt(password) {
       const res = await fetch('main.dart.js.enc', { cache: 'no-cache' });
@@ -79,6 +96,7 @@
 
     $('gate').addEventListener('submit', (e) => {
       e.preventDefault();
+      fullscreen();
       start($('pw').value, $('keep').checked);
     });
     let remembered = null;
