@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <base href="/z-devops-the-game/beta/">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>z-devops-the-game · beta</title>
+  <link rel="icon" type="image/png" href="favicon.png">
+  <!-- Añadida a la pantalla de inicio, se abre sin las barras del navegador (manifest.json de la app). -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0f1b2d">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <style>
+    html, body { margin: 0; height: 100%; background: #0f1b2d; color: #eef4e6; }
+    body { font: 16px/1.4 system-ui, sans-serif; display: flex; align-items: center; justify-content: center; }
+    form { width: min(320px, calc(100% - 32px)); display: flex; flex-direction: column; gap: 12px; }
+    h1 { margin: 0; font-size: 22px; text-align: center; color: #f2d43a; letter-spacing: 1px; }
+    p { margin: 0; text-align: center; opacity: .75; font-size: 14px; }
+    input[type=password] { font: inherit; padding: 12px; border: 2px solid #3a4a66; background: #1a2840; color: inherit; border-radius: 0; }
+    label { font-size: 14px; opacity: .85; display: flex; gap: 8px; align-items: center; }
+    button { font: inherit; font-weight: 700; padding: 12px; border: 0; background: #f2d43a; color: #10131c; cursor: pointer; }
+    button:disabled { opacity: .5; cursor: wait; }
+    #msg { color: #ff8a6a; min-height: 1.4em; opacity: 1; }
+  </style>
+</head>
+<body>
+  <!-- Beta privada: el código del juego va cifrado (main.dart.js.enc). -->
+  <form id="gate">
+    <h1>z-devops-the-game</h1>
+    <p>Versión de prueba privada · Private beta</p>
+    <input type="password" id="pw" autocomplete="current-password" placeholder="Contraseña · Password" required autofocus>
+    <label><input type="checkbox" id="keep" checked> Recordar en este dispositivo · Remember me</label>
+    <button id="go">Entrar · Enter</button>
+    <p id="msg" role="alert"></p>
+  </form>
+  <script>
+    const iterations = 600000, saved = 'vg-beta:z-devops-the-game';
+    const $ = (id) => document.getElementById(id);
+
+    // En el móvil, a pantalla completa (sin las barras del navegador ni las del sistema): al entrar y, si se
+    // ha salido, con el siguiente toque. El navegador solo lo permite al tocar. En el iPhone no hay
+    // pantalla completa para páginas: allí, «Añadir a pantalla de inicio».
+    const touch = matchMedia('(pointer: coarse)').matches;
+    function fullscreen() {
+      const el = document.documentElement;
+      if (!touch || document.fullscreenElement || !el.requestFullscreen) return;
+      el.requestFullscreen({ navigationUI: 'hide' }).catch(() => {});
+    }
+    document.addEventListener('pointerup', fullscreen, true);
+
+    async function decrypt(password) {
+      const res = await fetch('main.dart.js.enc', { cache: 'no-cache' });
+      if (!res.ok) throw new Error('net');
+      const buf = new Uint8Array(await res.arrayBuffer());
+      if (new TextDecoder().decode(buf.slice(0, 4)) !== 'VGB1') throw new Error('net');
+      const base = await crypto.subtle.importKey(
+        'raw', new TextEncoder().encode(password), 'PBKDF2', false, ['deriveKey']);
+      const key = await crypto.subtle.deriveKey(
+        { name: 'PBKDF2', salt: buf.slice(4, 20), iterations, hash: 'SHA-256' },
+        base, { name: 'AES-GCM', length: 256 }, false, ['decrypt']);
+      // Con otra contraseña, la etiqueta GCM no cuadra y esto falla.
+      const js = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: buf.slice(4 + 16, 32) }, key, buf.slice(32));
+      return URL.createObjectURL(new Blob([js], { type: 'application/javascript' }));
+    }
+
+    async function start(password, remember) {
+      $('go').disabled = true;
+      $('msg').textContent = '';
+      let url;
+      try {
+        url = await decrypt(password);
+      } catch (e) {
+        $('go').disabled = false;
+        if (e.message === 'net') {
+          $('msg').textContent = 'No se ha podido descargar. Inténtalo de nuevo. · Download failed, try again.';
+        } else {
+          try { localStorage.removeItem(saved); } catch (_) {}
+          $('msg').textContent = 'Contraseña incorrecta · Wrong password';
+          $('pw').select();
+        }
+        return;
+      }
+      try {
+        if (remember) localStorage.setItem(saved, password); else localStorage.removeItem(saved);
+      } catch (_) {}
+      $('gate').remove();
+      window.__vgMain = url;
+      const s = document.createElement('script');
+      s.src = 'flutter_bootstrap.js';
+      s.async = true;
+      document.body.appendChild(s);
+    }
+
+    $('gate').addEventListener('submit', (e) => {
+      e.preventDefault();
+      fullscreen();
+      start($('pw').value, $('keep').checked);
+    });
+    let remembered = null;
+    try { remembered = localStorage.getItem(saved); } catch (_) {}
+    if (remembered) start(remembered, true);
+  </script>
+</body>
+</html>
