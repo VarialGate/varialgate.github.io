@@ -1,0 +1,35 @@
+{
+    "name": "App Template",
+    "short_name": "App Template",
+    "start_url": ".",
+    "display": "fullscreen",
+    "background_color": "#1b2130",
+    "theme_color": "#1b2130",
+    "description": "Una tribu pixelada de la edad de piedra con vida propia.",
+    "orientation": "portrait-primary",
+    "prefer_related_applications": false,
+    "icons": [
+        {
+            "src": "icons/Icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-maskable-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "icons/Icon-maskable-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ]
+}
