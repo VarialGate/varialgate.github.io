@@ -26,16 +26,15 @@
   <div>
     <p class="eyebrow">SPRITE VARIAL PIXEL GEN · 1.0</p>
     <h1 class="pixel-title">SPRITEVPG</h1>
-    <p class="lead">Un formato de hoja de sprites que se basta sola: el <strong>sprite pattern</strong>. Los frames van
-    limpios desde la esquina de arriba a la izquierda, listos para cualquier motor, y los márgenes de la derecha y de
-    abajo llevan, como el cajetín de un patrón, la ficha completa: qué es, cómo se corta, cómo se anima, cómo se
-    coloca en el juego y cómo ampliarla con el mismo estilo.</p>
-    <p>Pensado para que una IA lo procese con solo mirarlo, y para que un programa lo lea de forma exacta: todo el
-    texto va en una rejilla de caracteres con una fuente de píxeles fija, en zonas con título. Sin QR ni metadatos.</p>
+    <p class="lead">Una hoja de sprites que dice ella misma cómo se corta y cómo se anima: el <strong>sprite
+    pattern</strong>. Los frames van limpios desde la esquina de arriba a la izquierda, una animación por fila; al
+    lado de cada fila, su nombre y su ritmo; y abajo, el tamaño de frame y el enlace a la especificación.</p>
+    <p>Solo lo imprescindible, dibujado en la propia imagen: lo lee una persona, lo lee una IA con solo mirarlo y lo
+    lee un programa de forma exacta.</p>
     <p><a href="spec.html"><strong>Leer la especificación →</strong></a></p>
   </div>
   <figure>
-    <img class="px pattern" src="example/caballero.spritevpg@4x.png" width="1152" height="2380" alt="Sprite pattern de ejemplo: un caballero azul con reposo, andar y ataque, y debajo las zonas con la ficha: entidad, hoja, arte, cuerpo, detalle de las cajas, animaciones, direcciones, mundo, estilo, instrucciones para IA y procedencia.">
+    <img class="px pattern" src="example/caballero.spritevpg@4x.png" width="1184" height="476" alt="Sprite pattern de ejemplo: tres filas de frames de un caballero azul; a la derecha, IDLE 400 MS LOOP, WALK 110 MS LOOP y ATTACK 80 120 90 160 MS ONCE; debajo, el nombre, FRAME 32X32, GRID 6X3 y la barra con el enlace a la especificación.">
     <figcaption>El sprite pattern de ejemplo, ampliado ×4.</figcaption>
   </figure>
 </section>
@@ -45,13 +44,13 @@
   <div class="card">
     <span class="tag">DOC</span>
     <h3>Especificación</h3>
-    <p>La imagen, la rejilla de caracteres, las zonas y su notación, la ficha, cómo leerlo y generarlo, y cómo importarlo en un motor.</p>
+    <p>La zona de frames, el texto, los rótulos de fila, el pie, cómo leerlo y cómo importarlo en un motor.</p>
     <div class="links"><a href="spec.html">Abrir</a></div>
   </div>
   <div class="card">
     <span class="tag">PNG</span>
     <h3>Sprite pattern de ejemplo</h3>
-    <p>Un caballero en vista lateral: reposo, andar y ataque con golpe, cajas, mano, apoyo y dirección volteada.</p>
+    <p>Un caballero con tres animaciones: reposo, andar y ataque.</p>
     <div class="links"><a href="example/caballero.spritevpg.png">Nativo</a><a href="example/caballero.spritevpg@4x.png">×4</a><a href="example/caballero.spritevpg.json">Ficha</a></div>
   </div>
   <div class="card">
@@ -63,7 +62,7 @@
   <div class="card">
     <span class="tag">IA</span>
     <h3>Skill de IA</h3>
-    <p>Enseña a un asistente a entender, procesar y generar sprite patterns, con una herramienta en Python.</p>
+    <p>Enseña a un asistente a entender, recortar y generar sprite patterns, con una herramienta en Python.</p>
     <div class="links"><a href="skill/spritevpg.zip" download>spritevpg.zip</a><a href="skill/spritevpg/SKILL.md">SKILL.md</a></div>
   </div>
   <div class="card">
@@ -76,56 +75,32 @@
 
 <h2>Sumario de la especificación</h2>
 <ol class="toc">
-  <li><span class="num">1</span><div><a href="spec.html#intro">Introducción</a>
-    <p>Por qué una hoja que lleva dibujada su información: los metadatos se pierden y una IA no los ve.</p></div></li>
-  <li><span class="num">2</span><div><a href="spec.html#terminos">Términos</a>
-    <p>Sprite pattern, ficha, entidad, zona de frames, frame, apoyo y coordenadas.</p></div></li>
-  <li><span class="num">3</span><div><a href="spec.html#vista">Un vistazo</a>
-    <p>El ejemplo completo y el esquema de zonas.</p></div></li>
-  <li><span class="num">4</span><div><a href="spec.html#imagen">La imagen</a>
-    <p>PNG, zona de frames desde 0,0 sin margen ni separación, transparencia, tamaño, escala y formatos.</p></div></li>
-  <li><span class="num">5</span><div><a href="spec.html#margenes">Los márgenes</a>
-    <p>La rejilla de caracteres, la fuente, las zonas con su barra de título y la notación con la que se escribe la
-    ficha.</p>
+  <li><span class="num">1</span><div><a href="spec.html#intro">Qué es</a>
+    <p>Una hoja que lleva dibujado lo imprescindible: los metadatos se pierden y una IA no los ve.</p></div></li>
+  <li><span class="num">2</span><div><a href="spec.html#vista">Un vistazo</a>
+    <p>El ejemplo.</p></div></li>
+  <li><span class="num">3</span><div><a href="spec.html#frames">La zona de frames</a>
+    <p>Desde 0,0, sin margen ni separación, una animación por fila.</p></div></li>
+  <li><span class="num">4</span><div><a href="spec.html#texto">El texto</a>
+    <p>La rejilla de caracteres, la fuente y los colores.</p>
     <ol>
       <li><a href="spec.html#rejilla">Rejilla de caracteres</a></li>
       <li><a href="spec.html#fuente">Fuente</a></li>
-      <li><a href="spec.html#borde">Borde de la zona de frames</a></li>
-      <li><a href="spec.html#zonas">Zonas</a></li>
-      <li><a href="spec.html#notacion">Notación</a></li>
-      <li><a href="spec.html#barra">Barra final</a></li>
-      <li><a href="spec.html#colores">Colores reservados</a></li>
+      <li><a href="spec.html#colores">Colores</a></li>
     </ol></div></li>
-  <li><span class="num">6</span><div><a href="spec.html#ficha">La ficha</a>
-    <p>Los datos, campo a campo: entidad, arte, frames, apoyo, cajas, puntos, direcciones, animaciones, estados,
-    mundo, estilo, instrucciones para IA y procedencia.</p>
-    <ol>
-      <li><a href="spec.html#f-image">image</a></li>
-      <li><a href="spec.html#f-entity">entity</a></li>
-      <li><a href="spec.html#f-art">art</a></li>
-      <li><a href="spec.html#f-frames">grid y frames</a></li>
-      <li><a href="spec.html#f-defaults">defaults</a></li>
-      <li><a href="spec.html#f-directions">directions</a></li>
-      <li><a href="spec.html#f-animations">animations</a></li>
-      <li><a href="spec.html#f-states">states</a></li>
-      <li><a href="spec.html#f-world">world</a></li>
-      <li><a href="spec.html#f-style">style</a></li>
-      <li><a href="spec.html#f-ai">ai</a></li>
-      <li><a href="spec.html#f-provenance">provenance</a></li>
-    </ol></div></li>
-  <li><span class="num">7</span><div><a href="spec.html#copia">Lo dibujado manda</a>
-    <p>La ficha es la que está escrita en la imagen; la copia en los metadatos del PNG es opcional.</p></div></li>
-  <li><span class="num">8</span><div><a href="spec.html#leer">Leer un sprite pattern</a>
-    <p>Escala, texto, zonas, ficha y hoja limpia: los pasos, también para una copia ampliada.</p></div></li>
-  <li><span class="num">9</span><div><a href="spec.html#generar">Generar un sprite pattern</a>
-    <p>De una hoja limpia y una ficha, con la herramienta de referencia.</p></div></li>
-  <li><span class="num">10</span><div><a href="spec.html#motores">Importar en un motor</a>
+  <li><span class="num">5</span><div><a href="spec.html#rotulos">Rótulos de fila</a>
+    <p>Nombre, milisegundos por frame y bucle: <code>WALK 110 MS LOOP</code>.</p></div></li>
+  <li><span class="num">6</span><div><a href="spec.html#pie">El pie</a>
+    <p>Nombre, tamaño de frame y rejilla, y la barra con el formato y el enlace.</p></div></li>
+  <li><span class="num">7</span><div><a href="spec.html#leer">Leer un sprite pattern</a>
+    <p>Escala, geometría, rótulos y frames, en cuatro pasos.</p></div></li>
+  <li><span class="num">8</span><div><a href="spec.html#ficha">La ficha en JSON</a>
+    <p>Lo mismo que dice la imagen, para programas.</p></div></li>
+  <li><span class="num">9</span><div><a href="spec.html#motores">Importar en un motor</a>
     <p>Unity, Godot, Tiled, Aseprite y código propio: sin desplazamientos.</p></div></li>
-  <li><span class="num">11</span><div><a href="spec.html#ia">Para IAs</a>
-    <p>Qué hace el skill: entender, procesar y generar sprite patterns, y ampliarlos con el mismo estilo.</p></div></li>
-  <li><span class="num">12</span><div><a href="spec.html#versiones">Versiones</a>
-    <p>Compatibilidad entre versiones menores y mayores.</p></div></li>
-  <li><span class="num">13</span><div><a href="spec.html#recursos">Recursos</a>
+  <li><span class="num">10</span><div><a href="spec.html#futuro">Lo que no entra en la 1.0</a>
+    <p>Apoyo, cajas, eventos, direcciones, estados, paleta y estilo: para más adelante.</p></div></li>
+  <li><span class="num">11</span><div><a href="spec.html#recursos">Recursos</a>
     <p>Todos los ficheros para descargar.</p></div></li>
 </ol>
 
