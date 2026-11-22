@@ -1,7 +1,7 @@
 /* SpriteVPG: estilos comunes del sumario y de la especificación. */
 @font-face {
-  font-family: "SpriteVPG 5x7";
-  src: url("font/spritevpg-5x7.ttf") format("truetype");
+  font-family: "SpriteVPG 3x5";
+  src: url("font/spritevpg-3x5.ttf") format("truetype");
   font-display: swap;
 }
 *, *::before, *::after { box-sizing: border-box; }
@@ -15,10 +15,10 @@
   --gold: #f6c768;
   --pink: #ff5d8f;
   --violet: #8b6cff;
-  --paper: #f2eee3;
-  --ink: #1a1c2c;
+  --paper: #f3eedd;
+  --ink: #1f2a44;
   --code-bg: #100e1a;
-  --pixel: "SpriteVPG 5x7", ui-monospace, monospace;
+  --pixel: "SpriteVPG 3x5", ui-monospace, monospace;
 }
 html { background: var(--bg); color-scheme: dark; scroll-behavior: smooth; }
 body {
@@ -35,6 +35,8 @@ a { color: var(--gold); text-underline-offset: 3px; }
 a:hover { color: #ffd98f; }
 img { height: auto; }
 img.px { image-rendering: pixelated; image-rendering: crisp-edges; }
+/* Damero bajo lo transparente de un sprite pattern. */
+img.pattern { background: repeating-conic-gradient(#fff 0% 25%, #e4dfce 0% 50%) 0 0 / 16px 16px; }
 .wrap { max-width: 1080px; margin: 0 auto; padding: 0 16px; }
 
 header.top { display: flex; align-items: center; gap: 12px; padding: 22px 0; flex-wrap: wrap; }
@@ -43,9 +45,9 @@ header.top nav { margin-left: auto; display: flex; gap: 16px; flex-wrap: wrap; }
 header.top nav a { color: var(--text); text-decoration: none; font-size: .92rem; opacity: .85; }
 header.top nav a:hover, header.top nav a[aria-current] { opacity: 1; color: var(--gold); }
 
-.pixel-title { font-family: var(--pixel); font-size: clamp(30px, 8vw, 60px); line-height: 1.1; letter-spacing: .02em; margin: 0; color: var(--gold); }
+.pixel-title { font-family: var(--pixel); font-size: 56px; line-height: 1.1; margin: 0; color: var(--gold); }
 .lead { font-size: 1.15rem; color: var(--muted); max-width: 720px; }
-.eyebrow { font-family: var(--pixel); font-size: 20px; color: var(--pink); margin: 0 0 8px; }
+.eyebrow { font-family: var(--pixel); font-size: 21px; color: var(--pink); margin: 0 0 8px; }
 
 .hero { display: grid; grid-template-columns: 1.1fr .9fr; gap: 32px; align-items: start; padding: 24px 0 40px; }
 .hero figure { margin: 0; }
@@ -61,7 +63,7 @@ figcaption { color: var(--muted); font-size: .85rem; margin-top: 8px; }
 .card h3 { margin: 0; font-size: 1rem; }
 .card p { margin: 0; color: var(--muted); font-size: .92rem; flex: 1; }
 .card .links { display: flex; gap: 12px; flex-wrap: wrap; font-size: .9rem; margin-top: 6px; }
-.tag { font-family: var(--pixel); font-size: 10px; letter-spacing: .05em; color: var(--ink); background: var(--gold); border-radius: 3px; padding: 3px 6px 2px; align-self: flex-start; }
+.tag { font-family: var(--pixel); font-size: 14px; color: var(--ink); background: var(--gold); border-radius: 3px; padding: 2px 6px 1px; align-self: flex-start; }
 
 h2 { font-size: 1.5rem; margin: 44px 0 10px; padding-top: 8px; border-top: 1px solid var(--line); }
 h3 { font-size: 1.15rem; margin: 28px 0 8px; }
@@ -72,7 +74,7 @@ p, li { max-width: 78ch; }
 
 ol.toc { list-style: none; padding: 0; margin: 0; counter-reset: none; }
 ol.toc > li { border-bottom: 1px solid var(--line); padding: 10px 0; display: grid; grid-template-columns: 3.2em 1fr; gap: 4px 12px; max-width: none; }
-ol.toc .num { font-family: var(--pixel); color: var(--pink); font-size: 20px; line-height: 1.2; }
+ol.toc .num { font-family: var(--pixel); color: var(--pink); font-size: 28px; line-height: 1.1; }
 ol.toc a { font-weight: 700; text-decoration: none; }
 ol.toc p { margin: 2px 0 0; color: var(--muted); font-size: .92rem; }
 ol.toc ol { list-style: none; padding: 0; margin: 4px 0 0; display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: .88rem; }
@@ -85,7 +87,8 @@ th { color: var(--muted); font-weight: 600; background: var(--panel); }
 
 code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: .88em; background: var(--panel-2); padding: 1px 5px; border-radius: 4px; }
 pre { background: var(--code-bg); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; overflow-x: auto; font-size: .84rem; line-height: 1.5; }
-pre code { background: none; padding: 0; font-size: inherit; }
+code { overflow-wrap: anywhere; }
+pre code { background: none; padding: 0; font-size: inherit; overflow-wrap: normal; }
 
 .note { border-left: 3px solid var(--violet); background: rgba(139, 108, 255, .08); padding: 10px 14px; border-radius: 0 8px 8px 0; margin: 14px 0; }
 .must { border-left: 3px solid var(--pink); background: rgba(255, 93, 143, .07); padding: 10px 14px; border-radius: 0 8px 8px 0; margin: 14px 0; }
@@ -104,7 +107,8 @@ pre code { background: none; padding: 0; font-size: inherit; }
 
 figure.sheet { margin: 18px 0; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; }
 figure.sheet img { max-width: 100%; display: block; margin: 0 auto; }
-.paper { background: var(--paper); color: var(--ink); font-family: var(--pixel); font-size: 20px; line-height: 1.35; padding: 14px 16px; border-radius: 8px; overflow-x: auto; white-space: pre; }
+.paper { background: var(--paper); color: var(--ink); font-family: var(--pixel); font-size: 21px; line-height: 1.2; padding: 14px 16px; border-radius: 8px; overflow-x: auto; white-space: pre; }
 .swatch { display: inline-block; width: 14px; height: 14px; border-radius: 3px; vertical-align: -2px; margin-right: 6px; border: 1px solid rgba(0, 0, 0, .35); }
 
 footer { border-top: 1px solid var(--line); margin-top: 56px; padding: 24px 0 40px; color: var(--muted); font-size: .88rem; }
+@media (max-width: 480px) { .pixel-title { font-size: 42px; } }

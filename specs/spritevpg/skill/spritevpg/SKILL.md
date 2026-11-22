@@ -1,6 +1,6 @@
 ---
 name: spritevpg
-description: Entender, procesar, validar, generar y ampliar sprite patterns SpriteVPG (Sprite Varial Pixel Gen) — hojas de sprites PNG con los frames limpios desde la esquina de arriba a la izquierda y la información (rótulos, cajas de colisión, animaciones, instrucciones y un QR con la ficha JSON) en los márgenes de la derecha y de abajo. Úsalo cuando aparezca un fichero *.spritevpg.png, una hoja de sprites con rótulos en los márgenes o un QR «FICHA», o cuando se pida crear, leer, importar en un motor, recortar, animar o añadir animaciones o direcciones a una hoja de sprites de un personaje, objeto o construcción en este formato.
+description: Entender, procesar, validar, generar y ampliar sprite patterns SpriteVPG (Sprite Varial Pixel Gen) — hojas de sprites PNG con los frames limpios desde la esquina de arriba a la izquierda y la ficha completa (entidad, rejilla, arte, cajas de colisión, animaciones, estilo, instrucciones) escrita debajo en zonas recuadradas con título (ENTITY, SHEET, ART, BODY, ANIMATIONS…) y una barra final «SPRITEVPG 1.0 … HTTPS://VARIALGATE.GITHUB.IO/SPECS/SPRITEVPG/». Úsalo cuando aparezca un fichero *.spritevpg.png o una hoja de sprites con ese aspecto, o cuando se pida crear, leer, importar en un motor, recortar, animar o añadir animaciones o direcciones a una hoja de sprites de un personaje, objeto o construcción en este formato.
 ---
 
 # SpriteVPG: sprite patterns
@@ -8,41 +8,46 @@ description: Entender, procesar, validar, generar y ampliar sprite patterns Spri
 Un **sprite pattern** es un PNG que lleva dibujada toda su información, como un patrón de costura:
 
 - **Zona de frames**: desde `(0, 0)`, rejilla pura de `columnas × filas` celdas de `fw × fh`, sin margen ni
-  separación, fondo transparente. Frame `i` = `fila·columnas + columna`, desde 0.
-- **Márgenes** (papel `#F2EEE3`, fuente de píxeles SpriteVPG 5×7):
-  - a la derecha de cada fila, su rótulo (`WALK DER` / `F6-11 BUCLE` / `110MS`);
-  - debajo, los números de columna y unas muescas rojas que marcan el apoyo;
-  - luego la cabecera (`SPRITEVPG 1.0 · NOMBRE`, tipo y vista, `FRAME 32×32 · 6×3 · DESDE 0,0`, paleta, regla de 32 px);
-  - y el pie: detalle con cajas y puntos, animaciones, estilo, instrucciones `IA:`, licencia y el QR `FICHA`.
-- **Ficha**: JSON con todo (entidad, arte, frames, apoyo, cajas, puntos, direcciones, animaciones, estados, mundo,
-  estilo, instrucciones, procedencia). Va en el QR (`SVPG1:` + Base45 de zlib del JSON) y, como copia, en el bloque
-  PNG iTXt `spritevpg`. Si discrepan, manda el QR.
+  separación, fondo transparente. Frame `i` = `fila·columnas + columna`, desde 0. Una línea de tinta la bordea por
+  fuera; unas muescas rosas marcan el apoyo de cada fila y columna.
+- **Márgenes** (papel `#F3EEDD`, tinta `#1F2A44`): todo el texto va en una **rejilla de celdas de 4×7 px** con la
+  fuente SpriteVPG 3×5 (mayúsculas). Debajo de los frames, la ficha en **zonas** con barra de título en negativo:
+  `ENTITY`, `SHEET`, `ART`, `BODY`, `DETAIL` (dibujo con las cajas), `ANIMATIONS`, `DIRECTIONS`, `STATES`, `WORLD`,
+  `STYLE`, `AI`, `PROVENANCE`.
+- **Notación**: en cada zona, líneas `CLAVE valor`; una fila sangrada continúa la anterior.
+- **Barra final**: `SPRITEVPG 1.0` y el enlace a la especificación.
+- No hay QR. La ficha es lo que está escrito; un programa lo lee de forma exacta comparando cada celda con la tabla
+  de la fuente. El PNG puede llevar además una copia en JSON (bloque iTXt `spritevpg`), opcional.
 
-Especificación: https://varialgate.github.io/specs/spritevpg/spec.html · Campos: `reference.md` (en este skill).
+Especificación: https://varialgate.github.io/specs/spritevpg/spec.html · Notación y campos: `reference.md`.
 
 ## Herramienta
 
-`scripts/spritevpg.py` (Python 3, Pillow y qrcode; para leer el QR, opencv-python o pyzbar):
+`scripts/spritevpg.py` (Python 3; solo necesita Pillow):
 
 ```bash
-pip install pillow qrcode opencv-python-headless      # si faltan
-python3 scripts/spritevpg.py info     patron.png       # resumen legible de la ficha
+pip install pillow                                     # si falta
+python3 scripts/spritevpg.py info     patron.png       # resumen legible
+python3 scripts/spritevpg.py text     patron.png       # la notación, tal como está escrita en la imagen
 python3 scripts/spritevpg.py validate patron.png       # o ficha.json
-python3 scripts/spritevpg.py read     patron.png -o salida/ --gifs   # hoja limpia, frames, ficha, GIFs
+python3 scripts/spritevpg.py read     patron.png -o salida/ --gifs   # hoja limpia, frames, ficha JSON, GIFs
 python3 scripts/spritevpg.py make     hoja.png ficha.json -o entidad.spritevpg.png --preview 4
 ```
 
-`read` acepta también copias ampliadas a escala entera (detecta la escala con `image.w` de la ficha) y PNG sin
-metadatos (lee el QR).
+`read`, `info`, `text` y `validate` leen el dibujo: funcionan con PNG sin metadatos y con copias ampliadas a escala
+entera (detectan la escala con la barra final). No funcionan con JPEG ni con imágenes reescaladas con suavizado.
 
 ## Entender un sprite pattern
 
-1. Con herramienta: `info`. Explica al usuario qué es la entidad, las animaciones (frames, duración, bucle, siguiente,
-   eventos), las direcciones volteadas, los estados, el apoyo y las cajas, y lo que diga `ai.summary` y `ai.howTo`.
-2. Sin herramienta (solo ves la imagen): lee la cabecera. La línea `FRAME fw×fh · C×R · DESDE 0,0` basta para
-   cortar. Los rótulos de la derecha dicen qué animación empieza en cada fila, y el pie, los detalles. Si la letra
-   se ve borrosa, pide la copia ampliada (`@4x`). Para datos exactos (milisegundos, cajas) di que conviene leer el
-   QR con la herramienta: no los inventes.
+1. Con herramienta: `info` (o `text` para verlo todo). Explica qué es la entidad, las animaciones (frames, duración,
+   bucle, siguiente, eventos), las direcciones volteadas, los estados, el apoyo y las cajas, y lo que digan
+   `AI SUMMARY` y `AI HOWTO`.
+2. Sin herramienta (solo ves la imagen): lee las zonas como texto.
+   - `SHEET` basta para cortar: `FRAME 32X32`, `GRID 6X3` (columnas × filas), `FRAMES 0-1 6-15` (los que tienen
+     dibujo).
+   - `ANIMATIONS`: `ATTACK RIGHT ONCE > IDLE F12 80 F13 120 … F14 90 HIT BOX HIT 20,4 11X22`: nombre, dirección,
+     bucle, siguiente y, por frame, milisegundos, eventos y cajas o puntos propios. `F6-11 110`: seis frames a 110 ms.
+   - Si la letra se ve pequeña o borrosa, pide la copia ampliada (`@4x`). No inventes datos que no puedas leer.
 
 ## Procesar (importar, recortar, convertir)
 
@@ -62,14 +67,17 @@ metadatos (lee el QR).
 ## Generar un sprite pattern
 
 1. **Hoja limpia**: frames del mismo tamaño en rejilla desde `(0, 0)`, fondo transparente, **una fila por animación y
-   dirección** (o por grupo de estados). El rótulo de cada fila sale de la animación que empieza en ella.
-2. **Ficha** sin `image` ni `frames` (se calculan); parte de `templates/card.template.json`. Obligatorio:
-   - `entity` (`kind`, `name`), `art` (`view`, `facing`) y `grid`;
+   dirección** (o por grupo de estados).
+2. **Ficha** en JSON, sin `image` ni `frames` (se calculan); parte de `templates/card.template.json`. Obligatorio:
+   - `entity` (`kind`, `name`), `art.view` y `grid`;
    - `defaults.pivot`;
    - `animations`, con `ms` en **cada** frame;
    - `ai.summary` y `provenance`.
    Recomendado: `style` con `reference.frame`, cajas `collision` y `hurt`, eventos (`footstep`, `hit`).
 3. `make hoja.png ficha.json -o <nombre>.spritevpg.png --preview 4` y después `validate`. Enseña la copia `@4x`.
+
+Los identificadores (nombres de entidad, animación, caja, punto, estado, evento) van en minúsculas: `[a-z0-9_:-]`.
+El texto libre se dibuja en mayúsculas.
 
 ## Ampliar con el mismo estilo (otra animación o dirección)
 
@@ -92,6 +100,6 @@ metadatos (lee el QR).
 
 - Nada dentro de la zona de frames salvo frames; nunca texto ni marcas.
 - PNG siempre; nunca JPEG. Ampliar solo a escala entera y sin suavizado.
-- `framesArea` empieza en 0,0; `margin` y `spacing` son 0.
+- Los frames empiezan en 0,0, sin margen ni separación.
 - Una hoja = una entidad. El par `name` + `direction` no se repite.
 - No inventes datos que no estén en la ficha. Si falta algo (cajas, eventos), dilo o pregúntalo.

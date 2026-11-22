@@ -28,14 +28,14 @@
     <h1 class="pixel-title">SPRITEVPG</h1>
     <p class="lead">Un formato de hoja de sprites que se basta sola: el <strong>sprite pattern</strong>. Los frames van
     limpios desde la esquina de arriba a la izquierda, listos para cualquier motor, y los márgenes de la derecha y de
-    abajo llevan, como un patrón de costura, todo lo que hace falta para entenderla, animarla, colocarla en el juego
-    y ampliarla con el mismo estilo.</p>
-    <p>Pensado para que una IA lo procese con solo mirarlo: rótulos con una fuente de píxeles fija para leer, y un QR
-    con la ficha completa para los datos exactos.</p>
+    abajo llevan, como el cajetín de un patrón, la ficha completa: qué es, cómo se corta, cómo se anima, cómo se
+    coloca en el juego y cómo ampliarla con el mismo estilo.</p>
+    <p>Pensado para que una IA lo procese con solo mirarlo, y para que un programa lo lea de forma exacta: todo el
+    texto va en una rejilla de caracteres con una fuente de píxeles fija, en zonas con título. Sin QR ni metadatos.</p>
     <p><a href="spec.html"><strong>Leer la especificación →</strong></a></p>
   </div>
   <figure>
-    <img class="px" src="example/caballero.spritevpg@4x.png" width="1140" height="2292" alt="Sprite pattern de ejemplo: un caballero azul con reposo, andar y ataque, y en los márgenes los rótulos, el detalle de las cajas de colisión, las animaciones, las instrucciones y un QR con la ficha.">
+    <img class="px pattern" src="example/caballero.spritevpg@4x.png" width="1152" height="2380" alt="Sprite pattern de ejemplo: un caballero azul con reposo, andar y ataque, y debajo las zonas con la ficha: entidad, hoja, arte, cuerpo, detalle de las cajas, animaciones, direcciones, mundo, estilo, instrucciones para IA y procedencia.">
     <figcaption>El sprite pattern de ejemplo, ampliado ×4.</figcaption>
   </figure>
 </section>
@@ -45,7 +45,7 @@
   <div class="card">
     <span class="tag">DOC</span>
     <h3>Especificación</h3>
-    <p>La imagen, los márgenes, la ficha JSON, el QR, cómo leerlo y generarlo, y cómo importarlo en un motor.</p>
+    <p>La imagen, la rejilla de caracteres, las zonas y su notación, la ficha, cómo leerlo y generarlo, y cómo importarlo en un motor.</p>
     <div class="links"><a href="spec.html">Abrir</a></div>
   </div>
   <div class="card">
@@ -56,9 +56,9 @@
   </div>
   <div class="card">
     <span class="tag">TTF</span>
-    <h3>Fuente SpriteVPG 5×7</h3>
-    <p>La fuente de píxeles de los rótulos: mayúsculas, cifras y signos, sin suavizado. Licencia SIL OFL 1.1.</p>
-    <div class="links"><a href="font/spritevpg-5x7.ttf" download>Descargar</a><a href="spec.html#fuente">Detalles</a></div>
+    <h3>Fuente SpriteVPG 3×5</h3>
+    <p>La fuente de píxeles de los márgenes: mayúsculas, cifras, tildes y signos en celdas de 4×7, sin suavizado. Licencia SIL OFL 1.1.</p>
+    <div class="links"><a href="font/spritevpg-3x5.ttf" download>Descargar</a><a href="spec.html#fuente">Detalles</a></div>
   </div>
   <div class="card">
     <span class="tag">IA</span>
@@ -85,19 +85,20 @@
   <li><span class="num">4</span><div><a href="spec.html#imagen">La imagen</a>
     <p>PNG, zona de frames desde 0,0 sin margen ni separación, transparencia, tamaño, escala y formatos.</p></div></li>
   <li><span class="num">5</span><div><a href="spec.html#margenes">Los márgenes</a>
-    <p>Qué se dibuja en cada sitio, con qué colores y con qué fuente.</p>
+    <p>La rejilla de caracteres, la fuente, las zonas con su barra de título y la notación con la que se escribe la
+    ficha.</p>
     <ol>
-      <li><a href="spec.html#derecha">Rótulos de fila</a></li>
-      <li><a href="spec.html#franja">Franja inferior</a></li>
-      <li><a href="spec.html#registro">Marcas de registro</a></li>
-      <li><a href="spec.html#cabecera">Cabecera</a></li>
-      <li><a href="spec.html#pie">Pie</a></li>
-      <li><a href="spec.html#colores">Colores reservados</a></li>
+      <li><a href="spec.html#rejilla">Rejilla de caracteres</a></li>
       <li><a href="spec.html#fuente">Fuente</a></li>
+      <li><a href="spec.html#borde">Borde de la zona de frames</a></li>
+      <li><a href="spec.html#zonas">Zonas</a></li>
+      <li><a href="spec.html#notacion">Notación</a></li>
+      <li><a href="spec.html#barra">Barra final</a></li>
+      <li><a href="spec.html#colores">Colores reservados</a></li>
     </ol></div></li>
   <li><span class="num">6</span><div><a href="spec.html#ficha">La ficha</a>
-    <p>El JSON con todo: entidad, arte, frames, apoyo, cajas, puntos, direcciones, animaciones, estados, mundo,
-    estilo, instrucciones para IA y procedencia.</p>
+    <p>Los datos, campo a campo: entidad, arte, frames, apoyo, cajas, puntos, direcciones, animaciones, estados,
+    mundo, estilo, instrucciones para IA y procedencia.</p>
     <ol>
       <li><a href="spec.html#f-image">image</a></li>
       <li><a href="spec.html#f-entity">entity</a></li>
@@ -112,10 +113,10 @@
       <li><a href="spec.html#f-ai">ai</a></li>
       <li><a href="spec.html#f-provenance">provenance</a></li>
     </ol></div></li>
-  <li><span class="num">7</span><div><a href="spec.html#qr">El QR y el bloque iTXt</a>
-    <p>La ficha exacta en un QR (zlib y Base45, prefijo SVPG1:), repartida si no cabe, y su copia en el PNG.</p></div></li>
+  <li><span class="num">7</span><div><a href="spec.html#copia">Lo dibujado manda</a>
+    <p>La ficha es la que está escrita en la imagen; la copia en los metadatos del PNG es opcional.</p></div></li>
   <li><span class="num">8</span><div><a href="spec.html#leer">Leer un sprite pattern</a>
-    <p>Los pasos para sacar la hoja limpia, los frames y las animaciones, también de una copia ampliada.</p></div></li>
+    <p>Escala, texto, zonas, ficha y hoja limpia: los pasos, también para una copia ampliada.</p></div></li>
   <li><span class="num">9</span><div><a href="spec.html#generar">Generar un sprite pattern</a>
     <p>De una hoja limpia y una ficha, con la herramienta de referencia.</p></div></li>
   <li><span class="num">10</span><div><a href="spec.html#motores">Importar en un motor</a>

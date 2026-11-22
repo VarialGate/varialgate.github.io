@@ -2,305 +2,541 @@
 """SpriteVPG: genera, lee y comprueba sprite patterns.
 
 Un sprite pattern es una hoja de sprites PNG con los frames limpios desde la
-esquina de arriba a la izquierda y la información (rótulos, detalle, ficha en
-un QR) a la derecha y abajo. Especificación:
+esquina de arriba a la izquierda y, a la derecha y abajo, la ficha completa
+escrita en una rejilla de caracteres con zonas recuadradas. Especificación:
 https://varialgate.github.io/specs/spritevpg/
 
 Uso:
   spritevpg.py make  HOJA.png FICHA.json -o PATRON.png [--preview 4]
   spritevpg.py read  PATRON.png -o CARPETA [--gifs]
-  spritevpg.py info  PATRON.png|FICHA.json
+  spritevpg.py text  PATRON.png|FICHA.json     (la notación de los márgenes)
+  spritevpg.py info  PATRON.png|FICHA.json     (resumen legible)
   spritevpg.py validate PATRON.png|FICHA.json
 
-Necesita Pillow y qrcode (make). Para leer el QR cuando el PNG no trae la ficha
-dentro (bloque iTXt), opencv-python o pyzbar.
+Solo necesita Pillow. La ficha se lee del propio dibujo (cada carácter cae en
+una celda fija de la rejilla y se reconoce comparando píxeles), así que
+funciona con PNG sin metadatos y con copias ampliadas a escala entera.
 """
-import argparse, json, os, sys, unicodedata, zlib
+import argparse, json, os, re, sys, unicodedata
 from collections import Counter
 
 from PIL import Image, PngImagePlugin
 
 FORMAT, VERSION = 'spritevpg', '1.0'
-QR_PREFIX = 'SVPG1:'
-SCHEMA = 'https://varialgate.github.io/specs/spritevpg/schema/spritevpg-1.schema.json'
+URL = 'https://varialgate.github.io/specs/spritevpg/'
+SCHEMA = URL + 'schema/spritevpg-1.schema.json'
 
 # ---------------------------------------------------------------- fuente ----
-# SpriteVPG 5x7: la misma tabla que la fuente TTF (font/spritevpg-5x7.ttf).
-# Glifos de 5x7, avance 6, línea 9. Solo mayúsculas: el texto se pasa a
-# mayúsculas y sin tildes (la Ñ se conserva).
+# SpriteVPG 3x5: la misma tabla que la fuente TTF (font/spritevpg-3x5.ttf).
+# Cada carácter ocupa una celda de 4x7: fila 0 para la tilde, filas 1-5 para
+# el glifo de 3x5 y fila 6 y columna 3 libres (por ahí pasan las reglas).
 G = {
-'A':["01110","10001","10001","11111","10001","10001","10001"],
-'B':["11110","10001","10001","11110","10001","10001","11110"],
-'C':["01110","10001","10000","10000","10000","10001","01110"],
-'D':["11110","10001","10001","10001","10001","10001","11110"],
-'E':["11111","10000","10000","11110","10000","10000","11111"],
-'F':["11111","10000","10000","11110","10000","10000","10000"],
-'G':["01110","10001","10000","10111","10001","10001","01111"],
-'H':["10001","10001","10001","11111","10001","10001","10001"],
-'I':["11111","00100","00100","00100","00100","00100","11111"],
-'J':["00111","00010","00010","00010","00010","10010","01100"],
-'K':["10001","10010","10100","11000","10100","10010","10001"],
-'L':["10000","10000","10000","10000","10000","10000","11111"],
-'M':["10001","11011","10101","10101","10001","10001","10001"],
-'N':["10001","10001","11001","10101","10011","10001","10001"],
-'O':["01110","10001","10001","10001","10001","10001","01110"],
-'P':["11110","10001","10001","11110","10000","10000","10000"],
-'Q':["01110","10001","10001","10001","10101","10010","01101"],
-'R':["11110","10001","10001","11110","10100","10010","10001"],
-'S':["01111","10000","10000","01110","00001","00001","11110"],
-'T':["11111","00100","00100","00100","00100","00100","00100"],
-'U':["10001","10001","10001","10001","10001","10001","01110"],
-'V':["10001","10001","10001","10001","10001","01010","00100"],
-'W':["10001","10001","10001","10101","10101","10101","01010"],
-'X':["10001","10001","01010","00100","01010","10001","10001"],
-'Y':["10001","10001","01010","00100","00100","00100","00100"],
-'Z':["11111","00001","00010","00100","01000","10000","11111"],
-'Ñ':["01110","00000","10001","11001","10101","10011","10001"],
-'0':["01110","10001","10011","10101","11001","10001","01110"],
-'1':["00100","01100","00100","00100","00100","00100","01110"],
-'2':["01110","10001","00001","00010","00100","01000","11111"],
-'3':["11111","00010","00100","00010","00001","10001","01110"],
-'4':["00010","00110","01010","10010","11111","00010","00010"],
-'5':["11111","10000","11110","00001","00001","10001","01110"],
-'6':["00110","01000","10000","11110","10001","10001","01110"],
-'7':["11111","00001","00010","00100","01000","01000","01000"],
-'8':["01110","10001","10001","01110","10001","10001","01110"],
-'9':["01110","10001","10001","01111","00001","00010","01100"],
-' ':["00000"]*7,
-'.':["00000","00000","00000","00000","00000","01100","01100"],
-',':["00000","00000","00000","00000","01100","00100","01000"],
-':':["00000","01100","01100","00000","01100","01100","00000"],
-'-':["00000","00000","00000","11111","00000","00000","00000"],
-'+':["00000","00100","00100","11111","00100","00100","00000"],
-'/':["00001","00010","00010","00100","01000","01000","10000"],
-'(':["00010","00100","01000","01000","01000","00100","00010"],
-')':["01000","00100","00010","00010","00010","00100","01000"],
-'=':["00000","00000","11111","00000","11111","00000","00000"],
-'#':["01010","01010","11111","01010","11111","01010","01010"],
-'>':["01000","00100","00010","00001","00010","00100","01000"],
-'<':["00010","00100","01000","10000","01000","00100","00010"],
-'*':["00000","10101","01110","11111","01110","10101","00000"],
-'%':["11000","11001","00010","00100","01000","10011","00011"],
-'_':["00000","00000","00000","00000","00000","00000","11111"],
-'"':["01010","01010","00000","00000","00000","00000","00000"],
-'·':["00000","00000","00000","00100","00000","00000","00000"],
-'×':["00000","10001","01010","00100","01010","10001","00000"],
-'→':["00000","00100","00010","11111","00010","00100","00000"],
+ 'A': '010 101 111 101 101', 'B': '110 101 110 101 110', 'C': '011 100 100 100 011',
+ 'D': '110 101 101 101 110', 'E': '111 100 110 100 111', 'F': '111 100 110 100 100',
+ 'G': '011 100 101 101 011', 'H': '101 101 111 101 101', 'I': '111 010 010 010 111',
+ 'J': '001 001 001 101 010', 'K': '101 101 110 101 101', 'L': '100 100 100 100 111',
+ 'M': '111 111 101 101 101', 'N': '110 101 101 101 101', 'O': '111 101 101 101 111',
+ 'P': '110 101 110 100 100', 'Q': '111 101 101 110 011', 'R': '110 101 110 101 101',
+ 'S': '011 100 010 001 110', 'T': '111 010 010 010 010', 'U': '101 101 101 101 111',
+ 'V': '101 101 101 101 010', 'W': '101 101 101 111 111', 'X': '101 101 010 101 101',
+ 'Y': '101 101 010 010 010', 'Z': '111 001 010 100 111',
+ '0': '010 101 101 101 010', '1': '010 110 010 010 111', '2': '110 001 010 100 111',
+ '3': '110 001 010 001 110', '4': '101 101 111 001 001', '5': '111 100 110 001 110',
+ '6': '011 100 111 101 111', '7': '111 001 010 010 010', '8': '111 101 111 101 111',
+ '9': '111 101 111 001 110',
+ ' ': '000 000 000 000 000', '.': '000 000 000 000 010', ',': '000 000 000 010 100',
+ ':': '000 010 000 010 000', ';': '000 010 000 010 100', '-': '000 000 111 000 000',
+ '+': '000 010 111 010 000', '/': '001 001 010 100 100', '(': '010 100 100 100 010',
+ ')': '010 001 001 001 010', '[': '110 100 100 100 110', ']': '011 001 001 001 011',
+ '=': '000 111 000 111 000', '#': '101 111 101 111 101', '<': '001 010 100 010 001',
+ '>': '100 010 001 010 100', '*': '101 010 111 010 101', '%': '101 001 010 100 101',
+ '_': '000 000 000 000 111', '"': '101 101 000 000 000', "'": '010 010 000 000 000',
+ '!': '010 010 010 000 010', '?': '110 001 010 000 010', '&': '010 101 010 101 011',
+ '·': '000 000 010 000 000', '¿': '010 000 010 100 011', '¡': '010 000 010 010 010',
 }
+G = {k: v.split() for k, v in G.items()}
+# Tildes: en la fila 0 de la celda, sobre la letra.
+ACUTE, TILDE, DIAER = '010', '111', '101'
+ACCENTED = {'Á': ('A', ACUTE), 'É': ('E', ACUTE), 'Í': ('I', ACUTE), 'Ó': ('O', ACUTE),
+            'Ú': ('U', ACUTE), 'Ü': ('U', DIAER), 'Ñ': ('N', TILDE)}
+CW, CH = 4, 7
 
-G.update({
-';':["00000","01100","01100","00000","01100","00100","01000"],
-'!':["00100","00100","00100","00100","00100","00000","00100"],
-'?':["01110","10001","00001","00010","00100","00000","00100"],
-"'":["00100","00100","01000","00000","00000","00000","00000"],
-'&':["01100","10010","10100","01000","10101","10010","01101"],
-'[':["01110","01000","01000","01000","01000","01000","01110"],
-']':["01110","00010","00010","00010","00010","00010","01110"],
-})
-ADV, LINE = 6, 9
+def cell_rows(ch):
+    """Las 6 filas (tilde + 5) de un carácter, como cadenas de 3 bits."""
+    if ch in ACCENTED:
+        base, acc = ACCENTED[ch]
+        return [acc] + G[base]
+    return ['000'] + G[ch]
+
+CHARS = list(G) + list(ACCENTED)
+LOOKUP = {''.join(cell_rows(c)): c for c in CHARS}
+assert len(LOOKUP) == len(CHARS), 'glifos repetidos'
 
 def norm(s):
+    """Texto tal como se puede dibujar: mayúsculas y solo caracteres de la fuente."""
     out = []
     for ch in str(s).upper():
-        if ch in G:
+        if ch in G or ch in ACCENTED:
             out.append(ch)
             continue
         base = unicodedata.normalize('NFD', ch)[0]
-        out.append(base if base in G else '?')
-    return ''.join(out)
-
-def text_width(s):
-    return max(0, len(norm(s)) * ADV - 1)
+        out.append(base if base in G else {'×': 'X', '→': '>', '«': '"', '»': '"',
+                                           '“': '"', '”': '"', '’': "'", '–': '-', '—': '-',
+                                           '\n': ' ', '\t': ' '}.get(ch, '?'))
+    return re.sub(r' +', ' ', ''.join(out)).strip()
 
 # ---------------------------------------------------------------- colores ---
-PAPER = (242, 238, 227, 255)
-INK = (26, 28, 44, 255)
-GRID = (200, 193, 178, 255)
-PIVOT = (177, 62, 83, 255)
-BOX = {'collision': (56, 183, 100, 255), 'hurt': (239, 125, 87, 255),
-       'hit': (228, 59, 68, 255), 'interact': (65, 166, 246, 255)}
-POINT = (59, 93, 201, 255)
-CHECK = ((255, 255, 255, 255), (230, 226, 215, 255))
+PAPER = (243, 238, 221, 255)     # papel de patrón
+INK = (31, 42, 68, 255)          # tinta azul marino
+RULE = (154, 163, 181, 255)      # reglas secundarias y marcas de celda
+PIVOT = (214, 51, 108, 255)      # apoyo
+BOX = {'collision': (47, 158, 68, 255), 'hurt': (240, 140, 0, 255),
+       'hit': (224, 49, 49, 255), 'interact': (28, 126, 214, 255)}
+BOX_OTHER = (112, 72, 232, 255)
+POINT = (112, 72, 232, 255)
+CHECK = ((255, 255, 255, 255), (228, 223, 206, 255))
 
-# ---------------------------------------------------------------- rótulos ---
-LABELS = {
- 'es': {
-  'kind': {'character': 'PERSONAJE', 'creature': 'CRIATURA', 'item': 'OBJETO',
-           'prop': 'DECORADO', 'building': 'CONSTRUCCIÓN', 'effect': 'EFECTO',
-           'tile': 'CASILLA'},
-  'view': {'side': 'VISTA LATERAL', 'front': 'VISTA FRONTAL',
-           'threeQuarter': 'VISTA 3/4 CENITAL', 'oblique': 'CENITAL OBLICUA',
-           'topDown': 'VISTA CENITAL', 'isometric': 'ISOMÉTRICA'},
-  'dir': {'right': 'DER', 'left': 'IZQ', 'down': 'ABAJO', 'up': 'ARRIBA',
-          'down-right': 'ABAJO-DER', 'down-left': 'ABAJO-IZQ',
-          'up-right': 'ARRIBA-DER', 'up-left': 'ARRIBA-IZQ'},
-  'loop': {'loop': 'BUCLE', 'once': 'UNA VEZ', 'pingpong': 'IDA Y VUELTA',
-           'hold': 'Y SE QUEDA'},
-  'event': {'footstep': 'PASO', 'hit': 'GOLPE', 'hit-end': 'FIN GOLPE',
-            'spawn': 'SALIDA'},
-  'box': {'collision': 'CHOQUE', 'hurt': 'DAÑO', 'hit': 'GOLPE',
-          'interact': 'USO'},
-  'point': {'hand_r': 'MANO DER', 'hand_l': 'MANO IZQ', 'head': 'CABEZA',
-            'muzzle': 'BOCA', 'spawn': 'SALIDA', 'smoke': 'HUMO',
-            'light': 'LUZ', 'ground': 'SUELO'},
-  'facing': 'MIRA {d}', 'frame': 'FRAME {w}×{h} · {c}×{r} · DESDE 0,0',
-  'palette': 'PALETA', 'detail': 'DETALLE F{i}', 'pivot': 'APOYO {x},{y}',
-  'animations': 'ANIMACIONES', 'states': 'ESTADOS', 'style': 'ESTILO: ',
-  'ai': 'IA: ', 'index': 'F = FILA×{c} + COLUMNA', 'mirror': '{a} = {b} VOLTEADA',
-  'see': 'VER PIE', 'at': '{e} EN {f}', 'ms': 'MS: ', 'card': 'FICHA',
-  'footprint': 'HUELLA {w}×{h} CASILLAS DE {t}', 'sortY': 'PROFUNDIDAD Y={y}',
-  'ppu': '{p} PX POR UNIDAD', 'default': 'INICIAL', 'license': 'LICENCIA ',
-  'sound': 'SONIDO',
- },
- 'en': {
-  'kind': {'character': 'CHARACTER', 'creature': 'CREATURE', 'item': 'ITEM',
-           'prop': 'PROP', 'building': 'BUILDING', 'effect': 'EFFECT',
-           'tile': 'TILE'},
-  'view': {'side': 'SIDE VIEW', 'front': 'FRONT VIEW',
-           'threeQuarter': '3/4 TOP-DOWN', 'oblique': 'OBLIQUE TOP-DOWN',
-           'topDown': 'TOP-DOWN', 'isometric': 'ISOMETRIC'},
-  'dir': {'right': 'RIGHT', 'left': 'LEFT', 'down': 'DOWN', 'up': 'UP',
-          'down-right': 'DOWN-RIGHT', 'down-left': 'DOWN-LEFT',
-          'up-right': 'UP-RIGHT', 'up-left': 'UP-LEFT'},
-  'loop': {'loop': 'LOOP', 'once': 'ONCE', 'pingpong': 'PING-PONG',
-           'hold': 'HOLD'},
-  'event': {'footstep': 'STEP', 'hit': 'HIT', 'hit-end': 'HIT END',
-            'spawn': 'SPAWN'},
-  'box': {'collision': 'COLLISION', 'hurt': 'HURT', 'hit': 'HIT',
-          'interact': 'INTERACT'},
-  'point': {'hand_r': 'RIGHT HAND', 'hand_l': 'LEFT HAND', 'head': 'HEAD',
-            'muzzle': 'MUZZLE', 'spawn': 'SPAWN', 'smoke': 'SMOKE',
-            'light': 'LIGHT', 'ground': 'GROUND'},
-  'facing': 'FACING {d}', 'frame': 'FRAME {w}×{h} · {c}×{r} · FROM 0,0',
-  'palette': 'PALETTE', 'detail': 'DETAIL F{i}', 'pivot': 'PIVOT {x},{y}',
-  'animations': 'ANIMATIONS', 'states': 'STATES', 'style': 'STYLE: ',
-  'ai': 'AI: ', 'index': 'F = ROW×{c} + COLUMN', 'mirror': '{a} = {b} FLIPPED',
-  'see': 'SEE BELOW', 'at': '{e} AT {f}', 'ms': 'MS: ', 'card': 'CARD',
-  'footprint': 'FOOTPRINT {w}×{h} TILES OF {t}', 'sortY': 'SORT Y={y}',
-  'ppu': '{p} PX PER UNIT', 'default': 'DEFAULT', 'license': 'LICENSE ',
-  'sound': 'SOUND',
- },
-}
+# ---------------------------------------------------------------- vocabulario
+KINDS = ['character', 'creature', 'item', 'prop', 'building', 'effect', 'tile']
+VIEWS = ['side', 'front', 'threeQuarter', 'oblique', 'topDown', 'isometric']
+DIRS = ['down', 'up', 'left', 'right', 'down-left', 'down-right', 'up-left', 'up-right']
+LOOPS = ['loop', 'once', 'pingpong', 'hold']
+SHADOWS = ['none', 'baked', 'separate']
+OUTLINES = ['dark', 'colored', 'none']
+ZONES = ['ENTITY', 'SHEET', 'ART', 'BODY', 'DETAIL', 'ANIMATIONS', 'DIRECTIONS',
+         'STATES', 'WORLD', 'STYLE', 'AI', 'PROVENANCE']
 
-def lab(card):
-    return LABELS.get(card.get('lang', 'es'), LABELS['es'])
+def ident(s, known=()):
+    """Un identificador leído del dibujo (mayúsculas) a como va en la ficha."""
+    low = s.lower()
+    for k in known:
+        if k.lower() == low:
+            return k
+    return low
 
-def custom(v):
-    return v.split(':', 1)[1] if isinstance(v, str) and v.startswith('custom:') else v
-
-# ---------------------------------------------------------------- Base45 ----
-A45 = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ $%*+-./:'
-
-def b45encode(bs):
-    out = []
-    for i in range(0, len(bs), 2):
-        if i + 1 < len(bs):
-            n = bs[i] * 256 + bs[i + 1]
-            c, n = n % 45, n // 45
-            d, e = n % 45, n // 45
-            out += [A45[c], A45[d], A45[e]]
-        else:
-            out += [A45[bs[i] % 45], A45[bs[i] // 45]]
-    return ''.join(out)
-
-def b45decode(s):
-    out = bytearray()
-    for i in range(0, len(s), 3):
-        ch = s[i:i + 3]
-        n = sum(A45.index(c) * 45 ** k for k, c in enumerate(ch))
-        out += bytes([n // 256, n % 256]) if len(ch) == 3 else bytes([n])
-    return bytes(out)
-
-def card_to_payloads(card, max_chars=3000):
-    data = b45encode(zlib.compress(json.dumps(card, separators=(',', ':'),
-                                              ensure_ascii=False).encode(), 9))
-    if len(data) <= max_chars:
-        return [QR_PREFIX + data]
-    parts = [data[i:i + max_chars] for i in range(0, len(data), max_chars)]
-    return [f'{QR_PREFIX}{k + 1}/{len(parts)}:{p}' for k, p in enumerate(parts)]
-
-def payloads_to_card(payloads):
-    chunks = {}
-    for p in payloads:
-        if not p.startswith(QR_PREFIX):
-            continue
-        body = p[len(QR_PREFIX):]
-        head = body.split(':', 1)
-        if len(head) == 2 and '/' in head[0] and head[0].replace('/', '').isdigit():
-            k, _ = head[0].split('/')
-            chunks[int(k)] = head[1]
-        else:
-            chunks[1] = body
-    if not chunks:
-        return None
-    data = ''.join(chunks[k] for k in sorted(chunks))
-    return json.loads(zlib.decompress(b45decode(data)))
-
-# ---------------------------------------------------------------- utilidades
-def frame_rect(card, i):
-    for f in card.get('frames', []):
-        if f['i'] == i:
-            return f
-    g = card['grid']
-    c, fw, fh = g['columns'], g['frameSize']['w'], g['frameSize']['h']
-    return {'i': i, 'x': (i % c) * fw, 'y': (i // c) * fh, 'w': fw, 'h': fh}
-
-def frame_value(card, i, kind, name=None):
-    """Caja, punto o apoyo de un frame: el suyo, el de la animación o el de
-    defaults."""
-    d = card.get('defaults', {})
-    val = d.get(kind)
-    if name is not None:
-        val = (val or {}).get(name)
-    f = next((f for f in card.get('frames', []) if f['i'] == i), {})
-    own = f.get(kind)
-    if name is not None:
-        own = (own or {}).get(name)
-    for a in card.get('animations', []):
-        for af in a['frames']:
-            if af['frame'] == i:
-                v = af.get(kind)
-                if name is not None:
-                    v = (v or {}).get(name)
-                if v is not None:
-                    own = v
-    return own if own is not None else val
-
-def frames_of(a):
-    return [f['frame'] for f in a['frames']]
+# ---------------------------------------------------------------- notación --
+# La ficha, escrita como líneas `CLAVE valor` por zonas. Es lo que se dibuja
+# en los márgenes y lo que se vuelve a leer.
 
 def ranges(nums):
-    nums = list(nums)
-    if nums == list(range(nums[0], nums[0] + len(nums))):
-        return f'F{nums[0]}-{nums[-1]}' if len(nums) > 1 else f'F{nums[0]}'
-    return ' '.join(f'F{n}' for n in nums)
+    out, nums = [], sorted(nums)
+    i = 0
+    while i < len(nums):
+        j = i
+        while j + 1 < len(nums) and nums[j + 1] == nums[j] + 1:
+            j += 1
+        out.append(f'{nums[i]}-{nums[j]}' if j > i else f'{nums[i]}')
+        i = j + 1
+    return ' '.join(out)
 
-def wrap(s, width_px):
-    words, lines, cur = norm(s).split(' '), [], ''
-    for w in words:
-        t = (cur + ' ' + w).strip()
-        if text_width(t) <= width_px or not cur:
-            cur = t
-        else:
-            lines.append(cur)
-            cur = w
+def pt(p):
+    return f'{p["x"]},{p["y"]}'
+
+def rect(b):
+    return f'{b["x"]},{b["y"]} {b["w"]}X{b["h"]}'
+
+def geometry_chunks(o):
+    """PIVOT, BOX y POINT de un frame o de defaults."""
+    out = []
+    if 'pivot' in o:
+        out.append(f'PIVOT {pt(o["pivot"])}')
+    for name, b in o.get('boxes', {}).items():
+        out.append(f'BOX {name} {rect(b)}')
+    for name, p in o.get('points', {}).items():
+        out.append(f'POINT {name} {pt(p)}')
+    return out
+
+def notation(card):
+    """Zonas de la ficha: lista de (título, [línea lógica]). Una línea lógica
+    es una lista de trozos que no se parten al ajustar el texto."""
+    def words(key, text):
+        return [key] + norm(text).split(' ')
+    z = []
+    e = card['entity']
+    lines = [['NAME', e['name']]]
+    if e.get('displayName'):
+        lines.append(words('TITLE', e['displayName']))
+    lines.append(['KIND', e['kind']])
+    if e.get('tags'):
+        lines.append(['TAGS'] + [t for t in (', '.join(e['tags'])).split(' ')])
+    if e.get('description'):
+        lines.append(words('DESC', e['description']))
+    z.append(('ENTITY', lines))
+
+    g = card['grid']
+    lines = [['FRAME', f'{g["frameSize"]["w"]}X{g["frameSize"]["h"]}'],
+             ['GRID', f'{g["columns"]}X{g["rows"]}'],
+             ['FRAMES'] + ranges(f['i'] for f in card['frames']).split(' ')]
+    z.append(('SHEET', lines))
+
+    a = card['art']
+    lines = []
+    if a.get('view'):
+        lines.append(['VIEW', a['view']])
+    if a.get('facing'):
+        lines.append(['FACING', a['facing']])
+    if a.get('light'):
+        lines.append(words('LIGHT', a['light']))
+    if a.get('outline'):
+        o = a['outline']
+        lines.append(['OUTLINE', o.get('style', 'dark'), str(o.get('width', 1))]
+                     + ([o['color'].lstrip('#')] if o.get('color') else []))
+    if a.get('shadow'):
+        lines.append(['SHADOW', a['shadow']])
+    if a.get('palette'):
+        lines.append(['PALETTE'] + [p['color'].lstrip('#') + (':' + p['role'] if p.get('role') else '')
+                                    for p in a['palette']])
+    z.append(('ART', lines))
+
+    d = card.get('defaults', {})
+    lines = [c.split(' ') for c in geometry_chunks(d)]
+    for f in card['frames']:
+        extra = geometry_chunks(f)
+        if extra:
+            lines.append([f'F{f["i"]}'] + extra)
+    z.append(('BODY', lines))
+
+    if card.get('animations'):
+        lines = []
+        for an in card['animations']:
+            head = [an['name']]
+            if an.get('direction'):
+                head.append(an['direction'])
+            head.append(an.get('loop', 'loop'))
+            if an.get('next'):
+                head += ['>', an['next']]
+            chunks = [' '.join(head)]
+            fr = an['frames']
+            i = 0
+            while i < len(fr):
+                f = fr[i]
+                extra = list(f.get('events', []))
+                if 'offset' in f:
+                    extra.append(f'OFFSET {f["offset"].get("dx", 0)},{f["offset"].get("dy", 0)}')
+                extra += geometry_chunks(f)
+                j = i
+                if not extra:      # frames seguidos, misma duración, sin nada más
+                    while (j + 1 < len(fr) and fr[j + 1]['frame'] == fr[j]['frame'] + 1
+                           and fr[j + 1]['ms'] == f['ms'] and set(fr[j + 1]) == {'frame', 'ms'}):
+                        j += 1
+                tag = f'F{f["frame"]}' + (f'-{fr[j]["frame"]}' if j > i else '')
+                chunks.append(' '.join([tag, str(f['ms'])] + extra))
+                i = j + 1
+            lines.append(chunks)
+        z.append(('ANIMATIONS', lines))
+
+    dr = card.get('directions')
+    if dr:
+        lines = [['SET'] + list(dr.get('set', []))]
+        for dst, m in dr.get('mirror', {}).items():
+            lines.append(['MIRROR', dst, '=', m['from'], 'FLIP', m.get('flip', 'x')])
+        z.append(('DIRECTIONS', lines))
+
+    if card.get('states'):
+        lines = []
+        for s in card['states']:
+            ln = [s['name'], f'F{s["frame"]}' if 'frame' in s else f'ANIM {s["animation"]}']
+            if s.get('group'):
+                ln.append(f'GROUP {s["group"]}')
+            if s.get('default'):
+                ln.append('DEFAULT')
+            lines.append(ln)
+        z.append(('STATES', lines))
+
+    w = card.get('world')
+    if w:
+        lines = []
+        if 'pixelsPerUnit' in w:
+            lines.append(['PPU', f'{w["pixelsPerUnit"]:g}'])
+        if w.get('footprint'):
+            fp = w['footprint']
+            ln = ['FOOTPRINT', f'{fp["w"]}X{fp["h"]}', f'TILE {fp["tileSize"]}']
+            if fp.get('origin'):
+                ln.append(f'ORIGIN {pt(fp["origin"])}')
+            lines.append(ln)
+        if 'sortY' in w:
+            lines.append(['SORTY', str(w['sortY'])])
+        if w.get('shadow'):
+            sh = w['shadow']
+            ln = ['SHADOW', f'F{sh["frame"]}']
+            if sh.get('offset'):
+                ln.append(f'OFFSET {sh["offset"].get("dx", 0)},{sh["offset"].get("dy", 0)}')
+            lines.append(ln)
+        z.append(('WORLD', lines))
+
+    st = card.get('style')
+    if st:
+        lines = []
+        if st.get('summary'):
+            lines.append(words('SUMMARY', st['summary']))
+        if st.get('proportions'):
+            lines.append(words('PROPORTIONS', st['proportions']))
+        for r in st.get('rules', []):
+            lines.append(words('RULE', r))
+        if st.get('reference', {}).get('frame') is not None:
+            lines.append(['REFERENCE', f'F{st["reference"]["frame"]}'])
+        z.append(('STYLE', lines))
+
+    ai = card.get('ai', {})
+    lines = []
+    if ai.get('summary'):
+        lines.append(words('SUMMARY', ai['summary']))
+    for h in ai.get('howTo', []):
+        lines.append(words('HOWTO', h))
+    for h in ai.get('warnings', []):
+        lines.append(words('WARNING', h))
+    z.append(('AI', lines))
+
+    p = card.get('provenance', {})
+    gen = p.get('generator', {})
+    lines = []
+    for key, val in [('APP', gen.get('app')), ('VERSION', gen.get('version')), ('MODEL', gen.get('model')),
+                     ('CREATED', p.get('created')), ('AUTHOR', p.get('author')),
+                     ('LICENSE', p.get('license')), ('PROMPT', p.get('prompt'))]:
+        if val:
+            lines.append(words(key, val))
+    z.append(('PROVENANCE', lines))
+    return [(t, [[norm(c) for c in ln] for ln in lines]) for t, lines in z]
+
+def wrap_line(chunks, width, indent=2):
+    """Ajusta una línea lógica al ancho. Las filas de continuación van
+    sangradas: así se sabe, al leer, que siguen a la anterior."""
+    rows, cur = [], ''
+    for c in chunks:
+        pieces = [c] if len(c) <= width - indent else c.split(' ')
+        for p in pieces:
+            first = not rows and not cur
+            room = width if first else width - indent
+            while len(p) > room:                    # palabra más larga que la fila
+                if cur:
+                    rows.append(cur); cur = ''
+                rows.append(('' if first else ' ' * indent) + p[:room])
+                p, first, room = p[room:], False, width - indent
+            if not cur:
+                cur = ('' if not rows else ' ' * indent) + p
+            elif len(cur) + 1 + len(p) <= width:
+                cur += ' ' + p
+            else:
+                rows.append(cur)
+                cur = ' ' * indent + p
     if cur:
-        lines.append(cur)
-    return lines
+        rows.append(cur)
+    return rows
+
+def notation_text(card, width=70):
+    out = []
+    for title, lines in notation(card):
+        out.append(f'[{title}]')
+        for ln in lines:
+            out += wrap_line(ln, width)
+    return '\n'.join(out)
+
+# ---------------------------------------------------------------- lectura ---
+INT = r'-?\d+'
+
+def parse_pt(s):
+    x, y = s.split(',')
+    return {'x': int(x), 'y': int(y)}
+
+def parse_size(s):
+    w, h = s.upper().split('X')
+    return int(w), int(h)
+
+def parse_geometry(tokens, into):
+    """Consume PIVOT/BOX/POINT/OFFSET de una lista de palabras; devuelve el resto."""
+    rest, i = [], 0
+    while i < len(tokens):
+        t = tokens[i]
+        if t == 'PIVOT':
+            into['pivot'] = parse_pt(tokens[i + 1]); i += 2
+        elif t == 'BOX':
+            w, h = parse_size(tokens[i + 3])
+            into.setdefault('boxes', {})[ident(tokens[i + 1])] = {**parse_pt(tokens[i + 2]), 'w': w, 'h': h}
+            i += 4
+        elif t == 'POINT':
+            into.setdefault('points', {})[ident(tokens[i + 1])] = parse_pt(tokens[i + 2]); i += 3
+        elif t == 'OFFSET':
+            dx, dy = tokens[i + 1].split(',')
+            into['offset'] = {'dx': int(dx), 'dy': int(dy)}; i += 2
+        else:
+            rest.append(t); i += 1
+    return rest
+
+def expand(spec):
+    out = []
+    for part in spec:
+        a, _, b = part.partition('-')
+        out += list(range(int(a), int(b or a) + 1))
+    return out
+
+def parse_notation(zones):
+    """De {zona: [línea lógica (cadena)]} a la ficha. El texto libre queda en
+    mayúsculas, como está dibujado."""
+    card = {'format': FORMAT, 'version': VERSION, '$schema': SCHEMA}
+    def kv(zone):
+        for ln in zones.get(zone, []):
+            key, _, val = ln.partition(' ')
+            yield key, val.strip()
+    e = {}
+    for k, v in kv('ENTITY'):
+        if k == 'NAME': e['name'] = ident(v)
+        elif k == 'TITLE': e['displayName'] = v
+        elif k == 'KIND': e['kind'] = ident(v, KINDS)
+        elif k == 'TAGS': e['tags'] = [t.strip() for t in v.split(',') if t.strip()]
+        elif k == 'DESC': e['description'] = v
+    card['entity'] = {k: e[k] for k in ('kind', 'name', 'displayName', 'description', 'tags') if k in e}
+    grid, frame_ids = {}, []
+    for k, v in kv('SHEET'):
+        if k == 'FRAME':
+            w, h = parse_size(v); grid['frameSize'] = {'w': w, 'h': h}
+        elif k == 'GRID':
+            c, r = parse_size(v); grid['columns'], grid['rows'] = c, r
+        elif k == 'FRAMES':
+            frame_ids = expand(v.split())
+    art = {}
+    for k, v in kv('ART'):
+        if k == 'VIEW': art['view'] = ident(v, VIEWS)
+        elif k == 'FACING': art['facing'] = ident(v)
+        elif k == 'LIGHT': art['light'] = v.lower()
+        elif k == 'OUTLINE':
+            t = v.split()
+            art['outline'] = {'style': ident(t[0]), 'width': int(t[1])}
+            if len(t) > 2: art['outline']['color'] = '#' + t[2].lower()
+        elif k == 'SHADOW': art['shadow'] = ident(v)
+        elif k == 'PALETTE':
+            art['palette'] = []
+            for t in v.split():
+                col, _, role = t.partition(':')
+                art['palette'].append({'color': '#' + col.lower(), **({'role': ident(role)} if role else {})})
+    card['art'] = art
+    fw, fh = grid['frameSize']['w'], grid['frameSize']['h']
+    card['grid'] = {'columns': grid['columns'], 'rows': grid['rows'],
+                    'frameSize': grid['frameSize'], 'margin': 0, 'spacing': 0}
+    frames = {i: {'i': i, 'x': (i % grid['columns']) * fw, 'y': (i // grid['columns']) * fh, 'w': fw, 'h': fh}
+              for i in frame_ids}
+    defaults = {}
+    for ln in zones.get('BODY', []):
+        t = ln.split()
+        if re.fullmatch(r'F\d+', t[0]):
+            parse_geometry(t[1:], frames[int(t[0][1:])])
+        else:
+            parse_geometry(t, defaults)
+    card['frames'] = [frames[i] for i in sorted(frames)]
+    card['defaults'] = defaults
+    dr = {}
+    for k, v in kv('DIRECTIONS'):
+        t = v.split()
+        if k == 'SET': dr['set'] = [ident(x) for x in t]
+        elif k == 'MIRROR':
+            dr.setdefault('mirror', {})[ident(t[0])] = {'from': ident(t[2]), 'flip': ident(t[4]) if len(t) > 4 else 'x'}
+    if dr:
+        card['directions'] = dr
+    anims = []
+    for ln in zones.get('ANIMATIONS', []):
+        t = ln.split()
+        k = next((i for i, x in enumerate(t) if re.fullmatch(r'F\d+(-\d+)?', x)), len(t))
+        head, body = t[:k], t[k:]
+        an = {'name': ident(head[0])}
+        h = head[1:]
+        if '>' in h:
+            an['next'] = ident(h[h.index('>') + 1]); h = h[:h.index('>')]
+        for x in h:
+            if x.lower() in DIRS: an['direction'] = x.lower()
+            elif x.lower() in LOOPS: an['loop'] = x.lower()
+        an = {k_: an[k_] for k_ in ('name', 'direction', 'loop', 'next') if k_ in an}
+        an['frames'] = []
+        i = 0
+        while i < len(body):
+            j = i + 1
+            while j < len(body) and not re.fullmatch(r'F\d+(-\d+)?', body[j]):
+                j += 1
+            ids = expand([body[i][1:]])
+            ms, extra = int(body[i + 1]), {}
+            events = [ident(x) for x in parse_geometry(body[i + 2:j], extra)]
+            for n in ids:
+                f = {'frame': n, 'ms': ms}
+                if events: f['events'] = list(events)
+                f.update({k_: extra[k_] for k_ in ('offset', 'pivot', 'boxes', 'points') if k_ in extra})
+                an['frames'].append(f)
+            i = j
+        anims.append(an)
+    if anims:
+        card['animations'] = anims
+    states = []
+    for ln in zones.get('STATES', []):
+        t = ln.split()
+        s = {'name': ident(t[0])}
+        i = 1
+        while i < len(t):
+            if re.fullmatch(r'F\d+', t[i]): s['frame'] = int(t[i][1:]); i += 1
+            elif t[i] == 'ANIM': s['animation'] = ident(t[i + 1]); i += 2
+            elif t[i] == 'GROUP': s['group'] = ident(t[i + 1]); i += 2
+            elif t[i] == 'DEFAULT': s['default'] = True; i += 1
+            else: i += 1
+        states.append(s)
+    if states:
+        card['states'] = states
+    w = {}
+    for k, v in kv('WORLD'):
+        t = v.split()
+        if k == 'PPU': w['pixelsPerUnit'] = float(v) if '.' in v else int(v)
+        elif k == 'FOOTPRINT':
+            a, b = parse_size(t[0]); fp = {'tileSize': int(t[t.index('TILE') + 1]), 'w': a, 'h': b}
+            if 'ORIGIN' in t: fp['origin'] = parse_pt(t[t.index('ORIGIN') + 1])
+            w['footprint'] = fp
+        elif k == 'SORTY': w['sortY'] = int(v)
+        elif k == 'SHADOW':
+            sh = {'frame': int(t[0][1:])}
+            if 'OFFSET' in t:
+                dx, dy = t[t.index('OFFSET') + 1].split(','); sh['offset'] = {'dx': int(dx), 'dy': int(dy)}
+            w['shadow'] = sh
+    if w:
+        card['world'] = w
+    st = {}
+    for k, v in kv('STYLE'):
+        if k == 'SUMMARY': st['summary'] = v
+        elif k == 'PROPORTIONS': st['proportions'] = v
+        elif k == 'RULE': st.setdefault('rules', []).append(v)
+        elif k == 'REFERENCE': st['reference'] = {'frame': int(v[1:])}
+    if st:
+        card['style'] = st
+    ai = {}
+    for k, v in kv('AI'):
+        if k == 'SUMMARY': ai['summary'] = v
+        elif k == 'HOWTO': ai.setdefault('howTo', []).append(v)
+        elif k == 'WARNING': ai.setdefault('warnings', []).append(v)
+    card['ai'] = ai
+    p, gen = {}, {}
+    for k, v in kv('PROVENANCE'):
+        if k in ('APP', 'VERSION', 'MODEL'): gen[k.lower()] = v
+        elif k in ('CREATED', 'AUTHOR', 'LICENSE', 'PROMPT'): p[k.lower()] = v
+    card['provenance'] = {**({'generator': gen} if gen else {}), **p}
+    return card
+
+def normalized(card):
+    """La ficha tal como se lee del dibujo (texto libre en mayúsculas)."""
+    zones = {}
+    for title, lines in notation(card):
+        zones[title] = [' '.join(ln) for ln in lines]
+    out = parse_notation(zones)
+    if 'image' in card:
+        out['image'] = card['image']
+    return out
 
 # ---------------------------------------------------------------- dibujo ----
 class Canvas:
     def __init__(self, img):
         self.img, self.px = img, img.load()
 
-    def text(self, x, y, s, col=INK):
-        for ch in norm(s):
-            for r, row in enumerate(G[ch]):
-                for c, b in enumerate(row):
+    def text(self, col, row, s, fg=INK):
+        for i, ch in enumerate(s):
+            if ch == ' ':
+                continue
+            x0, y0 = (col + i) * CW, row * CH
+            for r, bits in enumerate(cell_rows(ch)):
+                for c, b in enumerate(bits):
                     if b == '1':
-                        self.px[x + c, y + r] = col
-            x += ADV
-        return x
+                        self.px[x0 + c, y0 + r] = fg
 
     def h(self, x0, x1, y, col):
         for x in range(x0, x1 + 1):
@@ -311,10 +547,8 @@ class Canvas:
             self.px[x, y] = col
 
     def rect(self, x, y, w, h, col):
-        self.h(x, x + w - 1, y, col)
-        self.h(x, x + w - 1, y + h - 1, col)
-        self.v(x, y, y + h - 1, col)
-        self.v(x + w - 1, y, y + h - 1, col)
+        self.h(x, x + w - 1, y, col); self.h(x, x + w - 1, y + h - 1, col)
+        self.v(x, y, y + h - 1, col); self.v(x + w - 1, y, y + h - 1, col)
 
     def fill(self, x, y, w, h, col):
         for yy in range(y, y + h):
@@ -322,263 +556,345 @@ class Canvas:
                 self.px[xx, yy] = col
 
 def auto_palette(sheet, n=16):
-    cnt = Counter(p[:3] for p in sheet.convert('RGBA').get_flattened_data() if p[3]) if hasattr(sheet, 'get_flattened_data') else Counter(p[:3] for p in sheet.convert('RGBA').getdata() if p[3])
+    data = sheet.convert('RGBA')
+    px = data.get_flattened_data() if hasattr(data, 'get_flattened_data') else data.getdata()
+    cnt = Counter(p[:3] for p in px if p[3])
     return ['#%02x%02x%02x' % c for c, _ in cnt.most_common(n)]
 
 def hex_rgba(h):
     h = h.lstrip('#')
     return (int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16), 255)
 
-def row_label(card, r, cols, nlines):
-    """Rótulo de la fila r: las animaciones que empiezan en ella."""
-    L = lab(card)
+def frame_rect(card, i):
+    for f in card.get('frames', []):
+        if f['i'] == i:
+            return f
+    g = card['grid']
+    c, fw, fh = g['columns'], g['frameSize']['w'], g['frameSize']['h']
+    return {'i': i, 'x': (i % c) * fw, 'y': (i // c) * fh, 'w': fw, 'h': fh}
+
+def frame_value(card, i, kind, name=None):
+    """Apoyo, caja o punto de un frame: el del frame en una animación, si no
+    el de frames[], si no el de defaults."""
+    def pick(o):
+        v = o.get(kind)
+        return (v or {}).get(name) if name is not None else v
+    val = pick(card.get('defaults', {}))
+    own = pick(next((f for f in card.get('frames', []) if f['i'] == i), {}))
+    for a in card.get('animations', []):
+        for af in a['frames']:
+            if af['frame'] == i and pick(af) is not None:
+                own = pick(af)
+    return own if own is not None else val
+
+def box_color(name):
+    return BOX.get(name, BOX_OTHER)
+
+def row_labels(card, r, cols, nlines):
     first, last = r * cols, r * cols + cols - 1
-    anims = [a for a in card.get('animations', [])
-             if first <= frames_of(a)[0] <= last]
-    states = [s for s in card.get('states', [])
-              if 'frame' in s and first <= s['frame'] <= last]
-    if anims:
-        a = anims[0]
-        name = custom(a['name']).upper()
-        d = L['dir'].get(a.get('direction', ''), '')
+    anims = [a for a in card.get('animations', []) if first <= a['frames'][0]['frame'] <= last]
+    states = [s for s in card.get('states', []) if 'frame' in s and first <= s['frame'] <= last]
+    lines = []
+    for a in anims:
+        ids = [f['frame'] for f in a['frames']]
         ms = {f['ms'] for f in a['frames']}
-        lines = [f'{name} {d}'.strip(),
-                 f'{ranges(frames_of(a))} {L["loop"].get(a.get("loop", "loop"), "")}',
-                 f'{ms.pop()}MS' if len(ms) == 1 else L['see']]
-        if len(anims) > 1:
-            lines[0] += ' +' + str(len(anims) - 1)
-    elif states:
-        lines = [' · '.join(custom(s['name']).upper() for s in states)]
-    else:
-        lines = []
-    return lines[:nlines]
+        lines += [' '.join([a['name']] + ([a['direction']] if a.get('direction') else [])),
+                  'F' + ranges(sorted(set(ids))).replace(' ', ' F'),
+                  a.get('loop', 'loop') + (' > ' + a['next'] if a.get('next') else ''),
+                  (f'{ms.pop()} MS' if len(ms) == 1 else 'MS: SEE ANIMATIONS')]
+    if not anims and states:
+        lines = [' '.join(s['name'] for s in states)]
+    return [norm(x) for x in lines][:nlines]
+
+def layout_rows(zones, wide):
+    """Filas de zonas: (título, ancho en columnas, líneas ya ajustadas)."""
+    z = dict(zones)
+    half_l, half_r = (wide - 1) // 2, wide - 1 - (wide - 1) // 2
+    def wrapped(title, width):
+        out = []
+        for ln in z[title]:
+            out += wrap_line(ln, width - 2)
+        return out
+    rows = [[('ENTITY', half_l), ('SHEET', half_r)], [('ART', wide - 1)], [('BODY', half_l), ('DETAIL', half_r)]]
+    if 'ANIMATIONS' in z:
+        rows.append([('ANIMATIONS', wide - 1)])
+    small = [t for t in ('DIRECTIONS', 'STATES', 'WORLD') if t in z]
+    while small:
+        pair = small[:2]; small = small[2:]
+        rows.append([(pair[0], half_l), (pair[1], half_r)] if len(pair) == 2 else [(pair[0], wide - 1)])
+    for t in ('STYLE', 'AI', 'PROVENANCE'):
+        if t in z:
+            rows.append([(t, wide - 1)])
+    return [[(t, w, wrapped(t, w) if t != 'DETAIL' else None) for t, w in row] for row in rows]
 
 def render(sheet, card):
     """Dibuja el sprite pattern a partir de la hoja limpia y la ficha."""
-    L = lab(card)
     g = card['grid']
     cols, rows = g['columns'], g['rows']
     fw, fh = g['frameSize']['w'], g['frameSize']['h']
     AW, AH = cols * fw, rows * fh
-    if sheet.size != (AW, AH):
-        sheet = sheet.crop((0, 0, AW, AH))
-    nlines = max(1, min(3, fh // LINE))
-    labels = [row_label(card, r, cols, nlines) for r in range(rows)]
-    RW = max([60] + [text_width(t) for ls in labels for t in ls]) + 2
-    GAP = 8
-    W = max(AW + GAP + RW, 256)
+    sheet = sheet.convert('RGBA').crop((0, 0, AW, AH))
+    piv = card.get('defaults', {}).get('pivot', {'x': fw // 2, 'y': fh - 1})
 
-    # Pie: se maqueta primero para saber la altura.
-    pal = card['art'].get('palette') or [{'color': c} for c in auto_palette(sheet)]
+    # Rótulos de fila, a la derecha de la zona de frames.
+    nlines = max(1, (fh - 8) // CH)
+    labels = [row_labels(card, r, cols, nlines) for r in range(rows)]
+    lab_col = -(-(AW + 8) // CW)
+    lab_w = max([8] + [len(t) for ls in labels for t in ls])
+    wide = max(72, lab_col + lab_w + 1)            # ancho de la hoja en caracteres
+    W = wide * CW
+
+    # Detalles: el frame de referencia y uno con cajas propias.
     ref = card.get('style', {}).get('reference', {}).get('frame')
     if ref is None:
-        ref = card['frames'][0]['i'] if card.get('frames') else 0
+        ref = card['frames'][0]['i']
     details = [ref]
     for a in card.get('animations', []):
         for af in a['frames']:
             if af.get('boxes') and af['frame'] not in details and len(details) < 2:
                 details.append(af['frame'])
-    k = 2 if fw <= 48 and fh <= 48 else 1
-    pw, ph = fw * k, fh * k
-    lines = [L['animations']]
-    for a in card.get('animations', []):
-        name = custom(a['name']).upper()
-        d = L['dir'].get(a.get('direction', ''), '')
-        ms = [f['ms'] for f in a['frames']]
-        loop = L['loop'].get(a.get('loop', 'loop'), '')
-        nxt = f' → {custom(a["next"]).upper()}' if a.get('next') else ''
-        lines.append(f'{name} {d} {ranges(frames_of(a))} {loop}{nxt}'.replace('  ', ' '))
-        if len(set(ms)) == 1:
-            lines.append(f'  {ms[0]}MS')
-        else:
-            lines.append('  ' + L['ms'] + ', '.join(f'F{f["frame"]} {f["ms"]}' for f in a['frames']))
-        ev = {}
-        for f in a['frames']:
-            for e in f.get('events', []):
-                if e.startswith('sound:'):
-                    e = L['sound'] + ' ' + e[6:].upper()
-                ev.setdefault(L['event'].get(e, custom(e).upper()), []).append(f'F{f["frame"]}')
-        for e, fs in ev.items():
-            lines.append('  ' + L['at'].format(e=e, f=', '.join(fs)))
-    for dst, m in card.get('directions', {}).get('mirror', {}).items():
-        lines.append(L['mirror'].format(a=L['dir'].get(dst, dst), b=L['dir'].get(m['from'], m['from'])))
-    if card.get('states'):
-        lines.append(L['states'])
-        for s in card['states']:
-            where = f'F{s["frame"]}' if 'frame' in s else custom(s.get('animation', '')).upper()
-            extra = f' ({L["default"]})' if s.get('default') else ''
-            lines.append(f'  {custom(s["name"]).upper()} {where}{extra}')
-    w = card.get('world', {})
-    if w.get('pixelsPerUnit'):
-        lines.append(L['ppu'].format(p=w['pixelsPerUnit']))
-    if w.get('footprint'):
-        fp = w['footprint']
-        lines.append(L['footprint'].format(w=fp['w'], h=fp['h'], t=fp['tileSize']))
-    if 'sortY' in w:
-        lines.append(L['sortY'].format(y=w['sortY']))
-    legend_items = []
-    for b in ('collision', 'hurt', 'hit', 'interact'):
+    half_r = wide - 1 - (wide - 1) // 2
+    # Margen alrededor de cada detalle para las cajas que sobresalen del frame.
+    padl = padt = padr = padb = 0
+    for i in details:
+        for bx in (frame_value(card, i, 'boxes') or {}).values():
+            padl, padt = max(padl, -bx['x']), max(padt, -bx['y'])
+            padr, padb = max(padr, bx['x'] + bx['w'] - fw), max(padb, bx['y'] + bx['h'] - fh)
+    padl, padt, padr, padb = (min(v, fw) for v in (padl, padt, padr, padb))
+    k = 2 if ((fw + padl + padr) * 2 + 6 + 4 * CW) * len(details) <= (half_r - 2) * CW else 1
+    legend = []
+    for b in list(BOX) + sorted({n for i in details for n in (frame_value(card, i, 'boxes') or {}) if n not in BOX}):
         if any(frame_value(card, i, 'boxes', b) for i in details):
-            legend_items.append((BOX[b], L['box'][b]))
+            legend.append((box_color(b), norm(b)))
     for pname in sorted({p for i in details for p in (frame_value(card, i, 'points') or {})}):
-        legend_items.append((POINT, L['point'].get(pname, custom(pname).upper())))
-    piv = card.get('defaults', {}).get('pivot', {'x': fw // 2, 'y': fh - 1})
-    legend_items.append((PIVOT, L['pivot'].format(x=piv['x'], y=piv['y'])))
-    left_w = max([pw, text_width(L['detail'].format(i=99))] +
-                 [12 + text_width(t) for _, t in legend_items])
-    tx = 4 + left_w + 8
-    tw = W - tx - 4
-    text = []
-    for ln in lines:
-        text += wrap(ln, tw)
-    st = card.get('style', {}).get('summary')
-    if st:
-        text += wrap(L['style'] + st, tw)
-    text.append(norm(L['index'].format(c=cols)))
-    for hw in card.get('ai', {}).get('howTo', []):
-        text += wrap(L['ai'] + hw, tw)
-    prov = card.get('provenance', {})
-    lic = prov.get('license')
-    gen = prov.get('generator', {}).get('app')
-    if lic or gen:
-        text += wrap(' · '.join(x for x in [L['license'] + lic if lic else None, gen] if x), tw)
+        legend.append((POINT, norm(pname)))
+    legend.append((PIVOT, 'PIVOT'))
+    det_h = (fh + padt + padb) * k + 3
+    det_rows = -(-det_h // CH) + -(-len(legend) // 2)
 
-    payloads = card_to_payloads(card)
-    import qrcode
-    mats = []
-    for p in payloads:
-        qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_M,
-                           border=0, box_size=1)
-        qr.add_data(qrcode.util.QRData(p, mode=qrcode.util.MODE_ALPHA_NUM))
-        qr.make(fit=True)
-        mats.append(qr.get_matrix())
-
-    strip = AH + 16
-    head = strip + 4
-    foot = head + 40
-    left_h = len(details) * (ph + 12) + len(legend_items) * LINE + 4
-    text_h = len(text) * LINE
-    qr_h = max(len(m) for m in mats) + 10
-    qr_w = sum(len(m) + 4 for m in mats)
-    body_h = max(left_h, text_h + qr_h + 4)
-    if tx + max(text_width(t) for t in text) > W - qr_w - 4:
-        body_h = max(left_h, text_h + qr_h + 4)
-    H = foot + body_h + 6
+    zones = notation(card)
+    lay = layout_rows(zones + [('DETAIL', [])], wide)
+    strip_row = -(-(AH + 7) // CH)                 # fila de texto de los números de columna
+    top = strip_row + 2                            # primera fila de la primera zona
+    total = top
+    heights = []
+    for row in lay:
+        # barra de título + contenido + una fila libre antes de la regla de abajo
+        hgt = 2 + max((det_rows if t == 'DETAIL' else len(ls)) for t, w, ls in row)
+        heights.append(hgt)
+        total += hgt
+    H = (total + 1) * CH                           # + la barra del enlace
 
     img = Image.new('RGBA', (W, H), PAPER)
     cv = Canvas(img)
     cv.fill(0, 0, AW, AH, (0, 0, 0, 0))
-    img.alpha_composite(sheet.convert('RGBA'), (0, 0))
+    img.alpha_composite(sheet, (0, 0))
     cv = Canvas(img)
 
-    # A la derecha: rótulos de fila, bordes y muesca del apoyo (y).
+    # Borde de la zona de frames (por fuera) y panel de filas.
+    cv.v(AW, 0, AH, INK)
+    cv.h(0, AW, AH, INK)
     for r in range(rows):
         y0 = r * fh
-        for j, t in enumerate(labels[r]):
-            cv.text(AW + GAP, y0 + 1 + j * 10, t)
         if r:
-            cv.h(AW + 1, AW + 3, y0, GRID)
-        ay = y0 + piv['y']
-        cv.v(AW + 5, ay - 2, ay + 2, PIVOT)
-        cv.v(AW + 4, ay - 1, ay + 1, PIVOT)
-        cv.px[AW + 3, ay] = PIVOT
-    # Debajo: bordes de columna, muesca del apoyo (x) y número de columna.
+            cv.h(AW + 1, AW + 3, y0, INK)                    # marca entre filas
+            cv.h(AW + 5, W - 1, y0, RULE)                    # separa los rótulos
+        ay = y0 + piv['y']                                    # muesca del apoyo
+        for t in range(3):
+            cv.v(AW + 1 + t, ay - t, ay + t, PIVOT)
+        ty = -(-(y0 + 2) // CH)
+        for j, t in enumerate(labels[r]):
+            cv.text(lab_col, ty + j, t)
     for c in range(cols):
+        x0 = c * fw
         if c:
-            cv.v(c * fw, AH + 1, AH + 3, GRID)
-        ax = c * fw + piv['x']
-        cv.h(ax - 2, ax + 2, AH + 5, PIVOT)
-        cv.h(ax - 1, ax + 1, AH + 4, PIVOT)
-        cv.px[ax, AH + 3] = PIVOT
+            cv.v(x0, AH + 1, AH + 3, INK)                    # marca entre columnas
+        ax = x0 + piv['x']
+        for t in range(3):
+            cv.h(ax - t, ax + t, AH + 1 + t, PIVOT)
         s = str(c)
-        if text_width(s) <= fw:
-            cv.text(c * fw + fw // 2 - text_width(s) // 2, AH + 8, s)
-    # Marcas de registro: las tres esquinas exteriores de la zona.
-    for t in range(4):
-        cv.px[AW + 1, t] = INK; cv.px[AW + 1 + t, 0] = INK
-        cv.px[0, AH + 1 + t] = INK; cv.px[t, AH + 1] = INK
-        cv.px[AW + 1, AH + 1 + t] = INK; cv.px[AW + 1 + t, AH + 1] = INK
-    # Cabecera.
-    cv.h(0, W - 1, head - 2, GRID)
-    e = card['entity']
-    cv.text(4, head + 1, f'{FORMAT.upper()} {VERSION} · {e.get("displayName", e["name"])}')
-    view = L['view'].get(card['art'].get('view'), '')
-    facing = card['art'].get('facing')
-    l2 = [L['kind'].get(e['kind'], custom(e['kind']).upper()), view]
-    if facing:
-        l2.append(L['facing'].format(d=L['dir'].get(facing, facing)))
-    cv.text(4, head + 10, ' · '.join(x for x in l2 if x))
-    cv.text(4, head + 19, L['frame'].format(w=fw, h=fh, c=cols, r=rows))
-    x = cv.text(4, head + 29, L['palette']) + 4
-    for p in pal:
-        if x + 6 > W - 40:
-            break
-        cv.fill(x, head + 28, 6, 7, INK)
-        cv.fill(x + 1, head + 29, 4, 5, hex_rgba(p['color']))
-        x += 8
-    rx = W - 36
-    cv.h(rx, rx + 31, head + 33, INK)
-    for t in range(0, 33, 8):
-        cv.v(min(rx + t, rx + 31), head + 30, head + 33, INK)
-    cv.text(rx, head + 21, '32 PX')
-    cv.h(0, W - 1, foot - 4, GRID)
-    # Pie, izquierda: detalles con cajas, puntos y apoyo, y la leyenda.
-    y = foot
-    for i in details:
-        cv.text(4, y, L['detail'].format(i=i))
-        dx, dy = 4, y + 10
-        for yy in range(dy - 1, dy + ph + 1):
-            for xx in range(dx - 1, dx + pw + 1):
-                cv.px[xx, yy] = CHECK[(xx // 4 + yy // 4) % 2]
-        fr = frame_rect(card, i)
-        crop = sheet.crop((fr['x'], fr['y'], fr['x'] + fr['w'], fr['y'] + fr['h']))
-        img.alpha_composite(crop.resize((fr['w'] * k, fr['h'] * k), Image.NEAREST), (dx, dy))
-        cv = Canvas(img)
-        for b in ('hurt', 'collision', 'interact', 'hit'):
-            bx = frame_value(card, i, 'boxes', b)
-            if bx:
-                cv.rect(dx + bx['x'] * k, dy + bx['y'] * k, bx['w'] * k, bx['h'] * k, BOX[b])
-        for pname, pt in (frame_value(card, i, 'points') or {}).items():
-            px_, py_ = dx + pt['x'] * k, dy + pt['y'] * k
-            cv.h(px_ - 2, px_ + 2, py_, POINT); cv.v(px_, py_ - 2, py_ + 2, POINT)
-        pv = frame_value(card, i, 'pivot') or piv
-        ax, ay = dx + pv['x'] * k, dy + pv['y'] * k
-        cv.h(ax - 2, ax + 2, min(ay, dy + ph - 1), PIVOT)
-        cv.v(ax, ay - 2, min(ay + 1, dy + ph - 1), PIVOT)
-        y = dy + ph + 2
-    y += 2
-    for col, t in legend_items:
-        cv.fill(4, y + 1, 5, 5, col)
-        cv.text(12, y, t)
-        y += LINE
-    # Pie, derecha: texto y QR.
-    for j, t in enumerate(text):
-        cv.text(tx, foot + j * LINE, t)
-    qy = H - max(len(m) for m in mats) - 4
-    qx = W - 4
-    for m in reversed(mats):
-        n = len(m)
-        qx -= n
-        for yy in range(n):
-            for xx in range(n):
-                cv.px[qx + xx, qy + yy] = INK if m[yy][xx] else PAPER
-        qx -= 4
-    cv.text(qx + 4, qy - 9, L['card'] + (f' ×{len(mats)}' if len(mats) > 1 else ''))
+        cx = round((x0 + fw / 2 - (len(s) * CW - 1) / 2) / CW)
+        if len(s) * CW <= fw:
+            cv.text(cx, strip_row, s)
+
+    # Zonas.
+    y = top
+    for row, hgt in zip(lay, heights):
+        x = 1
+        for title, w, ls in row:
+            px0, px1 = x * CW - 1, (x + w) * CW - 1
+            py0, py1 = y * CH, (y + hgt) * CH - 1
+            cv.fill(px0, py0, px1 - px0 + 1, CH, INK)        # barra de título
+            cv.text(x + 1, y, title, PAPER)
+            cv.v(px0, py0, py1, INK); cv.v(px1, py0, py1, INK)
+            cv.h(px0, px1, py1, INK)
+            if title == 'DETAIL':
+                dx = (x + 1) * CW + padl * k
+                dy = (y + 1) * CH + 2 + padt * k
+                for i in details:
+                    fr = frame_rect(card, i)
+                    for yy in range(dy, dy + fh * k):
+                        for xx in range(dx, dx + fw * k):
+                            cv.px[xx, yy] = CHECK[((xx - dx) // 4 + (yy - dy) // 4) % 2]
+                    crop = sheet.crop((fr['x'], fr['y'], fr['x'] + fw, fr['y'] + fh))
+                    img.alpha_composite(crop.resize((fw * k, fh * k), Image.NEAREST), (dx, dy))
+                    cv = Canvas(img)
+                    for b, bx in sorted(((b, frame_value(card, i, 'boxes', b))
+                                         for b in (frame_value(card, i, 'boxes') or {})),
+                                        key=lambda t: -t[1]['w'] * t[1]['h']):
+                        cv.rect(dx + bx['x'] * k, dy + bx['y'] * k, bx['w'] * k, bx['h'] * k, box_color(b))
+                    for pname, p in (frame_value(card, i, 'points') or {}).items():
+                        qx, qy = dx + p['x'] * k, dy + p['y'] * k
+                        cv.h(qx - 2, qx + 2, qy, POINT); cv.v(qx, qy - 2, qy + 2, POINT)
+                    pv = frame_value(card, i, 'pivot') or piv
+                    qx, qy = dx + pv['x'] * k, min(dy + pv['y'] * k, dy + fh * k - 1)
+                    cv.h(qx - 2, qx + 2, qy, PIVOT); cv.v(qx, qy - 2, qy, PIVOT)
+                    cv.text(-(-(dx + (fw + padr) * k + 2) // CW), y + 1, f'F{i}')
+                    dx += (fw + padr + padl) * k + 6 + CW * (len(str(i)) + 2)
+                ly = y + 1 + -(-det_h // CH)
+                colw = (w - 2) // 2
+                for n, (col, name) in enumerate(legend):
+                    lx, lr = x + 1 + (n % 2) * colw, ly + n // 2
+                    cv.fill(lx * CW, lr * CH + 1, 3, 5, col)
+                    cv.text(lx + 2, lr, name[:colw - 3])
+            else:
+                for j, t in enumerate(ls):
+                    cv.text(x + 1, y + 1 + j, t)
+                if title == 'ART':
+                    # Muestras de la paleta: a la derecha de las primeras filas,
+                    # donde las líneas de texto son cortas.
+                    pal = card['art'].get('palette', [])
+                    free = (w - 2 - max([0] + [len(t) for t in ls[:2]]) - 2) * CW
+                    size = 9 if len(pal) * 10 <= free else 6
+                    if len(pal) * (size + 1) <= free and len(ls) >= 2:
+                        sx = px1 - 3 - len(pal) * (size + 1)
+                        sy = py0 + CH + 2
+                        for n, p in enumerate(pal):
+                            cv.fill(sx + n * (size + 1), sy, size, size, INK)
+                            cv.fill(sx + n * (size + 1) + 1, sy + 1, size - 2, size - 2, hex_rgba(p['color']))
+            x += w
+        y += hgt
+    # Barra final con el formato y el enlace a la especificación.
+    cv.fill(0, y * CH, W, CH, INK)
+    cv.text(1, y, norm(f'{FORMAT} {VERSION}'), PAPER)
+    link = norm(URL)
+    cv.text(wide - 1 - len(link), y, link, PAPER)
     return img
 
-# ---------------------------------------------------------------- ficha -----
+# ---------------------------------------------------------------- leer el dibujo
+def decode_grid(img, k=1):
+    """La rejilla de caracteres de la imagen: (texto, invertido) por celda;
+    None donde no hay un carácter."""
+    px = img.convert('RGBA').load()
+    W, H = img.width // k, img.height // k
+    grid = []
+    for row in range(H // CH):
+        line = []
+        for col in range(W // CW):
+            bits, ok = [], True
+            for r in range(6):
+                for c in range(3):
+                    p = px[(col * CW + c) * k, (row * CH + r) * k]
+                    if p == INK: bits.append('1')
+                    elif p == PAPER: bits.append('0')
+                    else: ok = False; break
+                if not ok: break
+            if not ok:
+                line.append(None); continue
+            key = ''.join(bits)
+            inv = ''.join('1' if b == '0' else '0' for b in bits)
+            gap = all(px[(col * CW + 3) * k, (row * CH + r) * k] == INK for r in range(CH)) and \
+                all(px[(col * CW + c) * k, (row * CH + 6) * k] == INK for c in range(3))
+            if gap and inv in LOOKUP:
+                line.append((LOOKUP[inv], True))
+            elif key in LOOKUP:
+                line.append((LOOKUP[key], False))
+            else:
+                line.append(None)
+        grid.append(line)
+    return grid
+
+def find_scale(img):
+    for k in range(1, 13):
+        if img.width % (CW * k) or img.height % (CH * k):
+            continue
+        last = decode_grid(img.crop((0, img.height - CH * k, img.width, img.height)), k)[0]
+        s = ''.join(c[0] if c and c[1] else ' ' for c in last)
+        if s.strip().startswith(norm(FORMAT) + ' '):
+            return k, s
+    raise SystemExit('No es un sprite pattern: falta la barra final «SPRITEVPG …».')
+
+def decode_zones(img, k):
+    grid = decode_grid(img, k)
+    bars = []                                     # (fila, col inicial, col final, título)
+    names = re.compile(r' (' + '|'.join(ZONES) + r')(?= |$)')
+    for r, line in enumerate(grid[:-1]):
+        c = 0
+        while c < len(line):
+            if line[c] and line[c][1]:
+                e = c
+                while e + 1 < len(line) and line[e + 1] and line[e + 1][1]:
+                    e += 1
+                run = ''.join(x[0] for x in line[c:e + 1])
+                starts = [(m.start(), m.group(1)) for m in names.finditer(run)]
+                for n, (st, title) in enumerate(starts):   # dos zonas seguidas comparten barra
+                    stop = starts[n + 1][0] - 1 if n + 1 < len(starts) else len(run) - 1
+                    bars.append((r, c + st, c + stop, title))
+                c = e + 1
+            else:
+                c += 1
+    zones = {}
+    for r, c0, c1, title in bars:
+        end = min([b[0] for b in bars if b[0] > r and not (b[2] < c0 or b[1] > c1)] + [len(grid) - 1])
+        logical = []
+        for rr in range(r + 1, end):
+            s = ''.join((x[0] if x and not x[1] else ' ') for x in grid[rr][c0 + 1:c1 + 1]).rstrip()
+            if not s.strip():
+                continue
+            if s.startswith(' ') and logical:
+                logical[-1] += ' ' + s.strip()
+            else:
+                logical.append(s.strip())
+        zones[title] = logical
+    return zones
+
+def read_card(path):
+    """La ficha de un patrón, leída del dibujo. Si el PNG trae la copia iTXt y
+    dice lo mismo, se usa esa (conserva minúsculas del texto libre)."""
+    img = Image.open(path)
+    k, _ = find_scale(img)
+    card = parse_notation(decode_zones(img, k))
+    g = card['grid']
+    card['image'] = {'w': img.width // k, 'h': img.height // k, 'pixelArt': True,
+                     'framesArea': {'x': 0, 'y': 0, 'w': g['columns'] * g['frameSize']['w'],
+                                    'h': g['rows'] * g['frameSize']['h']}}
+    txt = (getattr(img, 'text', {}) or {}).get(FORMAT)
+    src = 'dibujo'
+    if txt:
+        try:
+            full = json.loads(txt)
+            a, b = normalized(full), dict(card)
+            a.pop('image', None); b.pop('image', None)
+            if a == b:
+                card, src = full, 'dibujo + iTXt'
+        except (ValueError, KeyError):
+            pass
+    return card, src, k
+
+# ---------------------------------------------------------------- make/read -
 def complete(card, sheet):
-    """Rellena lo que se calcula: formato, frames con dibujo, tamaño, paleta."""
+    """Rellena lo que se calcula: formato, frames con dibujo, paleta."""
     g = card['grid']
     cols, rows = g['columns'], g['rows']
     fw, fh = g['frameSize']['w'], g['frameSize']['h']
-    card = {'format': FORMAT, 'version': VERSION, '$schema': SCHEMA, **card}
+    card = {'format': FORMAT, 'version': VERSION, '$schema': SCHEMA,
+            **{k: v for k, v in card.items() if k not in ('format', 'version', '$schema', 'lang')}}
+    card['grid'] = {'columns': cols, 'rows': rows, 'frameSize': {'w': fw, 'h': fh}, 'margin': 0, 'spacing': 0}
     if not card.get('frames'):
         fr = []
         for i in range(cols * rows):
             x, y = (i % cols) * fw, (i // cols) * fh
-            box = sheet.crop((x, y, x + fw, y + fh)).getbbox()
-            if box:
+            if sheet.crop((x, y, x + fw, y + fh)).getbbox():
                 fr.append({'i': i, 'x': x, 'y': y, 'w': fw, 'h': fh})
         card['frames'] = fr
     if not card['art'].get('palette'):
@@ -587,95 +903,30 @@ def complete(card, sheet):
 
 def make(sheet_path, card_path, out, preview=0):
     sheet = Image.open(sheet_path).convert('RGBA')
-    card = json.load(open(card_path, encoding='utf-8'))
-    card = complete(card, sheet)
+    card = complete(json.load(open(card_path, encoding='utf-8')), sheet)
     g = card['grid']
-    AW, AH = g['columns'] * g['frameSize']['w'], g['rows'] * g['frameSize']['h']
-    # Dos pasadas: el tamaño de la imagen va en la ficha, y la ficha en el QR.
-    card['image'] = {'file': os.path.basename(out), 'w': 0, 'h': 0, 'pixelArt': True,
-                     'framesArea': {'x': 0, 'y': 0, 'w': AW, 'h': AH}}
-    for _ in range(3):
-        img = render(sheet, card)
-        if (card['image']['w'], card['image']['h']) == img.size:
-            break
-        card['image']['w'], card['image']['h'] = img.size
+    img = render(sheet, card)
+    card['image'] = {'file': os.path.basename(out), 'w': img.width, 'h': img.height, 'pixelArt': True,
+                     'framesArea': {'x': 0, 'y': 0, 'w': g['columns'] * g['frameSize']['w'],
+                                    'h': g['rows'] * g['frameSize']['h']}}
     info = PngImagePlugin.PngInfo()
     info.add_itxt(FORMAT, json.dumps(card, ensure_ascii=False, separators=(',', ':')), zip=True)
     img.save(out, pnginfo=info)
     if preview:
-        # Copia para enseñar: ampliada y con damero donde es transparente.
-        prev = Image.new('RGBA', img.size)
-        pp = prev.load()
-        for y in range(img.height):
-            for x in range(img.width):
-                pp[x, y] = CHECK[(x // 4 + y // 4) % 2]
-        prev.alpha_composite(img)
-        prev.resize((img.width * preview, img.height * preview), Image.NEAREST).save(
-            out.replace('.png', f'@{preview}x.png'))
+        # La copia ampliada es también un sprite pattern válido: conserva la
+        # transparencia y la ficha.
+        img.resize((img.width * preview, img.height * preview), Image.NEAREST).save(
+            out.replace('.png', f'@{preview}x.png'), pnginfo=info)
     return card, img
 
-def read_card(path):
-    """La ficha de un patrón: del bloque iTXt o, si no está, del QR."""
-    img = Image.open(path)
-    txt = getattr(img, 'text', {}) or {}
-    if FORMAT in txt:
-        return json.loads(txt[FORMAT]), 'itxt'
-    payloads = decode_qr(img)
-    card = payloads_to_card(payloads)
-    if card is None:
-        raise SystemExit('No se encuentra la ficha: ni bloque iTXt ni QR legible.')
-    return card, 'qr'
-
-def decode_qr(img):
-    """Lee los QR del patrón (uno o varios). Prueba OpenCV (primero el detector
-    para códigos grandes) y, si no está, pyzbar."""
-    rgb = img.convert('RGB')
-    tried = False
-    for k in (3, 4, 2):
-        big = rgb.resize((rgb.width * k, rgb.height * k), Image.NEAREST)
-        try:
-            import cv2, numpy as np
-        except ImportError:
-            break
-        tried = True
-        arr = cv2.cvtColor(np.array(big), cv2.COLOR_RGB2BGR)
-        dets = [cv2.QRCodeDetectorAruco()] if hasattr(cv2, 'QRCodeDetectorAruco') else []
-        dets.append(cv2.QRCodeDetector())
-        for det in dets:
-            try:
-                ok, vals, _, _ = det.detectAndDecodeMulti(arr)
-                vals = [v for v in (vals or []) if v]
-            except cv2.error:
-                vals = []
-            if not vals:
-                v = det.detectAndDecode(arr)[0]
-                vals = [v] if v else []
-            if vals:
-                return vals
-    try:
-        from pyzbar.pyzbar import decode
-        return [d.data.decode() for d in decode(rgb.resize((rgb.width * 3, rgb.height * 3), Image.NEAREST))]
-    except ImportError:
-        if not tried:
-            raise SystemExit('Para leer el QR hace falta opencv-python o pyzbar.')
-        return []
-
-def scale_of(img, card):
-    k = img.width / card['image']['w']
-    if k != int(k) or img.height != card['image']['h'] * k:
-        raise SystemExit(f'La imagen mide {img.size} y la ficha dice '
-                         f'{card["image"]["w"]}x{card["image"]["h"]}: no es una ampliación entera.')
-    return int(k)
-
 def read(path, outdir, gifs=False):
-    card, src = read_card(path)
+    card, src, k = read_card(path)
     img = Image.open(path).convert('RGBA')
-    k = scale_of(img, card)
     if k > 1:
         img = img.resize((img.width // k, img.height // k), Image.NEAREST)
     os.makedirs(outdir, exist_ok=True)
     fa = card['image']['framesArea']
-    sheet = img.crop((fa['x'], fa['y'], fa['x'] + fa['w'], fa['y'] + fa['h']))
+    sheet = img.crop((0, 0, fa['w'], fa['h']))
     base = card['entity']['name']
     sheet.save(os.path.join(outdir, f'{base}.sheet.png'))
     json.dump(card, open(os.path.join(outdir, f'{base}.spritevpg.json'), 'w', encoding='utf-8'),
@@ -683,25 +934,19 @@ def read(path, outdir, gifs=False):
     fdir = os.path.join(outdir, 'frames')
     os.makedirs(fdir, exist_ok=True)
     for f in card['frames']:
-        sheet.crop((f['x'], f['y'], f['x'] + f['w'], f['y'] + f['h'])).save(
-            os.path.join(fdir, f'{f["i"]:03d}.png'))
+        sheet.crop((f['x'], f['y'], f['x'] + f['w'], f['y'] + f['h'])).save(os.path.join(fdir, f'{f["i"]:03d}.png'))
     if gifs:
         for a in card.get('animations', []):
             fr = [sheet.crop((r['x'], r['y'], r['x'] + r['w'], r['y'] + r['h']))
-                  for r in (frame_rect(card, i) for i in frames_of(a))]
+                  for r in (frame_rect(card, f['frame']) for f in a['frames'])]
             big = [f.resize((f.width * 4, f.height * 4), Image.NEAREST) for f in fr]
-            name = custom(a['name']) + (f'_{a["direction"]}' if a.get('direction') else '')
-            big[0].save(os.path.join(outdir, f'{name}.gif'), save_all=True,
-                        append_images=big[1:], duration=[f['ms'] for f in a['frames']],
+            name = a['name'].replace(':', '_') + (f'_{a["direction"]}' if a.get('direction') else '')
+            big[0].save(os.path.join(outdir, f'{name}.gif'), save_all=True, append_images=big[1:],
+                        duration=[f['ms'] for f in a['frames']],
                         loop=0 if a.get('loop', 'loop') != 'once' else 1, disposal=2)
     return card, src, k
 
 # ---------------------------------------------------------------- validar ---
-KINDS = {'character', 'creature', 'item', 'prop', 'building', 'effect', 'tile'}
-VIEWS = {'side', 'front', 'threeQuarter', 'oblique', 'topDown', 'isometric'}
-DIRS = {'down', 'up', 'left', 'right', 'down-left', 'down-right', 'up-left', 'up-right'}
-LOOPS = {'loop', 'once', 'pingpong', 'hold'}
-
 def validate(card):
     err, warn = [], []
     def need(cond, msg):
@@ -709,28 +954,32 @@ def validate(card):
             err.append(msg)
     need(card.get('format') == FORMAT, 'format debe ser "spritevpg"')
     need(str(card.get('version', '')).split('.')[0] == '1', 'version 1.x')
-    for k in ('image', 'entity', 'art', 'grid', 'frames', 'defaults', 'ai', 'provenance'):
+    for k in ('entity', 'art', 'grid', 'frames', 'defaults', 'ai', 'provenance'):
         need(k in card, f'falta {k}')
     if err:
         return err, warn
     e = card['entity']
     need(e.get('kind') in KINDS or str(e.get('kind', '')).startswith('custom:'), 'entity.kind no válido')
-    need(bool(e.get('name')), 'falta entity.name')
+    need(bool(re.fullmatch(r'[a-z0-9_\-]+', e.get('name', ''))), 'entity.name: solo a-z, 0-9, _ y -')
     v = card['art'].get('view')
-    need(v is None or v in VIEWS, f'art.view no válido: {v}')
+    need(v in VIEWS, f'art.view no válido: {v}')
     g = card['grid']
     fw, fh = g['frameSize']['w'], g['frameSize']['h']
-    fa = card['image'].get('framesArea', {})
-    need(fa.get('x') == 0 and fa.get('y') == 0, 'framesArea debe empezar en 0,0')
-    need(fa.get('w') == g['columns'] * fw and fa.get('h') == g['rows'] * fh,
-         'framesArea no coincide con la rejilla')
+    AW, AH = g['columns'] * fw, g['rows'] * fh
+    if 'image' in card:
+        fa = card['image'].get('framesArea', {})
+        need(fa.get('x') == 0 and fa.get('y') == 0, 'framesArea debe empezar en 0,0')
+        need(fa.get('w') == AW and fa.get('h') == AH, 'framesArea no coincide con la rejilla')
     ids = set()
     for f in card['frames']:
         ids.add(f['i'])
-        need(f['x'] + f['w'] <= fa.get('w', 0) and f['y'] + f['h'] <= fa.get('h', 0),
-             f'frame {f["i"]} fuera de la zona de frames')
+        need(f['x'] + f['w'] <= AW and f['y'] + f['h'] <= AH, f'frame {f["i"]} fuera de la zona de frames')
+        need((f['x'], f['y']) == ((f['i'] % g['columns']) * fw, (f['i'] // g['columns']) * fh),
+             f'frame {f["i"]}: no está en su celda')
+    need('pivot' in card['defaults'], 'falta defaults.pivot')
     names = set()
-    for a in card.get('animations', []):
+    anims = card.get('animations', [])
+    for a in anims:
         key = (a['name'], a.get('direction'))
         need(key not in names, f'animación repetida: {key}')
         names.add(key)
@@ -740,7 +989,7 @@ def validate(card):
             need(f['frame'] in ids, f'{a["name"]}: el frame {f["frame"]} no existe')
             need(isinstance(f.get('ms'), int) and f['ms'] > 0, f'{a["name"]}: ms no válido en F{f["frame"]}')
         if a.get('next'):
-            need(any(b['name'] == a['next'] for b in card['animations']), f'{a["name"]}: next desconocido')
+            need(any(b['name'] == a['next'] for b in anims), f'{a["name"]}: next desconocido')
         if a.get('loop') == 'once' and not a.get('next'):
             warn.append(f'{a["name"]}: una vez y sin next')
     for dst, m in card.get('directions', {}).get('mirror', {}).items():
@@ -752,8 +1001,7 @@ def validate(card):
     ref = card.get('style', {}).get('reference', {}).get('frame')
     need(ref is None or ref in ids, 'style.reference.frame no existe')
     for c in card['art'].get('palette', []):
-        col = c.get('color', '')
-        need(len(col) == 7 and col.startswith('#'), f'color no válido: {col}')
+        need(bool(re.fullmatch(r'#[0-9a-fA-F]{6}', c.get('color', ''))), f'color no válido: {c.get("color")}')
     if not card['ai'].get('summary'):
         warn.append('falta ai.summary')
     if 'style' not in card:
@@ -762,7 +1010,6 @@ def validate(card):
 
 # ---------------------------------------------------------------- resumen ---
 def summary(card):
-    L = lab(card)
     e, g = card['entity'], card['grid']
     out = [f'{e.get("displayName", e["name"])} ({e["kind"]}) · {FORMAT} {card.get("version")}',
            f'Frames de {g["frameSize"]["w"]}x{g["frameSize"]["h"]} en {g["columns"]}x{g["rows"]}, '
@@ -796,40 +1043,44 @@ def main(argv=None):
     r = sub.add_parser('read', help='sprite pattern -> ficha, hoja limpia y frames')
     r.add_argument('pattern'); r.add_argument('-o', '--out', required=True)
     r.add_argument('--gifs', action='store_true', help='un GIF por animación')
-    i = sub.add_parser('info', help='resumen legible de la ficha')
-    i.add_argument('path')
-    v = sub.add_parser('validate', help='comprueba la ficha')
-    v.add_argument('path')
+    for name, hlp in (('text', 'la notación de los márgenes'), ('info', 'resumen legible'),
+                      ('validate', 'comprueba la ficha')):
+        s = sub.add_parser(name, help=hlp)
+        s.add_argument('path')
     a = p.parse_args(argv)
 
     def load(path):
-        if path.lower().endswith('.json'):
-            return json.load(open(path, encoding='utf-8'))
-        return read_card(path)[0]
+        if not path.lower().endswith('.json'):
+            return read_card(path)[0]
+        card = json.load(open(path, encoding='utf-8'))
+        if 'frames' not in card:                   # ficha de entrada, sin calcular
+            g = card['grid']
+            fw, fh = g['frameSize']['w'], g['frameSize']['h']
+            card['frames'] = [{'i': i, 'x': (i % g['columns']) * fw, 'y': (i // g['columns']) * fh,
+                               'w': fw, 'h': fh} for i in range(g['columns'] * g['rows'])]
+        return {'format': FORMAT, 'version': VERSION, **card}
 
     if a.cmd == 'make':
         card, img = make(a.sheet, a.card, a.out, a.preview)
         err, warn = validate(card)
         print(f'{a.out}: {img.width}x{img.height}')
-        for w in warn:
-            print('aviso:', w)
-        for e in err:
-            print('error:', e)
+        for w in warn: print('aviso:', w)
+        for e in err: print('error:', e)
         return 1 if err else 0
     if a.cmd == 'read':
         card, src, k = read(a.pattern, a.out, a.gifs)
-        print(f'Ficha leída del {"bloque iTXt" if src == "itxt" else "QR"} (escala x{k}). '
-              f'{len(card["frames"])} frames en {a.out}/')
+        print(f'Ficha leída del {src} (escala x{k}). {len(card["frames"])} frames en {a.out}/')
+        return 0
+    if a.cmd == 'text':
+        print(notation_text(load(a.path)))
         return 0
     if a.cmd == 'info':
         print(summary(load(a.path)))
         return 0
     if a.cmd == 'validate':
         err, warn = validate(load(a.path))
-        for w in warn:
-            print('aviso:', w)
-        for e in err:
-            print('error:', e)
+        for w in warn: print('aviso:', w)
+        for e in err: print('error:', e)
         print('válida' if not err else f'{len(err)} errores')
         return 1 if err else 0
 

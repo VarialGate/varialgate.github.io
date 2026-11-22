@@ -2,7 +2,6 @@
   "format": "spritevpg",
   "version": "1.0",
   "$schema": "https://varialgate.github.io/specs/spritevpg/schema/spritevpg-1.schema.json",
-  "lang": "es",
   "entity": {
     "kind": "character",
     "name": "caballero_azul",
@@ -347,8 +346,8 @@
   ],
   "image": {
     "file": "caballero.spritevpg.png",
-    "w": 285,
-    "h": 573,
+    "w": 288,
+    "h": 595,
     "pixelArt": true,
     "framesArea": {
       "x": 0,

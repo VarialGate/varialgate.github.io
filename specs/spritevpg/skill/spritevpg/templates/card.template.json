@@ -1,23 +1,125 @@
 {
-  "lang": "es",
-  "entity": { "kind": "character", "name": "nombre_en_minusculas", "displayName": "Nombre visible",
-              "description": "Qué es, en una frase.", "tags": [] },
-  "art": { "view": "side", "facing": "right", "light": "top-left",
-           "outline": { "style": "dark", "width": 1 }, "shadow": "none" },
-  "grid": { "columns": 6, "rows": 2, "frameSize": { "w": 32, "h": 32 }, "margin": 0, "spacing": 0 },
-  "defaults": {
-    "pivot": { "x": 16, "y": 31 },
-    "boxes": { "collision": { "x": 10, "y": 26, "w": 12, "h": 6 }, "hurt": { "x": 8, "y": 4, "w": 16, "h": 28 } }
+  "entity": {
+    "kind": "character",
+    "name": "nombre_en_minusculas",
+    "displayName": "Nombre visible",
+    "description": "Qué es, en una frase.",
+    "tags": []
   },
-  "directions": { "set": ["right", "left"], "mirror": { "left": { "from": "right", "flip": "x" } } },
+  "art": {
+    "view": "side",
+    "facing": "right",
+    "light": "top-left",
+    "outline": {
+      "style": "dark",
+      "width": 1
+    },
+    "shadow": "none"
+  },
+  "grid": {
+    "columns": 6,
+    "rows": 2,
+    "frameSize": {
+      "w": 32,
+      "h": 32
+    },
+    "margin": 0,
+    "spacing": 0
+  },
+  "defaults": {
+    "pivot": {
+      "x": 16,
+      "y": 31
+    },
+    "boxes": {
+      "collision": {
+        "x": 10,
+        "y": 26,
+        "w": 12,
+        "h": 6
+      },
+      "hurt": {
+        "x": 8,
+        "y": 4,
+        "w": 16,
+        "h": 28
+      }
+    }
+  },
+  "directions": {
+    "set": [
+      "right",
+      "left"
+    ],
+    "mirror": {
+      "left": {
+        "from": "right",
+        "flip": "x"
+      }
+    }
+  },
   "animations": [
-    { "name": "idle", "direction": "right", "loop": "loop",
-      "frames": [ { "frame": 0, "ms": 300 }, { "frame": 1, "ms": 300 } ] },
-    { "name": "walk", "direction": "right", "loop": "loop",
-      "frames": [ { "frame": 6, "ms": 120 }, { "frame": 7, "ms": 120, "events": ["footstep"] },
-                  { "frame": 8, "ms": 120 }, { "frame": 9, "ms": 120, "events": ["footstep"] } ] }
+    {
+      "name": "idle",
+      "direction": "right",
+      "loop": "loop",
+      "frames": [
+        {
+          "frame": 0,
+          "ms": 300
+        },
+        {
+          "frame": 1,
+          "ms": 300
+        }
+      ]
+    },
+    {
+      "name": "walk",
+      "direction": "right",
+      "loop": "loop",
+      "frames": [
+        {
+          "frame": 6,
+          "ms": 120
+        },
+        {
+          "frame": 7,
+          "ms": 120,
+          "events": [
+            "footstep"
+          ]
+        },
+        {
+          "frame": 8,
+          "ms": 120
+        },
+        {
+          "frame": 9,
+          "ms": 120,
+          "events": [
+            "footstep"
+          ]
+        }
+      ]
+    }
   ],
-  "style": { "summary": "Estilo en una frase: resolución, contorno, tonos, luz.", "reference": { "frame": 0 } },
-  "ai": { "summary": "Qué es y qué animaciones tiene, en una frase.", "howTo": [] },
-  "provenance": { "generator": { "app": "" }, "created": "", "author": "", "license": "" }
+  "style": {
+    "summary": "Estilo en una frase: resolución, contorno, tonos, luz.",
+    "reference": {
+      "frame": 0
+    }
+  },
+  "ai": {
+    "summary": "Qué es y qué animaciones tiene, en una frase.",
+    "howTo": []
+  },
+  "provenance": {
+    "generator": {
+      "app": ""
+    },
+    "created": "",
+    "author": "",
+    "license": ""
+  }
 }
