@@ -89,7 +89,7 @@ JPEG ni con imágenes reescaladas con suavizado.
 | `side` | De lado, a la altura de los ojos | side view: seen straight from the side at eye level, the top is not visible |
 | `front` | De frente, a la altura de los ojos | front view: seen straight from the front at eye level, the top is not visible |
 | `three-quarter` | Desde arriba a 45°: techo y fachada (RPG de 16 bits) | three-quarter top-down view (3/4 overhead, like a classic 16-bit RPG): seen from above at about 45 degrees, showing the top and the front face, with the top taking about a third of the height |
-| `oblique` | Casi desde encima: techo y una franja de fachada (gestión de colonias) | top-down oblique view (like a colony management game): seen from almost directly above, mostly the top is visible plus a thin strip of the front face at the bottom |
+| `near-top-down` | Casi desde encima: techo y una franja de fachada (gestión de colonias) | near top-down view (like a colony management game): seen from almost directly above, mostly the top is visible plus a thin strip of the front face at the bottom |
 | `top-down` | Desde arriba del todo | top-down view: seen from directly above, only roofs, tree crowns and tops are visible; walls, trunks and front faces are not visible at all |
 | `isometric` | En diagonal, proyección 2:1 | isometric view: 2:1 pixel art isometric projection, the top is a diamond and two side faces are visible |
 

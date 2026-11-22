@@ -102,7 +102,7 @@ RULE = (154, 163, 181, 255)      # reglas entre filas
 
 LOOPS = ('loop', 'once')
 KINDS = ('character', 'creature', 'item', 'prop', 'building', 'effect', 'tile', 'ui')
-VIEWS = ('side', 'front', 'three-quarter', 'oblique', 'top-down', 'isometric')
+VIEWS = ('side', 'front', 'three-quarter', 'near-top-down', 'top-down', 'isometric')
 DIRS = ('down', 'up', 'left', 'right', 'down-left', 'down-right', 'up-left', 'up-right')
 
 # ---------------------------------------------------------------- ficha -----

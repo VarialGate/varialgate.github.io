@@ -182,7 +182,7 @@ cada etiqueta son opcionales, pero <span class="kw">DEBERÍAN</span> ponerse sie
 <div class="table-scroll"><table>
 <tr><th>Etiqueta</th><th>Valor</th></tr>
 <tr><td><code>KIND</code></td><td><code>CHARACTER</code> (personaje), <code>CREATURE</code> (criatura), <code>ITEM</code> (objeto que se coge o se usa), <code>PROP</code> (decorado), <code>BUILDING</code> (construcción), <code>EFFECT</code> (efecto), <code>TILE</code> (casilla) o <code>UI</code> (interfaz)</td></tr>
-<tr><td><code>VIEW</code></td><td>Una de las seis vistas de la <a href="#vistas">sección 6</a>: <code>SIDE</code>, <code>FRONT</code>, <code>THREE-QUARTER</code>, <code>OBLIQUE</code>, <code>TOP-DOWN</code> o <code>ISOMETRIC</code></td></tr>
+<tr><td><code>VIEW</code></td><td>Una de las seis vistas de la <a href="#vistas">sección 6</a>: <code>SIDE</code>, <code>FRONT</code>, <code>THREE-QUARTER</code>, <code>NEAR-TOP-DOWN</code>, <code>TOP-DOWN</code> o <code>ISOMETRIC</code></td></tr>
 <tr><td><code>FACING</code></td><td>Hacia dónde mira el dibujo: <code>RIGHT</code>, <code>LEFT</code>, <code>UP</code>, <code>DOWN</code>, <code>DOWN-RIGHT</code>, <code>DOWN-LEFT</code>, <code>UP-RIGHT</code> o <code>UP-LEFT</code></td></tr>
 <tr><td><code>DESC</code></td><td>Una frase breve, en el idioma de quien la escribe</td></tr>
 </table></div>
@@ -199,7 +199,7 @@ sirven para calcular la escala de una copia ampliada.</p>
 cada una y, sobre todo, para que quien amplíe la hoja (otra animación, otro objeto del mismo conjunto) sepa qué
 vista tiene que forzar.</p>
 <figure class="sheet">
-  <img class="px" src="views.png" width="900" alt="La misma casa y el mismo personaje dibujados en las seis vistas: SIDE, FRONT, THREE-QUARTER, OBLIQUE, TOP-DOWN e ISOMETRIC." loading="lazy">
+  <img class="px" src="views.png" width="900" alt="La misma casa y el mismo personaje dibujados en las seis vistas: SIDE, FRONT, THREE-QUARTER, NEAR-TOP-DOWN, TOP-DOWN e ISOMETRIC." loading="lazy">
   <figcaption>La misma casa y el mismo personaje en las seis vistas.</figcaption>
 </figure>
 <div class="table-scroll"><table>
@@ -207,7 +207,7 @@ vista tiene que forzar.</p>
 <tr><td><code>SIDE</code></td><td>Lateral</td><td>De lado, a la altura de los ojos. No se ve la parte de arriba</td><td>Plataformas, lucha</td></tr>
 <tr><td><code>FRONT</code></td><td>Frontal</td><td>De frente, a la altura de los ojos. No se ve la parte de arriba</td><td>Iconos, inventario, retratos</td></tr>
 <tr><td><code>THREE-QUARTER</code></td><td>3/4 cenital</td><td>Desde arriba a unos 45°: se ven el techo y la fachada, y el techo ocupa un tercio del alto</td><td>RPG clásicos de 16 bits</td></tr>
-<tr><td><code>OBLIQUE</code></td><td>Cenital oblicua</td><td>Casi desde encima: el techo ocupa casi todo y la fachada es una franja fina abajo</td><td>Gestión y colonias</td></tr>
+<tr><td><code>NEAR-TOP-DOWN</code></td><td>Cenital oblicua</td><td>Casi desde encima: el techo ocupa casi todo y la fachada es una franja fina abajo</td><td>Gestión y colonias</td></tr>
 <tr><td><code>TOP-DOWN</code></td><td>Cenital</td><td>Desde arriba del todo: solo techos, copas y cabezas</td><td>Estrategia, mapas</td></tr>
 <tr><td><code>ISOMETRIC</code></td><td>Isométrica</td><td>En diagonal desde una esquina, proyección 2:1: la parte de arriba es un rombo y se ven dos caras laterales</td><td>Construcción, tácticas</td></tr>
 </table></div>
@@ -219,7 +219,7 @@ vista tiene que forzar.</p>
 <tr><td><code>SIDE</code></td><td>side view: seen straight from the side at eye level, the top is not visible</td></tr>
 <tr><td><code>FRONT</code></td><td>front view: seen straight from the front at eye level, the top is not visible</td></tr>
 <tr><td><code>THREE-QUARTER</code></td><td>three-quarter top-down view (3/4 overhead, like a classic 16-bit RPG): seen from above at about 45 degrees, showing the top and the front face, with the top taking about a third of the height</td></tr>
-<tr><td><code>OBLIQUE</code></td><td>top-down oblique view (like a colony management game): seen from almost directly above, mostly the top is visible plus a thin strip of the front face at the bottom</td></tr>
+<tr><td><code>NEAR-TOP-DOWN</code></td><td>near top-down view (like a colony management game): seen from almost directly above, mostly the top is visible plus a thin strip of the front face at the bottom</td></tr>
 <tr><td><code>TOP-DOWN</code></td><td>top-down view: seen from directly above, only roofs, tree crowns and tops are visible; walls, trunks and front faces are not visible at all</td></tr>
 <tr><td><code>ISOMETRIC</code></td><td>isometric view: 2:1 pixel art isometric projection, the top is a diamond and two side faces are visible</td></tr>
 </table></div>
