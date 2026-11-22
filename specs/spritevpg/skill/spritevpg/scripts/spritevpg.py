@@ -3,9 +3,10 @@
 
 Un sprite pattern es una hoja de sprites PNG con los frames limpios desde la
 esquina de arriba a la izquierda y una animación por fila. A la derecha de
-cada fila va su rótulo (nombre, FRAMES, MS/FRAME y PLAY) y debajo, dos zonas
-con título: SHEET (nombre, tamaño de frame y rejilla) y SUBJECT (tipo, vista,
-hacia dónde mira y una descripción breve); opcionalmente, AGENTS (lo que debe
+cada fila va su rótulo (nombre, FRAMES, MS/FRAME, PLAY y, si cambian en esa
+fila, FACING y MIRROR) y debajo, dos zonas con título: SHEET (nombre, tamaño de
+frame y rejilla) y SUBJECT (tipo, vista, hacia dónde mira, si se voltea para
+el otro lado y una descripción breve); opcionalmente, AGENTS (lo que debe
 hacer una IA al usar la hoja en una app y al ampliarla); y una barra final con el enlace
 a la especificación: https://varialgate.github.io/specs/spritevpg/
 
@@ -23,7 +24,7 @@ import argparse, json, os, re, sys, unicodedata
 
 from PIL import Image
 
-FORMAT, VERSION = 'spritevpg', '1.0'
+FORMAT, VERSION = 'spritevpg', '1.1'
 URL = 'https://varialgate.github.io/specs/spritevpg/'
 
 # ---------------------------------------------------------------- fuente ----
@@ -106,10 +107,14 @@ LOOPS = ('loop', 'once')
 KINDS = ('character', 'creature', 'item', 'prop', 'building', 'effect', 'tile', 'ui')
 VIEWS = ('side', 'front', 'three-quarter', 'near-top-down', 'top-down', 'isometric')
 DIRS = ('down', 'up', 'left', 'right', 'down-left', 'down-right', 'up-left', 'up-right')
+# MIRROR (1.1): la dirección que se obtiene volteando el dibujo en horizontal.
+HFLIP = {'left': 'right', 'right': 'left', 'down-left': 'down-right', 'down-right': 'down-left',
+         'up-left': 'up-right', 'up-right': 'up-left'}
 
 # ---------------------------------------------------------------- ficha -----
 # {"format": "spritevpg", "version": "1.0", "name": "Caballero azul",
 #  "kind": "character", "view": "side", "facing": "right",        (opcionales)
+#  "mirror": "left",            (opcional, 1.1: volteada sirve para ese lado)
 #  "description": "Caballero con armadura azul…",                 (opcional)
 #  "agents": {"implement": ["Voltear para la izquierda…"],         (opcional)
 #             "extend": ["Contorno oscuro de 1 px…"]},
@@ -118,6 +123,9 @@ DIRS = ('down', 'up', 'left', 'right', 'down-left', 'down-right', 'up-left', 'up
 #  "frame": {"w": 32, "h": 32}, "grid": {"columns": 6, "rows": 3},
 #  "rows": [{"name": "idle", "frames": 2, "ms": [400, 400], "loop": "loop"}, ...]}
 # Una fila sin "ms" son imágenes sueltas (no es una animación).
+# 1.1: una fila puede llevar "facing" (manda sobre el de la hoja) y "mirror"
+# (una dirección, o "none" si esa fila no se voltea aunque la hoja sí). Una
+# fila con "facing" propio no hereda el "mirror" de la hoja.
 
 def wrap(chunks, width, indent=2):
     """Parte un rótulo en filas de texto; las de continuación van sangradas."""
@@ -183,7 +191,7 @@ def sheet_lines(card, width):
 
 def subject_lines(card, width):
     pairs = [(key.upper() if key != 'description' else 'DESC', card[key])
-             for key in ('kind', 'view', 'facing', 'description') if card.get(key)]
+             for key in ('kind', 'view', 'facing', 'mirror', 'description') if card.get(key)]
     return keyed(pairs, width) if pairs else []
 
 AGENT_KEYS = ('implement', 'extend', 'note')
@@ -208,6 +216,9 @@ def row_chunks(row):
     if ms:
         out.append('MS/FRAME: ' + (str(ms[0]) if len(set(ms)) == 1 else ' '.join(map(str, ms))))
     out.append('PLAY: ' + (norm(row['loop']) if ms else 'STILL'))
+    for key in ('facing', 'mirror'):          # 1.1: solo si la fila los cambia
+        if row.get(key):
+            out.append(f'{key.upper()}: {norm(row[key])}')
     return out
 
 def fold(lines, width):
@@ -397,7 +408,7 @@ def read_card(path):
     g = sh['GRID'].split()
     cols, nrows = int(g[0]), int(g[3])
     card = {'format': FORMAT, 'version': row_text(grid[-2], True).split()[1], 'name': sh['NAME']}
-    for key in ('KIND', 'VIEW', 'FACING'):
+    for key in ('KIND', 'VIEW', 'FACING', 'MIRROR'):
         if key in su:
             card[key.lower()] = su[key].lower()
     if 'DESC' in su:
@@ -436,6 +447,9 @@ def read_card(path):
             ms = [int(x) for x in value('MS/FRAME').split()]
             row['ms'] = ms * row['frames'] if len(ms) == 1 else ms
             row['loop'] = value('PLAY').lower()
+        for key in ('FACING', 'MIRROR'):
+            if value(key):
+                row[key.lower()] = value(key).lower()
         card['rows'].append(row)
     return card, k
 
@@ -444,7 +458,7 @@ def complete(card, sheet):
     fw, fh = card['frame']['w'], card['frame']['h']
     cols, nrows = sheet.width // fw, len(card['rows'])
     out = {'format': FORMAT, 'version': VERSION, 'name': card['name'],
-           **{k: card[k] for k in ('kind', 'view', 'facing', 'description', 'agents') if card.get(k)},
+           **{k: card[k] for k in ('kind', 'view', 'facing', 'mirror', 'description', 'agents') if card.get(k)},
            'frame': {'w': fw, 'h': fh}, 'grid': {'columns': cols, 'rows': nrows}, 'rows': []}
     # "body": "auto" mide el primer frame de la fila de referencia (la que se
     # llama "idle"; si no la hay, la primera); "pivot": "auto" es el centro de
@@ -471,6 +485,9 @@ def complete(card, sheet):
             ms = row['ms'] if isinstance(row['ms'], list) else [row['ms']]
             new['ms'] = ms * n if len(ms) == 1 else ms
             new['loop'] = row.get('loop', 'loop')
+        for key in ('facing', 'mirror'):
+            if row.get(key):
+                new[key] = row[key].lower()
         out['rows'].append(new)
     return out
 
@@ -525,6 +542,15 @@ def validate(card):
     for key, known in (('kind', KINDS), ('view', VIEWS), ('facing', DIRS)):
         if card.get(key) and card[key] not in known:
             err.append(f'{key} no válido: {card[key]} (valen: {", ".join(known)})')
+    def check_mirror(where, facing, mirror, allow_none=False):
+        if not mirror or (allow_none and mirror == 'none'):
+            return
+        if mirror not in DIRS:
+            err.append(f'{where}mirror no válido: {mirror}')
+        elif facing and HFLIP.get(facing) != mirror:
+            err.append(f'{where}mirror debe ser la dirección volteada de facing '
+                       f'({facing} -> {HFLIP.get(facing, "no se voltea")})')
+    check_mirror('', card.get('facing'), card.get('mirror'))
     fw, fh = card.get('frame', {}).get('w', 0), card.get('frame', {}).get('h', 0)
     b, pv = card.get('body'), card.get('pivot')
     if b and not (b['w'] > 0 and b['h'] > 0 and 0 <= b['x'] and 0 <= b['y']
@@ -543,6 +569,9 @@ def validate(card):
         if n in names:
             err.append(f'fila {r}: nombre repetido ({n})')
         names.add(n)
+        if row.get('facing') and row['facing'] not in DIRS:
+            err.append(f'fila {r}: facing no válido: {row["facing"]}')
+        check_mirror(f'fila {r}: ', row.get('facing') or card.get('facing'), row.get('mirror'), True)
         if not 1 <= row.get('frames', 0) <= card['grid']['columns']:
             err.append(f'fila {r}: frames fuera de la rejilla')
         if 'ms' in row:
@@ -555,6 +584,16 @@ def validate(card):
 def summary(card):
     fw, fh = card['frame']['w'], card['frame']['h']
     what = ', '.join(f'{k}: {card[k]}' for k in ('kind', 'view', 'facing') if card.get(k))
+    if card.get('mirror'):
+        what += f' (volteada en horizontal: {card["mirror"]})'
+    def turn(row):
+        f, m = row.get('facing'), row.get('mirror')
+        out = (f', mira a {f}' if f else '')
+        if m == 'none':
+            out += ', no se voltea'
+        elif m:
+            out += f', volteada: {m}'
+        return out
     out = [f'{card["name"]} · {FORMAT} {card.get("version")}'] + ([what] if what else []) + \
         ([card['description']] if card.get('description') else []) + [
         f'Frames de {fw}x{fh} en {card["grid"]["columns"]}x{card["grid"]["rows"]}, desde 0,0. '
@@ -563,9 +602,9 @@ def summary(card):
         if row.get('ms'):
             ms = f'{row["ms"][0]} ms cada uno' if len(set(row['ms'])) == 1 else ', '.join(map(str, row['ms'])) + ' ms'
             mode = 'en bucle' if row['loop'] == 'loop' else 'una vez'
-            out.append(f'- fila {r}: {row["name"]}, {row["frames"]} frames, {ms}, {mode}')
+            out.append(f'- fila {r}: {row["name"]}, {row["frames"]} frames, {ms}, {mode}{turn(row)}')
         else:
-            out.append(f'- fila {r}: {row["name"]}, {row["frames"]} imágenes sueltas')
+            out.append(f'- fila {r}: {row["name"]}, {row["frames"]} imágenes sueltas{turn(row)}')
     if card.get('body'):
         b = card['body']
         out.append(f'El dibujo quieto ocupa {b["w"]}x{b["h"]} px dentro del frame, desde {b["x"]},{b["y"]}.')

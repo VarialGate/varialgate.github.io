@@ -3,6 +3,7 @@
   "kind": "character",
   "view": "side",
   "facing": "right",
+  "mirror": "left",
   "description": "Qué es, en una frase breve",
   "frame": {
     "w": 32,
@@ -24,7 +25,7 @@
   ],
   "agents": {
     "implement": [
-      "Lo que debe hacer el código que use la hoja: volteos, efectos que añade la aplicación, en qué frame pasa algo."
+      "Lo que debe hacer el código que use la hoja: efectos que añade la aplicación, en qué frame pasa algo (contando desde 1)."
     ],
     "extend": [
       "Estilo: contorno, tonos por color, dirección de la luz.",
