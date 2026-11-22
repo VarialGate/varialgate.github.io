@@ -1,5 +1,9 @@
 {
   "name": "Nombre de la hoja",
+  "kind": "character",
+  "view": "side",
+  "facing": "right",
+  "description": "Qué es, en una frase breve",
   "frame": {
     "w": 32,
     "h": 32

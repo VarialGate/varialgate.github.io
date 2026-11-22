@@ -28,13 +28,14 @@
     <h1 class="pixel-title">SPRITEVPG</h1>
     <p class="lead">Una hoja de sprites que dice ella misma cómo se corta y cómo se anima: el <strong>sprite
     pattern</strong>. Los frames van limpios desde la esquina de arriba a la izquierda, una animación por fila; al
-    lado de cada fila, su nombre y su ritmo; y abajo, el tamaño de frame y el enlace a la especificación.</p>
+    lado de cada fila, su nombre y su ritmo; y abajo, el tamaño de frame, qué es (tipo, vista, hacia dónde mira) y
+    el enlace a la especificación.</p>
     <p>Solo lo imprescindible, dibujado en la propia imagen: lo lee una persona, lo lee una IA con solo mirarlo y lo
     lee un programa de forma exacta.</p>
     <p><a href="spec.html"><strong>Leer la especificación →</strong></a></p>
   </div>
   <figure>
-    <img class="px pattern" src="example/caballero.spritevpg@4x.png" width="1184" height="476" alt="Sprite pattern de ejemplo: tres filas de frames de un caballero azul; a la derecha, IDLE 400 MS LOOP, WALK 110 MS LOOP y ATTACK 80 120 90 160 MS ONCE; debajo, el nombre, FRAME 32X32, GRID 6X3 y la barra con el enlace a la especificación.">
+    <img class="px pattern" src="example/caballero.spritevpg@4x.png" width="1280" height="544" alt="Sprite pattern de ejemplo: tres filas de frames de un caballero azul; a la derecha, IDLE 400 MS LOOP, WALK 110 MS LOOP y ATTACK 80 120 90 160 MS ONCE; debajo, el nombre, FRAME 32X32, GRID 6X3, el tipo, la vista, hacia dónde mira, una descripción y la barra con el enlace a la especificación.">
     <figcaption>El sprite pattern de ejemplo, ampliado ×4.</figcaption>
   </figure>
 </section>
@@ -55,9 +56,9 @@
   </div>
   <div class="card">
     <span class="tag">TTF</span>
-    <h3>Fuente SpriteVPG 3×5</h3>
-    <p>La fuente de píxeles de los márgenes: mayúsculas, cifras, tildes y signos en celdas de 4×7, sin suavizado. Licencia SIL OFL 1.1.</p>
-    <div class="links"><a href="font/spritevpg-3x5.ttf" download>Descargar</a><a href="spec.html#fuente">Detalles</a></div>
+    <h3>Fuente SpriteVPG 4×6</h3>
+    <p>La fuente de píxeles de los márgenes: mayúsculas, cifras, tildes y signos en celdas de 5×8, sin suavizado. Licencia SIL OFL 1.1.</p>
+    <div class="links"><a href="font/spritevpg-4x6.ttf" download>Descargar</a><a href="spec.html#fuente">Detalles</a></div>
   </div>
   <div class="card">
     <span class="tag">IA</span>
@@ -90,10 +91,10 @@
     </ol></div></li>
   <li><span class="num">5</span><div><a href="spec.html#rotulos">Rótulos de fila</a>
     <p>Nombre, milisegundos por frame y bucle: <code>WALK 110 MS LOOP</code>.</p></div></li>
-  <li><span class="num">6</span><div><a href="spec.html#pie">El pie</a>
-    <p>Nombre, tamaño de frame y rejilla, y la barra con el formato y el enlace.</p></div></li>
+  <li><span class="num">6</span><div><a href="spec.html#pie">El pie: qué es</a>
+    <p>Nombre, tamaño de frame y rejilla; tipo, vista, dirección y descripción; y la barra con el formato y el enlace.</p></div></li>
   <li><span class="num">7</span><div><a href="spec.html#leer">Leer un sprite pattern</a>
-    <p>Escala, geometría, rótulos y frames, en cuatro pasos.</p></div></li>
+    <p>Escala, pie, rótulos y frames, en cuatro pasos.</p></div></li>
   <li><span class="num">8</span><div><a href="spec.html#ficha">La ficha en JSON</a>
     <p>Lo mismo que dice la imagen, para programas.</p></div></li>
   <li><span class="num">9</span><div><a href="spec.html#motores">Importar en un motor</a>

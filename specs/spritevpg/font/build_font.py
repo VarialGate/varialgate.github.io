@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Construye font/spritevpg-3x5.ttf desde la tabla de glifos de spritevpg.py
+"""Construye font/spritevpg-4x6.ttf desde la tabla de glifos de spritevpg.py
 (una sola fuente de verdad: el texto que dibuja la herramienta y el de la
 fuente son los mismos píxeles).
 
-Celda de 4x7 píxeles: fila 0 para la tilde, filas 1-5 para el glifo de 3x5,
-fila 6 y columna 3 libres. Cada píxel mide 100 unidades y el em son 700: a
-7 px por em, un píxel de la fuente es un píxel de pantalla; usar múltiplos de
-7 px (14, 21, 28…) y sin suavizado.
+Celda de 5x8 píxeles: fila 0 para la tilde, filas 1-6 para el glifo de 4x6,
+fila 7 y columna 4 libres. Cada píxel mide 100 unidades y el em son 800: a
+8 px por em, un píxel de la fuente es un píxel de pantalla; usar múltiplos de
+8 px (16, 24, 32…) y sin suavizado.
 
   python3 font/build_font.py   (necesita fontTools)
 """
@@ -16,9 +16,9 @@ from fontTools.pens.ttGlyphPen import TTGlyphPen
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, '..', 'skill', 'spritevpg', 'scripts'))
-from spritevpg import CHARS, CW, cell_rows  # noqa: E402
+from spritevpg import CHARS, CW, CH, GW, GH, cell_rows  # noqa: E402
 
-PX, ROWS = 100, 6
+PX, ROWS = 100, GH
 
 def name(ch):
     return 'space' if ch == ' ' else f'uni{ord(ch):04X}'
@@ -27,10 +27,10 @@ def outlines(rows):
     """Contornos de la unión de los píxeles: aristas entre píxel lleno y vacío,
     con lo lleno a la derecha (horario por fuera, antihorario en los huecos,
     como pide TrueType), encadenadas."""
-    on = lambda c, r: 0 <= c < 3 and 0 <= r < ROWS and rows[r][c] == '1'
+    on = lambda c, r: 0 <= c < GW and 0 <= r < ROWS and rows[r][c] == '1'
     edges = {}
     for r in range(ROWS):
-        for c in range(3):
+        for c in range(GW):
             if not on(c, r):
                 continue
             x0, x1, y1 = c, c + 1, ROWS - r
@@ -67,7 +67,7 @@ def glyph(rows):
     return pen.glyph()
 
 order = ['.notdef'] + [name(ch) for ch in CHARS]
-fb = FontBuilder(700, isTTF=True)
+fb = FontBuilder(CH * PX, isTTF=True)
 fb.setupGlyphOrder(order)
 cmap = {}
 for ch in CHARS:
@@ -80,29 +80,29 @@ for code, ch in {0x2019: "'", 0x2013: '-', 0x2014: '-', 0xD7: 'X', 0x201C: '"', 
     cmap.setdefault(code, name(ch))
 fb.setupCharacterMap(cmap)
 box = TTGlyphPen(None)
-box.moveTo((0, 0)); box.lineTo((0, 500)); box.lineTo((300, 500)); box.lineTo((300, 0)); box.closePath()
+box.moveTo((0, 0)); box.lineTo((0, 600)); box.lineTo((400, 600)); box.lineTo((400, 0)); box.closePath()
 glyphs = {'.notdef': box.glyph()}
 glyphs.update({name(ch): glyph(cell_rows(ch)) for ch in CHARS})
 fb.setupGlyf(glyphs)
 fb.setupHorizontalMetrics({g: (CW * PX, 0) for g in order})
-fb.setupHorizontalHeader(ascent=600, descent=-100)
-fb.setupOS2(sTypoAscender=600, sTypoDescender=-100, sTypoLineGap=0,
-            usWinAscent=600, usWinDescent=100, achVendID='VRGT',
+fb.setupHorizontalHeader(ascent=GH * PX, descent=-100)
+fb.setupOS2(sTypoAscender=GH * PX, sTypoDescender=-100, sTypoLineGap=0,
+            usWinAscent=GH * PX, usWinDescent=100, achVendID='VRGT',
             panose={'bFamilyType': 2, 'bSerifStyle': 0, 'bWeight': 5, 'bProportion': 9,
                     'bContrast': 0, 'bStrokeVariation': 0, 'bArmStyle': 0,
                     'bLetterForm': 0, 'bMidline': 0, 'bXHeight': 0})
 fb.setupPost(isFixedPitch=1)
 fb.setupNameTable({
     'copyright': 'Copyright 2026 Varial Gate',
-    'familyName': 'SpriteVPG 3x5',
+    'familyName': 'SpriteVPG 4x6',
     'styleName': 'Regular',
-    'uniqueFontIdentifier': 'VarialGate:SpriteVPG3x5:1.0',
-    'fullName': 'SpriteVPG 3x5 Regular',
-    'psName': 'SpriteVPG3x5-Regular',
+    'uniqueFontIdentifier': 'VarialGate:SpriteVPG4x6:1.0',
+    'fullName': 'SpriteVPG 4x6 Regular',
+    'psName': 'SpriteVPG4x6-Regular',
     'version': 'Version 1.000',
     'licenseDescription': 'This Font Software is licensed under the SIL Open Font License, Version 1.1.',
     'licenseInfoURL': 'https://openfontlicense.org',
 })
-out = os.path.join(HERE, 'spritevpg-3x5.ttf')
+out = os.path.join(HERE, 'spritevpg-4x6.ttf')
 fb.save(out)
 print(out, len(CHARS), 'glifos,', len(cmap), 'caracteres')

@@ -2,6 +2,10 @@
   "format": "spritevpg",
   "version": "1.0",
   "name": "CABALLERO AZUL",
+  "kind": "character",
+  "view": "side",
+  "facing": "right",
+  "description": "CABALLERO CON ARMADURA AZUL, ESPADA Y ESCUDO",
   "frame": {
     "w": 32,
     "h": 32

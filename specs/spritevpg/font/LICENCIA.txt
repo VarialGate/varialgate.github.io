@@ -1,4 +1,4 @@
-SpriteVPG 3x5
+SpriteVPG 4x6
 Copyright 2026 Varial Gate
 
 Esta fuente se publica con la licencia SIL Open Font License, versión 1.1

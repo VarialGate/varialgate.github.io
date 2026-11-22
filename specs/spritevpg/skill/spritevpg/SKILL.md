@@ -1,6 +1,6 @@
 ---
 name: spritevpg
-description: Entender, recortar, validar y generar sprite patterns SpriteVPG (Sprite Varial Pixel Gen) — hojas de sprites PNG con los frames limpios desde la esquina de arriba a la izquierda, una animación por fila, un rótulo a la derecha de cada fila (por ejemplo «WALK 110 MS LOOP») y, abajo, el nombre, «FRAME 32X32 · GRID 6X3» y una barra «SPRITEVPG 1.0 · HTTPS://VARIALGATE.GITHUB.IO/SPECS/SPRITEVPG/». Úsalo cuando aparezca un fichero *.spritevpg.png o una hoja de sprites con ese aspecto, o cuando se pida crear, leer, importar en un motor, recortar o animar una hoja de sprites en este formato.
+description: Entender, recortar, validar y generar sprite patterns SpriteVPG (Sprite Varial Pixel Gen) — hojas de sprites PNG con los frames limpios desde la esquina de arriba a la izquierda, una animación por fila, un rótulo a la derecha de cada fila (por ejemplo «WALK 110 MS LOOP») y, abajo, el nombre, «FRAME 32X32 · GRID 6X3», qué es («KIND CHARACTER · VIEW SIDE · FACING RIGHT»), una descripción y una barra «SPRITEVPG 1.0 · HTTPS://VARIALGATE.GITHUB.IO/SPECS/SPRITEVPG/». Úsalo cuando aparezca un fichero *.spritevpg.png o una hoja de sprites con ese aspecto, o cuando se pida crear, leer, importar en un motor, recortar o animar una hoja de sprites en este formato.
 ---
 
 # SpriteVPG: sprite patterns
@@ -15,9 +15,15 @@ Un **sprite pattern** es una hoja de sprites PNG que dice ella misma cómo se co
   - `ATTACK 80 120 90 160 MS ONCE`: una duración por frame, una sola vez.
   - `ITEMS` (solo el nombre): imágenes sueltas, no una animación.
   - Una línea sangrada continúa el rótulo de arriba. El número de frames son las celdas con dibujo de la fila.
-- **Pie**: `NOMBRE · FRAME fwXfh · GRID columnasXfilas` y, debajo, la barra en negativo
-  `SPRITEVPG 1.0 · HTTPS://VARIALGATE.GITHUB.IO/SPECS/SPRITEVPG/`.
-- Texto en mayúsculas con la fuente SpriteVPG 3×5, en celdas de 4×7 px, tinta `#1F2A44` sobre papel `#F3EEDD`.
+- **Pie**, de arriba abajo:
+  - `NOMBRE · FRAME fwXfh · GRID columnasXfilas` (obligatoria);
+  - `KIND tipo · VIEW vista · FACING dirección` (opcional): qué es lo que se importa.
+    `KIND`: character, creature, item, prop, building, effect, tile, ui.
+    `VIEW`: side, front, three-quarter, oblique, top-down, isometric.
+    `FACING`: right, left, up, down o una diagonal;
+  - `DESC frase breve` (opcional);
+  - la barra en negativo `SPRITEVPG 1.0 · HTTPS://VARIALGATE.GITHUB.IO/SPECS/SPRITEVPG/`.
+- Texto en mayúsculas con la fuente SpriteVPG 4×6, en celdas de 5×8 px, tinta `#1F2A44` sobre papel `#F3EEDD`.
 
 Especificación: https://varialgate.github.io/specs/spritevpg/spec.html
 
@@ -38,9 +44,9 @@ JPEG ni con imágenes reescaladas con suavizado.
 
 ## Entender un sprite pattern
 
-- Con herramienta: `info`. Di el tamaño de frame, la rejilla y, por fila, la animación, sus frames, su duración y si
+- Con herramienta: `info`. Di qué es (tipo, vista, hacia dónde mira, descripción), el tamaño de frame, la rejilla y, por fila, la animación, sus frames, su duración y si
   va en bucle.
-- Solo mirando la imagen: lee el pie (`FRAME`, `GRID`) y los rótulos de arriba abajo; el rótulo número `r` es el de
+- Solo mirando la imagen: lee el pie (`FRAME`, `GRID`, `KIND`, `VIEW`, `FACING`, `DESC`) y los rótulos de arriba abajo; el rótulo número `r` es el de
   la fila `r`. Si la letra se ve pequeña o borrosa, pide la copia ampliada (`@4x`). No inventes lo que no puedas leer.
 
 ## Recortar e importar
@@ -60,14 +66,17 @@ JPEG ni con imágenes reescaladas con suavizado.
 2. **Ficha** (parte de `templates/card.template.json`):
 
    ```json
-   { "name": "Caballero azul", "frame": { "w": 32, "h": 32 },
+   { "name": "Caballero azul", "kind": "character", "view": "side", "facing": "right",
+     "description": "Caballero con armadura azul, espada y escudo",
+     "frame": { "w": 32, "h": 32 },
      "rows": [ { "name": "idle", "ms": 400, "loop": "loop" },
                { "name": "attack", "ms": [80, 120, 90, 160], "loop": "once" },
                { "name": "items" } ] }
    ```
 
    Una entrada por fila, en orden. `ms`: un número (todos los frames igual) o una lista (uno por frame). Sin `ms`,
-   imágenes sueltas. Nombres de fila en minúsculas: `[a-z0-9_-]`.
+   imágenes sueltas. Nombres de fila en minúsculas: `[a-z0-9_-]`. `kind`, `view`, `facing` y `description` son
+   opcionales, pero ponlos siempre que los sepas: es lo que le dice a otra IA qué está importando.
 3. `make hoja.png ficha.json -o <nombre>.spritevpg.png --preview 4`. Enseña la copia `@4x`.
 
 Para añadir una animación a un patrón: `read`, añade una fila a la hoja limpia y una entrada a `rows`, y `make`.

@@ -38,7 +38,7 @@ habitual de las especificaciones (RFC 2119).</p>
   <a class="sub" href="#fuente">4.2 Fuente</a>
   <a class="sub" href="#colores">4.3 Colores</a>
   <a href="#rotulos">5. Rótulos de fila</a>
-  <a href="#pie">6. El pie</a>
+  <a href="#pie">6. El pie: qué es</a>
   <a href="#leer">7. Leer un sprite pattern</a>
   <a href="#ficha">8. La ficha en JSON</a>
   <a href="#motores">9. Importar en un motor</a>
@@ -58,16 +58,17 @@ ve cuando mira la imagen.</p>
   <li>a la derecha de cada fila, su <strong>rótulo</strong>: el nombre, la duración de los frames y si va en
     bucle;</li>
   <li>abajo, el <strong>nombre</strong> de la hoja, el <strong>tamaño de frame</strong> y la
-    <strong>rejilla</strong>, y una barra con el formato y el <strong>enlace a esta especificación</strong>.</li>
+    <strong>rejilla</strong>; <strong>qué es</strong>, en esquema (tipo, vista, hacia dónde mira y una descripción
+    breve); y una barra con el formato y el <strong>enlace a esta especificación</strong>.</li>
 </ul>
-<p>Con eso basta para cortarla y animarla sin preguntar nada. Lo lee una persona, lo lee una IA mirando la imagen, y lo
+<p>Con eso basta para cortarla y animarla sin preguntar nada, y para que quien la importa sepa qué tiene delante. Lo lee una persona, lo lee una IA mirando la imagen, y lo
 lee un programa de forma exacta, porque el texto va en una rejilla de caracteres fija.</p>
 
 <h2 id="vista"><span class="n">2</span>Un vistazo</h2>
 <figure class="sheet">
-  <img class="px pattern" src="example/caballero.spritevpg@4x.png" width="888" alt="Sprite pattern de ejemplo: tres filas de frames de un caballero azul (reposo, andar y ataque); a la derecha de cada fila, IDLE 400 MS LOOP, WALK 110 MS LOOP y ATTACK 80 120 90 160 MS ONCE; debajo, CABALLERO AZUL · FRAME 32X32 · GRID 6X3 y la barra SPRITEVPG 1.0 con el enlace a la especificación." loading="lazy">
+  <img class="px pattern" src="example/caballero.spritevpg@4x.png" width="960" alt="Sprite pattern de ejemplo: tres filas de frames de un caballero azul (reposo, andar y ataque); a la derecha de cada fila, IDLE 400 MS LOOP, WALK 110 MS LOOP y ATTACK 80 120 90 160 MS ONCE; debajo, CABALLERO AZUL · FRAME 32X32 · GRID 6X3, KIND CHARACTER · VIEW SIDE · FACING RIGHT, una descripción y la barra SPRITEVPG 1.0 con el enlace a la especificación." loading="lazy">
   <figcaption>El ejemplo, ampliado ×4 (el damero lo pone esta página bajo lo transparente). Original:
-  <a href="example/caballero.spritevpg.png">caballero.spritevpg.png</a> (296×119).</figcaption>
+  <a href="example/caballero.spritevpg.png">caballero.spritevpg.png</a> (320×136).</figcaption>
 </figure>
 
 <h2 id="frames"><span class="n">3</span>La zona de frames</h2>
@@ -94,22 +95,22 @@ frames: ni texto ni marcas.</p>
 
 <h3 id="rejilla"><span class="n">4.1</span>La rejilla de caracteres</h3>
 <div class="must">
-<p>Toda la imagen se divide en <strong>celdas de texto de 4×7 px</strong> con origen en <code>(0, 0)</code>. Todo
-carácter <span class="kw">DEBE</span> caer exactamente en una celda. El ancho de la imagen es múltiplo de 4 y el alto,
-múltiplo de 7.</p>
+<p>Toda la imagen se divide en <strong>celdas de texto de 5×8 px</strong> con origen en <code>(0, 0)</code>. Todo
+carácter <span class="kw">DEBE</span> caer exactamente en una celda. El ancho de la imagen es múltiplo de 5 y el alto,
+múltiplo de 8.</p>
 </div>
-<p>Dentro de la celda, la fila 0 es para la tilde, las filas 1 a 5 y las columnas 0 a 2 para el glifo de 3×5, y la
-fila 6 y la columna 3 quedan libres. Un carácter va en tinta sobre papel o, en la barra final, <strong>en
+<p>Dentro de la celda, la fila 0 es para la tilde, las filas 1 a 6 y las columnas 0 a 3 para el glifo de 4×6, y la
+fila 7 y la columna 4 quedan libres. Un carácter va en tinta sobre papel o, en la barra final, <strong>en
 negativo</strong> (papel sobre tinta, con la celda entera rellena). Así el texto se lee sin ambigüedad: se mira cada
 celda y se compara con la tabla de la fuente.</p>
 
-<h3 id="fuente"><span class="n">4.2</span>La fuente: SpriteVPG 3×5</h3>
-<p><a href="font/spritevpg-3x5.ttf">SpriteVPG 3×5</a>: mayúsculas, cifras, vocales con tilde, Ü, Ñ y los signos
+<h3 id="fuente"><span class="n">4.2</span>La fuente: SpriteVPG 4×6</h3>
+<p><a href="font/spritevpg-4x6.ttf">SpriteVPG 4×6</a>: mayúsculas, cifras, vocales con tilde, Ü, Ñ y los signos
 <code>. , : ; - + / ( ) [ ] = # &lt; &gt; * % _ " ' ! ? ¿ ¡ &amp; ·</code>, sin suavizado. El texto se escribe siempre en
 mayúsculas.</p>
 <p class="paper">ABCDEFGHIJKLMNÑOPQRSTUVWXYZ ÁÉÍÓÚÜ
 0123456789 .,:;-+/()[]=#&lt;&gt;*%_"'!?¿¡&amp;·</p>
-<p class="muted">En la TTF, a 7 px por em (o múltiplos: 14, 21, 28…) un píxel de la fuente es un píxel de pantalla.
+<p class="muted">En la TTF, a 8 px por em (o múltiplos: 16, 24, 32…) un píxel de la fuente es un píxel de pantalla.
 Licencia SIL Open Font License 1.1. La tabla de glifos, píxel a píxel, está en
 <a href="skill/spritevpg/scripts/spritevpg.py">spritevpg.py</a>.</p>
 
@@ -144,13 +145,29 @@ ITEMS</div>
     otro. Lo que cuenta es el orden.</li>
 </ul>
 
-<h2 id="pie"><span class="n">6</span>El pie</h2>
-<p>Las dos últimas filas de texto de la imagen:</p>
+<h2 id="pie"><span class="n">6</span>El pie: qué es</h2>
+<p>Las últimas filas de texto de la imagen, desde la segunda celda:</p>
 <div class="paper">CABALLERO AZUL · FRAME 32X32 · GRID 6X3
+KIND CHARACTER · VIEW SIDE · FACING RIGHT
+DESC CABALLERO CON ARMADURA AZUL, ESPADA Y ESCUDO
 SPRITEVPG 1.0 · HTTPS://VARIALGATE.GITHUB.IO/SPECS/SPRITEVPG/</div>
 <ol>
-  <li><strong>Nombre, tamaño de frame y rejilla</strong> (columnas × filas), separados por <code>·</code>, desde la
-    segunda celda. Con esta línea se corta la hoja.</li>
+  <li><strong>Nombre, tamaño de frame y rejilla</strong> (columnas × filas), separados por <code>·</code>. Con esta
+    línea se corta la hoja. Obligatoria.</li>
+  <li><strong>Qué es</strong>, en esquema, para que quien la importa (una persona o una IA) sepa qué tiene delante.
+    Opcional, y cada parte también:
+    <ul>
+      <li><code>KIND</code>: <code>CHARACTER</code> (personaje), <code>CREATURE</code> (criatura),
+        <code>ITEM</code> (objeto que se coge o se usa), <code>PROP</code> (decorado), <code>BUILDING</code>
+        (construcción), <code>EFFECT</code> (efecto), <code>TILE</code> (casilla) o <code>UI</code> (interfaz);</li>
+      <li><code>VIEW</code>: <code>SIDE</code> (lateral), <code>FRONT</code> (frontal),
+        <code>THREE-QUARTER</code> (3/4 cenital), <code>OBLIQUE</code> (cenital oblicua), <code>TOP-DOWN</code>
+        (cenital) o <code>ISOMETRIC</code> (isométrica);</li>
+      <li><code>FACING</code>: hacia dónde mira el dibujo: <code>RIGHT</code>, <code>LEFT</code>, <code>UP</code>,
+        <code>DOWN</code> o una diagonal (<code>DOWN-RIGHT</code>…).</li>
+    </ul></li>
+  <li><strong>Descripción</strong>: <code>DESC</code> y una frase breve, en el idioma de quien la escribe. Opcional.
+    Si no cabe en una línea, sigue en la de abajo sangrada dos celdas.</li>
   <li><strong>La barra final</strong>, en negativo y a todo el ancho: <code>SPRITEVPG</code>, la versión y el enlace a
     esta especificación. Identifica el formato, dice a quien no lo conozca dónde leer cómo interpretarlo y sirve
     para calcular la escala de una copia ampliada.</li>
@@ -158,19 +175,20 @@ SPRITEVPG 1.0 · HTTPS://VARIALGATE.GITHUB.IO/SPECS/SPRITEVPG/</div>
 
 <h2 id="leer"><span class="n">7</span>Leer un sprite pattern</h2>
 <ol>
-  <li><strong>Escala.</strong> Para <code>k = 1, 2, 3…</code>: si el ancho es múltiplo de <code>4k</code> y el alto de
-    <code>7k</code>, leer la última fila de celdas. Si es una barra en negativo que empieza por
+  <li><strong>Escala.</strong> Para <code>k = 1, 2, 3…</code>: si el ancho es múltiplo de <code>5k</code> y el alto de
+    <code>8k</code>, leer la última fila de celdas. Si es una barra en negativo que empieza por
     <code>SPRITEVPG</code>, esa es la escala.</li>
-  <li><strong>Geometría.</strong> La fila de encima: nombre, <code>FRAME fwXfh</code> y
-    <code>GRID columnasXfilas</code>.</li>
-  <li><strong>Rótulos.</strong> Leer el texto a la derecha de la zona de frames, de arriba abajo, uniendo a la
+  <li><strong>Pie.</strong> Subiendo desde la barra, la línea con <code>FRAME fwXfh</code> y
+    <code>GRID columnasXfilas</code> da el nombre y la geometría; las que hay entre ella y la barra son
+    <code>KIND · VIEW · FACING</code> y <code>DESC</code>.</li>
+  <li><strong>Rótulos.</strong> Leer el texto a la derecha de la zona de frames, por encima del pie, de arriba abajo, uniendo a la
     anterior cada línea que empieza con espacio. El rótulo número <code>r</code> es el de la fila <code>r</code>.</li>
   <li><strong>Frames.</strong> Recortar <code>(0, 0, columnas·fw, filas·fh)</code> (reduciendo antes a escala nativa
     con vecino más próximo si <code>k &gt; 1</code>): esa es la hoja limpia. En cada fila, los frames son las celdas
     con dibujo.</li>
 </ol>
 <p>Una IA que solo mira la imagen hace lo mismo leyendo el texto: el pie para cortar y los rótulos para animar. Mejor
-con la copia ampliada (×4): a tamaño original la letra mide 5 px de alto.</p>
+con la copia ampliada (×4): a tamaño original la letra mide 6 px de alto.</p>
 <p>La herramienta de referencia lo hace todo (solo necesita Pillow):</p>
 <pre><code>python3 spritevpg.py make hoja.png ficha.json -o nombre.spritevpg.png --preview 4
 python3 spritevpg.py read nombre.spritevpg.png -o salida/ --gifs
@@ -178,11 +196,14 @@ python3 spritevpg.py info nombre.spritevpg.png</code></pre>
 
 <h2 id="ficha"><span class="n">8</span>La ficha en JSON</h2>
 <p>Lo mismo que dice la imagen, para programas. Es lo que devuelve <code>read</code>; para <code>make</code> basta con
-<code>name</code>, <code>frame</code> y, por fila, <code>name</code>, <code>ms</code> y <code>loop</code>. Esquema:
+<code>name</code>, <code>frame</code> y, por fila, <code>name</code>, <code>ms</code> y <code>loop</code>;
+<code>kind</code>, <code>view</code>, <code>facing</code> y <code>description</code> son opcionales. Esquema:
 <a href="schema/spritevpg-1.schema.json">spritevpg-1.schema.json</a>.</p>
 <pre><code>{
   "format": "spritevpg", "version": "1.0",
   "name": "CABALLERO AZUL",
+  "kind": "character", "view": "side", "facing": "right",
+  "description": "CABALLERO CON ARMADURA AZUL, ESPADA Y ESCUDO",
   "frame": { "w": 32, "h": 32 },
   "grid": { "columns": 6, "rows": 3 },
   "rows": [
@@ -192,7 +213,7 @@ python3 spritevpg.py info nombre.spritevpg.png</code></pre>
   ]
 }</code></pre>
 <p><code>rows[r]</code> es la fila <code>r</code>. Sin <code>ms</code>, la fila son imágenes sueltas. El nombre de la hoja
-se lee de la imagen en mayúsculas.</p>
+y la descripción se leen de la imagen en mayúsculas.</p>
 
 <h2 id="motores"><span class="n">9</span>Importar en un motor</h2>
 <div class="table-scroll"><table>
@@ -218,7 +239,7 @@ versión menor solo añadirá cosas opcionales: un lector 1.0 seguirá leyendo e
 <tr><td>Sprite pattern de ejemplo (nativo y ×4)</td><td><a href="example/caballero.spritevpg.png">caballero.spritevpg.png</a> · <a href="example/caballero.spritevpg@4x.png">@4x</a></td></tr>
 <tr><td>Su hoja limpia y su ficha de entrada</td><td><a href="example/caballero.sheet.png">caballero.sheet.png</a> · <a href="example/caballero.card.json">caballero.card.json</a></td></tr>
 <tr><td>Su ficha leída de la imagen</td><td><a href="example/caballero.spritevpg.json">caballero.spritevpg.json</a></td></tr>
-<tr><td>Fuente</td><td><a href="font/spritevpg-3x5.ttf">spritevpg-3x5.ttf</a> (<a href="font/LICENCIA.txt">licencia</a>)</td></tr>
+<tr><td>Fuente</td><td><a href="font/spritevpg-4x6.ttf">spritevpg-4x6.ttf</a> (<a href="font/LICENCIA.txt">licencia</a>)</td></tr>
 <tr><td>JSON Schema</td><td><a href="schema/spritevpg-1.schema.json">spritevpg-1.schema.json</a></td></tr>
 <tr><td>Skill de IA</td><td><a href="skill/spritevpg.zip">spritevpg.zip</a> · <a href="skill/spritevpg/SKILL.md">SKILL.md</a></td></tr>
 <tr><td>Herramienta (generar, leer, validar)</td><td><a href="skill/spritevpg/scripts/spritevpg.py">spritevpg.py</a></td></tr>

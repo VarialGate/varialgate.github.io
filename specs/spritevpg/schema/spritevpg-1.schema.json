@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://varialgate.github.io/specs/spritevpg/schema/spritevpg-1.schema.json",
   "title": "SpriteVPG 1 · ficha de un sprite pattern",
-  "description": "Lo que dice un sprite pattern SpriteVPG: nombre, tamaño de frame, rejilla y una fila por animación. Especificación: https://varialgate.github.io/specs/spritevpg/spec.html",
+  "description": "Lo que dice un sprite pattern SpriteVPG: nombre, qué es, tamaño de frame, rejilla y una fila por animación. Especificación: https://varialgate.github.io/specs/spritevpg/spec.html",
   "type": "object",
   "required": [
     "format",
@@ -23,6 +23,43 @@
     "name": {
       "type": "string",
       "minLength": 1
+    },
+    "kind": {
+      "enum": [
+        "character",
+        "creature",
+        "item",
+        "prop",
+        "building",
+        "effect",
+        "tile",
+        "ui"
+      ]
+    },
+    "view": {
+      "enum": [
+        "side",
+        "front",
+        "three-quarter",
+        "oblique",
+        "top-down",
+        "isometric"
+      ]
+    },
+    "facing": {
+      "enum": [
+        "down",
+        "up",
+        "left",
+        "right",
+        "down-left",
+        "down-right",
+        "up-left",
+        "up-right"
+      ]
+    },
+    "description": {
+      "type": "string"
     },
     "frame": {
       "type": "object",
