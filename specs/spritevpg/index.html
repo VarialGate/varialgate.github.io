@@ -27,15 +27,15 @@
     <p class="eyebrow">SPRITE VARIAL PIXEL GEN · 1.0</p>
     <h1 class="pixel-title">SPRITEVPG</h1>
     <p class="lead">Una hoja de sprites que dice ella misma cómo se corta y cómo se anima: el <strong>sprite
-    pattern</strong>. Los frames van limpios desde la esquina de arriba a la izquierda, una animación por fila; y
-    debajo, tres zonas con título: cómo se corta, qué es (tipo, vista, hacia dónde mira) y cómo se anima cada
-    fila, con el enlace a la especificación.</p>
-    <p>Solo lo imprescindible, con cada dato junto a su nombre: lo entiende una persona o una IA que no conozca el
+    pattern</strong>. Los frames van limpios desde la esquina de arriba a la izquierda, una animación por fila; al
+    lado de cada fila, cómo se anima; y debajo, cómo se corta y qué es (tipo, vista, hacia dónde mira), con el
+    enlace a la especificación.</p>
+    <p>Solo lo imprescindible, con cada dato tras su etiqueta: lo entiende una persona o una IA que no conozca el
     formato con solo mirarlo, y un programa lo lee de forma exacta.</p>
     <p><a href="spec.html"><strong>Leer la especificación →</strong></a></p>
   </div>
   <figure>
-    <img class="px pattern" src="example/caballero.spritevpg@4x.png" width="1260" height="864" alt="Sprite pattern de ejemplo: tres filas de frames de un caballero azul y, debajo, las zonas SHEET, SUBJECT y ANIMATIONS y la barra con el enlace a la especificación.">
+    <img class="px pattern" src="example/caballero.spritevpg@4x.png" width="1320" height="672" alt="Sprite pattern de ejemplo: tres filas de frames de un caballero azul, cada una con su rótulo a la derecha (nombre, FRAMES, MS/FRAME y PLAY), y debajo las zonas SHEET y SUBJECT y la barra con el enlace a la especificación.">
     <figcaption>El sprite pattern de ejemplo, ampliado ×4.</figcaption>
   </figure>
 </section>
@@ -45,7 +45,7 @@
   <div class="card">
     <span class="tag">DOC</span>
     <h3>Especificación</h3>
-    <p>La zona de frames, el texto, las zonas con título, las seis vistas, cómo leerlo y cómo importarlo en un motor.</p>
+    <p>La zona de frames, el texto, los rótulos de fila, las zonas con título, las seis vistas, cómo leerlo y cómo importarlo en un motor.</p>
     <div class="links"><a href="spec.html">Abrir</a></div>
   </div>
   <div class="card">
@@ -89,18 +89,18 @@
       <li><a href="spec.html#fuente">Fuente</a></li>
       <li><a href="spec.html#colores">Colores</a></li>
     </ol></div></li>
-  <li><span class="num">5</span><div><a href="spec.html#zonas">Las zonas</a>
-    <p>Cada dato con su nombre, una sola vez.</p>
+  <li><span class="num">5</span><div><a href="spec.html#zonas">La información</a>
+    <p>Cada dato tras su etiqueta, una sola vez.</p>
     <ol>
+      <li><a href="spec.html#z-rows">Rótulo de cada fila: cómo se anima</a></li>
       <li><a href="spec.html#z-sheet">SHEET: cómo se corta</a></li>
       <li><a href="spec.html#z-subject">SUBJECT: qué es</a></li>
-      <li><a href="spec.html#z-animations">ANIMATIONS: cómo se anima</a></li>
       <li><a href="spec.html#barra">Barra final</a></li>
     </ol></div></li>
   <li><span class="num">6</span><div><a href="spec.html#vistas">Las vistas</a>
     <p>Las seis vistas, con su dibujo y la frase para forzarlas al generar con IA.</p></div></li>
   <li><span class="num">7</span><div><a href="spec.html#leer">Leer un sprite pattern</a>
-    <p>Mirando la imagen, o con un programa: escala, texto, zonas y frames.</p></div></li>
+    <p>Mirando la imagen, o con un programa: escala, texto, zonas, rótulos y frames.</p></div></li>
   <li><span class="num">8</span><div><a href="spec.html#ficha">La ficha en JSON</a>
     <p>Lo mismo que dice la imagen, para programas.</p></div></li>
   <li><span class="num">9</span><div><a href="spec.html#motores">Importar en un motor</a>

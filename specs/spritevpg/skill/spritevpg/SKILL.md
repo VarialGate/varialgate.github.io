@@ -1,6 +1,6 @@
 ---
 name: spritevpg
-description: Entender, recortar, validar, generar y ampliar sprite patterns SpriteVPG (Sprite Varial Pixel Gen) — hojas de sprites PNG con los frames limpios desde la esquina de arriba a la izquierda, una animación por fila, y debajo tres zonas con barra de título, SHEET (NAME, FRAME, GRID), SUBJECT (KIND, VIEW, FACING, DESC) y ANIMATIONS (tabla ROW, NAME, FRAMES, MS PER FRAME, PLAY), y una barra final «SPRITEVPG 1.0 · HTTPS://VARIALGATE.GITHUB.IO/SPECS/SPRITEVPG/». Úsalo cuando aparezca un fichero *.spritevpg.png o una hoja de sprites con ese aspecto, o cuando se pida crear, leer, importar en un motor, recortar, animar o añadir animaciones a una hoja de sprites en este formato.
+description: Entender, recortar, validar, generar y ampliar sprite patterns SpriteVPG (Sprite Varial Pixel Gen) — hojas de sprites PNG con los frames limpios desde la esquina de arriba a la izquierda, una animación por fila con su rótulo a la derecha (nombre, «FRAMES: 6», «MS/FRAME: 110», «PLAY: LOOP»), y debajo dos zonas con barra de título, SHEET (NAME, FRAME, GRID) y SUBJECT (KIND, VIEW, FACING, DESC), y una barra final «SPRITEVPG 1.0 · HTTPS://VARIALGATE.GITHUB.IO/SPECS/SPRITEVPG/». Úsalo cuando aparezca un fichero *.spritevpg.png o una hoja de sprites con ese aspecto, o cuando se pida crear, leer, importar en un motor, recortar, animar o añadir animaciones a una hoja de sprites en este formato.
 ---
 
 # SpriteVPG: sprite patterns
@@ -9,24 +9,25 @@ Un **sprite pattern** es una hoja de sprites PNG que dice ella misma cómo se co
 
 - **Frames** desde `(0, 0)`, en rejilla de `columnas × filas` celdas de `fw × fh`, sin margen ni separación, con
   fondo transparente. **Una fila = una animación**; sus frames van seguidos desde la izquierda. El frame de la fila
-  `r` y la columna `c` está en `x = c·fw`, `y = r·fh`. A la derecha de cada fila va su número.
-- **`SHEET`**: `NAME`, `FRAME 32X32 PX`, `GRID 6 COLUMNS X 3 ROWS`, `ORIGIN TOP-LEFT 0,0, NO GAPS`.
-- **`SUBJECT`** (opcional): `KIND` (character, creature, item, prop, building, effect, tile, ui), `VIEW` (una de las
-  seis vistas de abajo), `FACING` (right, left, up, down o una diagonal) y `DESC` (frase breve).
-- **`ANIMATIONS`**: una tabla con cabecera, una línea por fila de la hoja:
+  `r` y la columna `c` está en `x = c·fw`, `y = r·fh`.
+- Todo dato va como `ETIQUETA: valor`. Una línea que empieza con espacio continúa la de arriba.
+- **Rótulo de cada fila**, a su derecha, en el orden de las filas: el nombre y, sangrados, sus datos.
 
   ```
-  ROW  NAME    FRAMES  MS PER FRAME   PLAY
-  0    IDLE    2       400            LOOP
-  2    ATTACK  4       80 120 90 160  ONCE
-  3    ITEMS   5                      STILL
+  ATTACK
+    FRAMES: 4
+    MS/FRAME: 80 120 90 160
+    PLAY: ONCE
   ```
 
-  `MS PER FRAME`: un número (todos igual) o uno por frame. `PLAY`: `LOOP` (en bucle), `ONCE` (una vez, se queda en
-  el último frame) o `STILL` (imágenes sueltas, no una animación).
+  `MS/FRAME`: un número (todos igual) o uno por frame. `PLAY`: `LOOP` (en bucle), `ONCE` (una vez, se queda en el
+  último frame) o `STILL` (imágenes sueltas, no una animación; sin `MS/FRAME`). En filas bajas va seguido:
+  `ITEMS · FRAMES: 5 · PLAY: STILL`.
+- **`SHEET`**, debajo: `NAME: …`, `FRAME: 32X32 PX`, `GRID: 6 COLUMNS X 3 ROWS`, `ORIGIN: TOP-LEFT 0,0, NO GAPS`.
+- **`SUBJECT`** (opcional): `KIND:` (character, creature, item, prop, building, effect, tile, ui), `VIEW:` (una de
+  las seis vistas de abajo), `FACING:` (right, left, up, down o una diagonal) y `DESC:` (frase breve).
 - **Barra final**: `SPRITEVPG 1.0 · HTTPS://VARIALGATE.GITHUB.IO/SPECS/SPRITEVPG/`.
-- Texto en mayúsculas con la fuente SpriteVPG 4×6, en celdas de 5×8 px, tinta `#1F2A44` sobre papel `#F3EEDD`. Una
-  línea que empieza con espacio continúa la de arriba.
+- Texto en mayúsculas con la fuente SpriteVPG 4×6, en celdas de 5×8 px, tinta `#1F2A44` sobre papel `#F3EEDD`.
 
 Especificación: https://varialgate.github.io/specs/spritevpg/spec.html
 
@@ -49,7 +50,7 @@ JPEG ni con imágenes reescaladas con suavizado.
 
 - Con herramienta: `info`. Di qué es (tipo, vista, hacia dónde mira, descripción), el tamaño de frame, la rejilla y,
   por fila, la animación, sus frames, su duración y cómo se reproduce.
-- Solo mirando la imagen: lee las tres zonas; cada dato lleva su nombre. Si la letra se ve pequeña o borrosa, pide la
+- Solo mirando la imagen: lee el rótulo de cada fila y las dos zonas; cada dato lleva su etiqueta. Si la letra se ve pequeña o borrosa, pide la
   copia ampliada (`@4x`). No inventes lo que no puedas leer.
 
 ## Recortar e importar

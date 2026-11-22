@@ -2,11 +2,11 @@
 """SpriteVPG: genera, lee y comprueba sprite patterns.
 
 Un sprite pattern es una hoja de sprites PNG con los frames limpios desde la
-esquina de arriba a la izquierda, una animación por fila, y debajo tres zonas
-con título: SHEET (nombre, tamaño de frame y rejilla), SUBJECT (tipo, vista,
-hacia dónde mira y una descripción breve) y ANIMATIONS (una tabla con los
-frames, los milisegundos y el modo de cada fila), más una barra final con el
-enlace a la especificación: https://varialgate.github.io/specs/spritevpg/
+esquina de arriba a la izquierda y una animación por fila. A la derecha de
+cada fila va su rótulo (nombre, FRAMES, MS/FRAME y PLAY) y debajo, dos zonas
+con título: SHEET (nombre, tamaño de frame y rejilla) y SUBJECT (tipo, vista,
+hacia dónde mira y una descripción breve), más una barra final con el enlace
+a la especificación: https://varialgate.github.io/specs/spritevpg/
 
 Uso:
   spritevpg.py make  HOJA.png FICHA.json -o PATRON.png [--preview 4]
@@ -146,16 +146,15 @@ def frames_in_row(sheet, r, cols, fw, fh):
             n += 1
     return n
 
-ZONES = ('SHEET', 'SUBJECT', 'ANIMATIONS')
-HEAD = ('ROW', 'NAME', 'FRAMES', 'MS PER FRAME', 'PLAY')
+ZONES = ('SHEET', 'SUBJECT')
 
 def keyed(pairs, width):
-    """Líneas `CLAVE valor` con las claves alineadas; el valor que no cabe
+    """Líneas `CLAVE: valor` con los valores alineados; el valor que no cabe
     sigue debajo, sangrado a la altura del valor."""
-    pad = max(len(k) for k, _ in pairs) + 1
+    pad = max(len(k) for k, _ in pairs) + 2
     out = []
     for key, val in pairs:
-        cur = key.ljust(pad)
+        cur = (key + ':').ljust(pad)
         for word in norm(val).split(' '):
             if len(cur) + len(word) + (0 if cur.endswith(' ') else 1) > width and cur.strip():
                 out.append(cur.rstrip())
@@ -175,16 +174,30 @@ def subject_lines(card, width):
              for key in ('kind', 'view', 'facing', 'description') if card.get(key)]
     return keyed(pairs, width) if pairs else []
 
-def table_lines(card):
-    """La tabla de animaciones: una línea por fila de la hoja, con cabecera."""
-    body = []
-    for r, row in enumerate(card['rows']):
-        ms = row.get('ms')
-        body.append((str(r), norm(row['name']), str(row['frames']),
-                     ('' if not ms else str(ms[0]) if len(set(ms)) == 1 else ' '.join(map(str, ms))),
-                     norm(row['loop']) if ms else 'STILL'))
-    widths = [max(len(x[c]) for x in [HEAD] + body) for c in range(5)]
-    return ['  '.join(x[c].ljust(widths[c]) for c in range(5)).rstrip() for x in [HEAD] + body]
+def row_chunks(row):
+    """Lo que se escribe junto a una fila: el nombre y sus datos, `CLAVE: valor`."""
+    ms = row.get('ms')
+    out = [norm(row['name']), f'FRAMES: {row["frames"]}']
+    if ms:
+        out.append('MS/FRAME: ' + (str(ms[0]) if len(set(ms)) == 1 else ' '.join(map(str, ms))))
+    out.append('PLAY: ' + (norm(row['loop']) if ms else 'STILL'))
+    return out
+
+def row_label(row, lines, width):
+    """El rótulo de una fila en `lines` líneas como mucho: un dato por línea si
+    caben; si no, seguidos y separados por «·». Las líneas de continuación van
+    sangradas dos celdas."""
+    chunks = row_chunks(row)
+    if lines >= len(chunks):
+        return [chunks[0]] + ['  ' + c for c in chunks[1:]]
+    out, cur = [], chunks[0]
+    for c in chunks[1:]:
+        if len(cur) + 3 + len(c) <= width:
+            cur += ' · ' + c
+        else:
+            out.append(cur)
+            cur = '  ' + c
+    return out + [cur]
 
 def render(sheet, card):
     fw, fh = card['frame']['w'], card['frame']['h']
@@ -192,17 +205,22 @@ def render(sheet, card):
     AW, AH = cols * fw, nrows * fh
     sheet = sheet.convert('RGBA').crop((0, 0, AW, AH))
     link = norm(f'{FORMAT} {VERSION} · {URL}')
-    table = table_lines(card)
-    idx_col = -(-(AW + 6) // CW)                  # números de fila, a la derecha de los frames
-    wide = max(len(link) + 2, max(len(t) for t in table) + 2, idx_col + len(str(nrows - 1)) + 1)
+    lab_col = -(-(AW + 6) // CW)                  # rótulos, a la derecha de los frames
+    room = max(26, len(link) + 2 - lab_col - 1)
+    labels = [row_label(r, fh // CH, room) for r in card['rows']]
+    wide = max(len(link) + 2, lab_col + max(len(t) for ls in labels for t in ls) + 1)
+    # Cada rótulo va a la altura de su fila si cabe; si no, debajo del anterior.
+    pos, nxt = [], 0
+    for r, ls in enumerate(labels):
+        ideal = -(-(r * fh + max(0, (fh - len(ls) * CH) // 2)) // CH)
+        pos.append(max(nxt, ideal))
+        nxt = pos[-1] + len(ls)
     has_subject = bool(subject_lines(card, 99))
     half = (wide - 1) // 2 if has_subject else wide
     left = sheet_lines(card, half - 2)
     right = subject_lines(card, wide - half - 3) if has_subject else []
-    top = -(-(AH + 4) // CH)                      # primera barra de título
-    h1 = max(len(left), len(right))
-    anim = top + 1 + h1 + 1
-    bar = anim + 1 + len(table) + 1
+    top = max(-(-(AH + 4) // CH), nxt + 1)        # barras de título
+    bar = top + 1 + max(len(left), len(right)) + 1
     W, H = wide * CW, (bar + 1) * CH
     img = Image.new('RGBA', (W, H), PAPER)
     px = img.load()
@@ -215,15 +233,18 @@ def render(sheet, card):
         px[AW, y] = INK
     for x in range(AW + 1):
         px[x, AH] = INK
-    for r in range(1, nrows):                     # marcas de celda
+    for r in range(1, nrows):                     # marca de celda y regla entre rótulos
         for x in range(AW + 1, AW + 4):
             px[x, r * fh] = INK
+        gy = pos[r] * CH - 1                      # por la fila libre de las celdas de texto
+        for x in range(lab_col * CW, W):
+            px[x, gy] = RULE
     for c in range(1, cols):
         for y in range(AH + 1, AH + 4):
             px[c * fw, y] = INK
-    for r in range(nrows):                        # número de cada fila, a su altura
-        if fh >= CH:
-            draw_text(px, idx_col, (r * fh + (fh - CH) // 2 + CH - 1) // CH, str(r), INK)
+    for ls, ty in zip(labels, pos):
+        for j, t in enumerate(ls):
+            draw_text(px, lab_col, ty + j, t, INK)
 
     def zone(title, c0, c1, row, lines):
         for y in range(row * CH, (row + 1) * CH):  # barra de título, en negativo
@@ -236,7 +257,6 @@ def render(sheet, card):
     zone('SHEET', 0, half, top, left)
     if has_subject:
         zone('SUBJECT', half + 1, wide, top, right)
-    zone('ANIMATIONS', 0, wide, anim, table)
     zone(link, 0, wide, bar, [])                  # barra final
     return img
 
@@ -310,10 +330,10 @@ def read_card(path):
             else:
                 lines.append(t.strip())
         zones[title] = lines
-    if 'SHEET' not in zones or 'ANIMATIONS' not in zones:
-        raise SystemExit('Faltan las zonas SHEET o ANIMATIONS.')
+    if 'SHEET' not in zones:
+        raise SystemExit('Falta la zona SHEET.')
     def pairs(name):
-        return {t.split()[0]: ' '.join(t.split()[1:]) for t in zones.get(name, [])}
+        return {t.partition(':')[0].strip(): t.partition(':')[2].strip() for t in zones.get(name, [])}
     sh, su = pairs('SHEET'), pairs('SUBJECT')
     fw, fh = (int(x) for x in sh['FRAME'].split()[0].split('X'))
     g = sh['GRID'].split()
@@ -325,13 +345,28 @@ def read_card(path):
     if 'DESC' in su:
         card['description'] = su['DESC']
     card.update({'frame': {'w': fw, 'h': fh}, 'grid': {'columns': cols, 'rows': nrows}, 'rows': []})
-    for t in zones['ANIMATIONS'][1:]:             # la primera línea es la cabecera
-        tok = t.split()
-        row = {'name': tok[1].lower(), 'frames': int(tok[2])}
-        if tok[-1] != 'STILL':
-            ms = [int(x) for x in tok[3:-1]]
+    # Rótulos de fila: a la derecha de los frames, por encima de las barras.
+    lab_col = -(-(cols * fw + 6) // CW)
+    logical = []
+    for line in grid[:min(b[0] for b in bars)]:
+        t = row_text(line[lab_col:])
+        if not t.strip():
+            continue
+        if t.startswith(' ') and logical:
+            logical[-1] += ' ' + t.strip()
+        else:
+            logical.append(t.strip())
+    if len(logical) != nrows:
+        raise SystemExit(f'Hay {len(logical)} rótulos para {nrows} filas.')
+    for t in logical:
+        def value(key):
+            m = re.search(key + r': ([^:·]*?)(?= ·| [A-Z/]+:|$)', t)
+            return m.group(1).strip() if m else None
+        row = {'name': t.split()[0].lower(), 'frames': int(value('FRAMES'))}
+        if value('PLAY') != 'STILL':
+            ms = [int(x) for x in value('MS/FRAME').split()]
             row['ms'] = ms * row['frames'] if len(ms) == 1 else ms
-            row['loop'] = tok[-1].lower()
+            row['loop'] = value('PLAY').lower()
         card['rows'].append(row)
     return card, k
 

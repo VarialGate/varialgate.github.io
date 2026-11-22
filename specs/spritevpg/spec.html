@@ -37,10 +37,10 @@ habitual de las especificaciones (RFC 2119).</p>
   <a class="sub" href="#rejilla">4.1 Rejilla de caracteres</a>
   <a class="sub" href="#fuente">4.2 Fuente</a>
   <a class="sub" href="#colores">4.3 Colores</a>
-  <a href="#zonas">5. Las zonas</a>
-  <a class="sub" href="#z-sheet">5.1 SHEET</a>
-  <a class="sub" href="#z-subject">5.2 SUBJECT</a>
-  <a class="sub" href="#z-animations">5.3 ANIMATIONS</a>
+  <a href="#zonas">5. La información</a>
+  <a class="sub" href="#z-rows">5.1 Rótulo de cada fila</a>
+  <a class="sub" href="#z-sheet">5.2 SHEET</a>
+  <a class="sub" href="#z-subject">5.3 SUBJECT</a>
   <a class="sub" href="#barra">5.4 Barra final</a>
   <a href="#vistas">6. Las vistas</a>
   <a href="#leer">7. Leer un sprite pattern</a>
@@ -59,19 +59,21 @@ ve cuando mira la imagen.</p>
 <ul>
   <li>los <strong>frames</strong>, en una rejilla pura desde <code>(0, 0)</code>, con <strong>una animación por
     fila</strong>;</li>
-  <li>debajo, tres <strong>zonas con título</strong>: <code>SHEET</code> (cómo se corta), <code>SUBJECT</code> (qué
-    es) y <code>ANIMATIONS</code> (cómo se anima cada fila);</li>
+  <li>a la derecha de cada fila, su <strong>rótulo</strong>: el nombre de la animación, cuántos frames tiene,
+    cuánto dura cada uno y cómo se reproduce;</li>
+  <li>debajo, dos <strong>zonas con título</strong>: <code>SHEET</code> (cómo se corta) y <code>SUBJECT</code> (qué
+    es);</li>
   <li>y una barra final con el formato y el <strong>enlace a esta especificación</strong>.</li>
 </ul>
-<p>Cada dato lleva su nombre al lado y sale una sola vez. Así lo entiende quien no conoce el formato, sea una persona
+<p>Cada dato lleva su etiqueta delante, separada por dos puntos (<code>FRAMES: 6</code>), y sale una sola vez. Así lo entiende quien no conoce el formato, sea una persona
 o una IA que solo mira la imagen; y un programa lo lee de forma exacta, porque el texto va en una rejilla de
 caracteres fija.</p>
 
 <h2 id="vista"><span class="n">2</span>Un vistazo</h2>
 <figure class="sheet">
-  <img class="px pattern" src="example/caballero.spritevpg@4x.png" width="945" alt="Sprite pattern de ejemplo: tres filas de frames de un caballero azul, numeradas 0, 1 y 2. Debajo, la zona SHEET (NAME CABALLERO AZUL, FRAME 32X32 PX, GRID 6 COLUMNS X 3 ROWS, ORIGIN TOP-LEFT 0,0, NO GAPS), la zona SUBJECT (KIND CHARACTER, VIEW SIDE, FACING RIGHT, DESC…) y la zona ANIMATIONS, una tabla con las columnas ROW, NAME, FRAMES, MS PER FRAME y PLAY. Al final, la barra SPRITEVPG 1.0 con el enlace a la especificación." loading="lazy">
+  <img class="px pattern" src="example/caballero.spritevpg@4x.png" width="990" alt="Sprite pattern de ejemplo: tres filas de frames de un caballero azul; a la derecha de cada fila, su rótulo: IDLE, FRAMES: 2, MS/FRAME: 400, PLAY: LOOP; WALK, FRAMES: 6, MS/FRAME: 110, PLAY: LOOP; ATTACK, FRAMES: 4, MS/FRAME: 80 120 90 160, PLAY: ONCE. Debajo, la zona SHEET (NAME, FRAME, GRID, ORIGIN) y la zona SUBJECT (KIND, VIEW, FACING, DESC). Al final, la barra SPRITEVPG 1.0 con el enlace a la especificación." loading="lazy">
   <figcaption>El ejemplo, ampliado ×4 (el damero lo pone esta página bajo lo transparente). Original:
-  <a href="example/caballero.spritevpg.png">caballero.spritevpg.png</a> (315×216).</figcaption>
+  <a href="example/caballero.spritevpg.png">caballero.spritevpg.png</a> (330×168).</figcaption>
 </figure>
 
 <h2 id="frames"><span class="n">3</span>La zona de frames</h2>
@@ -87,9 +89,7 @@ frames: ni texto ni marcas.</p>
   <li><strong>Una fila, una animación</strong> (o un grupo de imágenes sueltas). Sus frames van seguidos desde la
     izquierda, en orden; las celdas que sobran a la derecha quedan transparentes.</li>
   <li>Una línea de tinta de 1 px bordea la zona por fuera (la columna <code>x = columnas·fw</code> y la fila
-    <code>y = filas·fh</code>), con una marca de 3 px en cada borde entre filas y entre columnas. A la derecha de
-    cada fila va su <strong>número</strong> (0, 1, 2…), el de la columna <code>ROW</code> de la tabla de
-    animaciones.</li>
+    <code>y = filas·fh</code>), con una marca de 3 px en cada borde entre filas y entre columnas.</li>
   <li>La hoja <span class="kw">PUEDE</span> ampliarse a escala entera sin suavizado y sigue siendo válida.
     <span class="kw">NO DEBE</span> guardarse en JPEG ni otro formato con pérdida.</li>
   <li>Nombre recomendado: <code>&lt;nombre&gt;.spritevpg.png</code>.</li>
@@ -123,61 +123,68 @@ Licencia SIL Open Font License 1.1. La tabla de glifos, píxel a píxel, está e
 <tr><th>Uso</th><th>Color</th></tr>
 <tr><td>Papel (fondo de los márgenes)</td><td><span class="swatch" style="background:#F3EEDD"></span><code>#F3EEDD</code></td></tr>
 <tr><td>Tinta (texto, borde y barras)</td><td><span class="swatch" style="background:#1F2A44"></span><code>#1F2A44</code></td></tr>
+<tr><td>Regla entre los rótulos de fila</td><td><span class="swatch" style="background:#9AA3B5"></span><code>#9AA3B5</code></td></tr>
 </table></div>
 <p>Papel y tinta <span class="kw">DEBEN</span> ser exactamente esos colores: con ellos se lee el texto. Los frames
 pueden usar cualquiera.</p>
 
-<h2 id="zonas"><span class="n">5</span>Las zonas</h2>
-<p>Debajo de la zona de frames va la información, en <strong>zonas</strong>. Cada una empieza con una <strong>barra de
-título</strong> en negativo con su nombre (desde la segunda celda de la barra) y sigue con sus líneas, una celda a la
-derecha del inicio de la barra. <code>SHEET</code> y <code>SUBJECT</code> van una al lado de la otra;
-<code>ANIMATIONS</code>, a todo el ancho. Un lector las localiza por su barra, no por su posición.</p>
-<p>En <code>SHEET</code> y <code>SUBJECT</code> cada línea es <code>CLAVE valor</code>, con las claves alineadas. Un
-valor que no cabe sigue en la línea de abajo, sangrado: una línea que empieza con espacio continúa la anterior.</p>
+<h2 id="zonas"><span class="n">5</span>La información</h2>
+<p>Todo dato se escribe como <strong><code>ETIQUETA: valor</code></strong>, con dos puntos entre la etiqueta y el
+valor. Un texto que no cabe sigue en la línea de abajo, sangrado: una línea que empieza con espacio continúa la
+anterior.</p>
 
-<h3 id="z-sheet"><span class="n">5.1</span><code>SHEET</code>: cómo se corta</h3>
-<div class="paper">NAME   CABALLERO AZUL
-FRAME  32X32 PX
-GRID   6 COLUMNS X 3 ROWS
-ORIGIN TOP-LEFT 0,0, NO GAPS</div>
+<h3 id="z-rows"><span class="n">5.1</span>El rótulo de cada fila: cómo se anima</h3>
+<p>A la derecha de la zona de frames (desde la primera columna de texto tras <code>columnas·fw + 6</code> px), junto a
+cada fila, va su rótulo: el <strong>nombre</strong> de la animación y, sangrados debajo, sus datos.</p>
+<div class="paper">ATTACK
+  FRAMES: 4
+  MS/FRAME: 80 120 90 160
+  PLAY: ONCE</div>
 <div class="table-scroll"><table>
-<tr><th>Clave</th><th>Valor</th></tr>
+<tr><th>Línea</th><th>Significado</th></tr>
+<tr><td>Nombre</td><td>El de la animación: letras, cifras, <code>_</code> y <code>-</code>. Se recomiendan <code>idle</code>, <code>walk</code>, <code>run</code>, <code>jump</code>, <code>attack</code>, <code>hurt</code>, <code>death</code>…</td></tr>
+<tr><td><code>FRAMES</code></td><td>Cuántos frames tiene, desde la izquierda de la fila</td></tr>
+<tr><td><code>MS/FRAME</code></td><td>Milisegundos que dura cada frame. Un número: todos igual. Varios: uno por frame, en orden</td></tr>
+<tr><td><code>PLAY</code></td><td><code>LOOP</code> (en bucle), <code>ONCE</code> (una vez; se queda en el último frame) o <code>STILL</code> (no es una animación: son imágenes sueltas, y no lleva <code>MS/FRAME</code>)</td></tr>
+</table></div>
+<ul>
+  <li>Hay <strong>un rótulo por fila, en el orden de las filas</strong>. Cada uno <span class="kw">DEBERÍA</span> ir a
+    la altura de su fila, con una regla gris entre uno y otro.</li>
+  <li>Si la fila es baja y no caben las cuatro líneas, los datos van seguidos, separados por <code>·</code>:
+    <code>ITEMS · FRAMES: 5 · PLAY: STILL</code>. Si aun así no caben junto a su fila, los rótulos van uno debajo de
+    otro: lo que cuenta es el orden.</li>
+</ul>
+
+<p>Debajo de la zona de frames van dos <strong>zonas</strong>, una al lado de la otra. Cada una empieza con una
+<strong>barra de título</strong> en negativo con su nombre (desde la segunda celda de la barra) y sigue con sus líneas,
+con los valores alineados. Un lector las localiza por su barra, no por su posición.</p>
+
+<h3 id="z-sheet"><span class="n">5.2</span><code>SHEET</code>: cómo se corta</h3>
+<div class="paper">NAME:   CABALLERO AZUL
+FRAME:  32X32 PX
+GRID:   6 COLUMNS X 3 ROWS
+ORIGIN: TOP-LEFT 0,0, NO GAPS</div>
+<div class="table-scroll"><table>
+<tr><th>Etiqueta</th><th>Valor</th></tr>
 <tr><td><code>NAME</code></td><td>El nombre de la hoja. Obligatoria</td></tr>
 <tr><td><code>FRAME</code></td><td><code>anchoXalto PX</code>: el tamaño de cada frame. Obligatoria</td></tr>
 <tr><td><code>GRID</code></td><td><code>n COLUMNS X m ROWS</code>: columnas y filas de la zona de frames. Obligatoria</td></tr>
 <tr><td><code>ORIGIN</code></td><td>Siempre <code>TOP-LEFT 0,0, NO GAPS</code>: los frames empiezan arriba a la izquierda, sin margen ni separación. Es una constante del formato; se escribe para quien no lo conoce</td></tr>
 </table></div>
 
-<h3 id="z-subject"><span class="n">5.2</span><code>SUBJECT</code>: qué es</h3>
-<div class="paper">KIND   CHARACTER
-VIEW   SIDE
-FACING RIGHT
-DESC   CABALLERO CON ARMADURA AZUL, ESPADA Y ESCUDO</div>
+<h3 id="z-subject"><span class="n">5.3</span><code>SUBJECT</code>: qué es</h3>
+<div class="paper">KIND:   CHARACTER
+VIEW:   SIDE
+FACING: RIGHT
+DESC:   CABALLERO CON ARMADURA AZUL, ESPADA Y ESCUDO</div>
 <p>Dice a quien importa la hoja qué tiene delante, y a quien la amplía, cómo tiene que dibujar lo nuevo. La zona y
-cada clave son opcionales, pero <span class="kw">DEBERÍAN</span> ponerse siempre que se sepan.</p>
+cada etiqueta son opcionales, pero <span class="kw">DEBERÍAN</span> ponerse siempre que se sepan.</p>
 <div class="table-scroll"><table>
-<tr><th>Clave</th><th>Valor</th></tr>
+<tr><th>Etiqueta</th><th>Valor</th></tr>
 <tr><td><code>KIND</code></td><td><code>CHARACTER</code> (personaje), <code>CREATURE</code> (criatura), <code>ITEM</code> (objeto que se coge o se usa), <code>PROP</code> (decorado), <code>BUILDING</code> (construcción), <code>EFFECT</code> (efecto), <code>TILE</code> (casilla) o <code>UI</code> (interfaz)</td></tr>
 <tr><td><code>VIEW</code></td><td>Una de las seis vistas de la <a href="#vistas">sección 6</a>: <code>SIDE</code>, <code>FRONT</code>, <code>THREE-QUARTER</code>, <code>OBLIQUE</code>, <code>TOP-DOWN</code> o <code>ISOMETRIC</code></td></tr>
 <tr><td><code>FACING</code></td><td>Hacia dónde mira el dibujo: <code>RIGHT</code>, <code>LEFT</code>, <code>UP</code>, <code>DOWN</code>, <code>DOWN-RIGHT</code>, <code>DOWN-LEFT</code>, <code>UP-RIGHT</code> o <code>UP-LEFT</code></td></tr>
 <tr><td><code>DESC</code></td><td>Una frase breve, en el idioma de quien la escribe</td></tr>
-</table></div>
-
-<h3 id="z-animations"><span class="n">5.3</span><code>ANIMATIONS</code>: cómo se anima</h3>
-<div class="paper">ROW  NAME    FRAMES  MS PER FRAME   PLAY
-0    IDLE    2       400            LOOP
-1    WALK    6       110            LOOP
-2    ATTACK  4       80 120 90 160  ONCE
-3    ITEMS   5                      STILL</div>
-<p>Una tabla: la primera línea es la cabecera de las columnas y después va <strong>una línea por fila de la
-hoja</strong>, en orden. Las columnas van alineadas y separadas por dos espacios o más.</p>
-<div class="table-scroll"><table>
-<tr><th>Columna</th><th>Significado</th></tr>
-<tr><td><code>ROW</code></td><td>El número de la fila de la hoja, desde 0 (el que va dibujado a su derecha)</td></tr>
-<tr><td><code>NAME</code></td><td>El nombre de la animación: letras, cifras, <code>_</code> y <code>-</code>. Se recomiendan <code>idle</code>, <code>walk</code>, <code>run</code>, <code>jump</code>, <code>attack</code>, <code>hurt</code>, <code>death</code>…</td></tr>
-<tr><td><code>FRAMES</code></td><td>Cuántos frames tiene, desde la izquierda de la fila</td></tr>
-<tr><td><code>MS PER FRAME</code></td><td>Milisegundos que dura cada frame. Un número: todos igual. Varios: uno por frame, en orden</td></tr>
-<tr><td><code>PLAY</code></td><td><code>LOOP</code> (en bucle), <code>ONCE</code> (una vez; se queda en el último frame) o <code>STILL</code> (no es una animación: son imágenes sueltas, y la columna de milisegundos va vacía)</td></tr>
 </table></div>
 
 <h3 id="barra"><span class="n">5.4</span>La barra final</h3>
@@ -219,8 +226,8 @@ vista tiene que forzar.</p>
 
 <h2 id="leer"><span class="n">7</span>Leer un sprite pattern</h2>
 <p><strong>Mirando la imagen</strong> (una persona, o una IA sin herramientas): <code>SHEET</code> dice cómo cortar,
-<code>SUBJECT</code> qué es, y cada línea de <code>ANIMATIONS</code>, cómo se anima la fila de ese número. Mejor con
-una copia ampliada (×4): a tamaño original la letra mide 6 px de alto.</p>
+<code>SUBJECT</code> qué es, y el rótulo de cada fila, cómo se anima. Mejor con una copia ampliada (×4): a tamaño
+original la letra mide 6 px de alto.</p>
 <p><strong>Con un programa</strong>, de forma exacta:</p>
 <ol>
   <li><strong>Escala.</strong> Para <code>k = 1, 2, 3…</code>: si el ancho es múltiplo de <code>5k</code> y el alto de
@@ -228,9 +235,12 @@ una copia ampliada (×4): a tamaño original la letra mide 6 px de alto.</p>
     <code>SPRITEVPG</code>, esa es la escala.</li>
   <li><strong>Texto.</strong> Leer todas las celdas, comparándolas con la tabla de la fuente y anotando cuáles van en
     negativo.</li>
-  <li><strong>Zonas.</strong> Cada tramo en negativo cuyo texto es <code>SHEET</code>, <code>SUBJECT</code> o
-    <code>ANIMATIONS</code> es una barra de título. El contenido de la zona son las líneas de debajo, a su ancho,
-    hasta la siguiente barra; las que empiezan con espacio continúan la anterior.</li>
+  <li><strong>Zonas.</strong> Cada tramo en negativo cuyo texto es <code>SHEET</code> o <code>SUBJECT</code> es una
+    barra de título. El contenido de la zona son las líneas de debajo, a su ancho, hasta la siguiente barra; las que
+    empiezan con espacio continúan la anterior. En cada línea, la etiqueta va antes de los dos puntos.</li>
+  <li><strong>Rótulos.</strong> El texto a la derecha de la zona de frames, por encima de las barras, de arriba
+    abajo, uniendo las líneas sangradas a la anterior: el rótulo número <code>r</code> es el de la fila
+    <code>r</code>.</li>
   <li><strong>Frames.</strong> Con <code>FRAME</code> y <code>GRID</code>: recortar
     <code>(0, 0, columnas·fw, filas·fh)</code> (reduciendo antes a escala nativa con vecino más próximo si
     <code>k &gt; 1</code>). Esa es la hoja limpia.</li>
