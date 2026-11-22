@@ -6,7 +6,7 @@ esquina de arriba a la izquierda y una animación por fila. A la derecha de
 cada fila va su rótulo (nombre, FRAMES, MS/FRAME y PLAY) y debajo, dos zonas
 con título: SHEET (nombre, tamaño de frame y rejilla) y SUBJECT (tipo, vista,
 hacia dónde mira y una descripción breve); opcionalmente, AGENTS (lo que debe
-hacer una IA al importar la hoja y al ampliarla); y una barra final con el enlace
+hacer una IA al usar la hoja en una app y al ampliarla); y una barra final con el enlace
 a la especificación: https://varialgate.github.io/specs/spritevpg/
 
 Uso:
@@ -110,7 +110,7 @@ DIRS = ('down', 'up', 'left', 'right', 'down-left', 'down-right', 'up-left', 'up
 # {"format": "spritevpg", "version": "1.0", "name": "Caballero azul",
 #  "kind": "character", "view": "side", "facing": "right",        (opcionales)
 #  "description": "Caballero con armadura azul…",                 (opcional)
-#  "agents": {"import": ["Voltear para la izquierda…"],            (opcional)
+#  "agents": {"implement": ["Voltear para la izquierda…"],         (opcional)
 #             "extend": ["Contorno oscuro de 1 px…"]},
 #  "frame": {"w": 32, "h": 32}, "grid": {"columns": 6, "rows": 3},
 #  "rows": [{"name": "idle", "frames": 2, "ms": [400, 400], "loop": "loop"}, ...]}
@@ -177,11 +177,11 @@ def subject_lines(card, width):
              for key in ('kind', 'view', 'facing', 'description') if card.get(key)]
     return keyed(pairs, width) if pairs else []
 
-AGENT_KEYS = ('import', 'extend', 'note')
+AGENT_KEYS = ('implement', 'extend', 'note')
 
 def agent_notes(card):
     """Las indicaciones para IAs como pares (etiqueta, texto). En los datos
-    van como {"import": […], "extend": […], "note": […]}; una lista suelta
+    van como {"implement": […], "extend": […], "note": […]}; una lista suelta
     son notas generales."""
     a = card.get('agents') or {}
     if isinstance(a, list):
@@ -501,7 +501,7 @@ def summary(card):
         else:
             out.append(f'- fila {r}: {row["name"]}, {row["frames"]} imágenes sueltas')
     for key, note in agent_notes(card):
-        out.append({'IMPORT': 'Al importarla: ', 'EXTEND': 'Al ampliarla: ', 'NOTE': 'Nota: '}[key] + note)
+        out.append({'IMPLEMENT': 'Al usarla en una app: ', 'EXTEND': 'Al ampliarla: ', 'NOTE': 'Nota: '}[key] + note)
     return '\n'.join(out)
 
 def main(argv=None):

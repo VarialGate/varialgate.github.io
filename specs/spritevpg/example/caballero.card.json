@@ -31,7 +31,7 @@
     }
   ],
   "agents": {
-    "import": [
+    "implement": [
       "Para mirar a la izquierda, voltear en horizontal.",
       "Añadir una sombra elíptica bajo los pies.",
       "En attack, el golpe hace daño en el tercer frame."

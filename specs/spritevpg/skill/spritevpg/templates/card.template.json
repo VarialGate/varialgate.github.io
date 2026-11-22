@@ -21,8 +21,8 @@
     }
   ],
   "agents": {
-    "import": [
-      "Lo que debe hacer quien la importe: volteos, efectos que añade la aplicación, en qué frame pasa algo."
+    "implement": [
+      "Lo que debe hacer el código que use la hoja: volteos, efectos que añade la aplicación, en qué frame pasa algo."
     ],
     "extend": [
       "Estilo: contorno, tonos por color, dirección de la luz.",
