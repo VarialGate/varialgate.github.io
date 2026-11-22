@@ -3,6 +3,7 @@
   "kind": "character",
   "view": "side",
   "facing": "right",
+  "mirror": "left",
   "description": "Caballero con armadura azul, espada y escudo",
   "frame": {
     "w": 32,
@@ -42,7 +43,6 @@
   ],
   "agents": {
     "implement": [
-      "Para mirar a la izquierda, voltear en horizontal.",
       "Añadir una sombra elíptica bajo los pies.",
       "En attack, el golpe hace daño en el tercer frame."
     ],
