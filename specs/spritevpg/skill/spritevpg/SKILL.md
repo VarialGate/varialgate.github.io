@@ -80,8 +80,12 @@ JPEG ni con imágenes reescaladas con suavizado.
 ## Generar un sprite pattern
 
 1. **Hoja limpia**: frames del mismo tamaño en rejilla desde `(0, 0)`, fondo transparente, una fila por animación, con
-   los frames seguidos desde la izquierda. La celda debe dar cabida a la animación que más se sale: si el personaje
-   quieto ocupa 16 px, usa celdas de 24 o 32 y dibújalo siempre en el mismo sitio de la celda.
+   los frames seguidos desde la izquierda. **Un único tamaño de celda** para toda la hoja, el que pida la animación
+   que más se sale: si el personaje quieto ocupa 16 px, usa celdas de 24 o 32. Si una animación necesita más sitio,
+   agranda todas las celdas, no solo su fila; el cuerpo va en el mismo sitio de la celda en todas las filas (no hace
+   falta centrarlo: si el ataque se sale por la derecha, deja el cuerpo a la izquierda). Nunca encojas un frame para
+   que quepa. Si una animación es desproporcionada, saca el efecto (espadazo, proyectil) a otra hoja de tipo
+   `effect` y dilo en `agents.implement`.
 2. **Datos** para la herramienta, en un JSON (parte de `templates/card.template.json`). Ese JSON es solo la manera
    de pasarle los datos: el formato es la imagen, y no hay que entregarlo con ella.
 

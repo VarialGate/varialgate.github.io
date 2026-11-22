@@ -33,6 +33,7 @@ habitual de las especificaciones (RFC 2119).</p>
   <a href="#intro">1. Qué es</a>
   <a href="#vista">2. Un vistazo</a>
   <a href="#frames">3. La zona de frames</a>
+  <a class="sub" href="#celda">3.1 El tamaño de celda</a>
   <a href="#texto">4. El texto</a>
   <a class="sub" href="#rejilla">4.1 Rejilla de caracteres</a>
   <a class="sub" href="#fuente">4.2 Fuente</a>
@@ -94,6 +95,33 @@ frames: ni texto ni marcas.</p>
   <li>La hoja <span class="kw">PUEDE</span> ampliarse a escala entera sin suavizado y sigue siendo válida.
     <span class="kw">NO DEBE</span> guardarse en JPEG ni otro formato con pérdida.</li>
   <li>Nombre recomendado: <code>&lt;nombre&gt;.spritevpg.png</code>.</li>
+</ul>
+
+<h3 id="celda"><span class="n">3.1</span>Elegir el tamaño de celda</h3>
+<p>La hoja tiene <strong>un único tamaño de celda</strong>, el mismo en todas las filas: así cualquier motor la corta
+con una rejilla. Ese tamaño lo marca la animación que más se sale, no el dibujo quieto.</p>
+<ul>
+  <li><strong>Si una animación necesita más sitio</strong> (un ataque que alarga la espada, un salto), se agrandan
+    <strong>todas</strong> las celdas, no solo las de su fila. Un personaje que quieto ocupa 16 px suele ir en celdas
+    de 24 o de 32.</li>
+  <li><strong>El cuerpo va en el mismo sitio de la celda en todas las filas</strong>: si no, daría un salto al cambiar
+    de animación. Ese sitio lo dicen <code>BODY</code> y <code>PIVOT</code> (<a href="#z-sheet">5.2</a>).</li>
+  <li><strong>No tiene que ir centrado.</strong> Si el ataque solo se sale por la derecha, las celdas se ensanchan por
+    la derecha y el cuerpo se queda a la izquierda en todas: las demás animaciones solo tienen más transparente a
+    ese lado.</li>
+  <li><strong>El espacio vacío no cuesta</strong>: lo transparente casi no pesa en un PNG. Lo que no se debe hacer
+    nunca es encoger o deformar los frames que se salen para meterlos en la celda: el personaje cambiaría de tamaño
+    al animarse.</li>
+</ul>
+<p>Cuando una sola animación es desproporcionada (un ataque tres veces más ancho que el personaje), agrandar todas
+las celdas deja de compensar. Entonces:</p>
+<ul>
+  <li><strong>Sacar el efecto aparte.</strong> El personaje hace el gesto en su celda normal, y el arco del espadazo,
+    el proyectil o la explosión van en otro sprite pattern, de tipo <code>EFFECT</code>, que el juego dibuja encima.
+    Se indica en <code>AGENTS</code>: <code>IMPLEMENT: EN ATTACK, DIBUJAR ENCIMA EL EFECTO SLASH DESDE EL TERCER
+    FRAME.</code></li>
+  <li><strong>O dar a esa animación su propia hoja</strong>, con su tamaño de celda y el <code>PIVOT</code> sobre el
+    mismo punto del personaje (los pies), para que encaje con las demás al cambiar de una a otra.</li>
 </ul>
 
 <h2 id="texto"><span class="n">4</span>El texto</h2>
@@ -178,9 +206,8 @@ PIVOT:  15,31</div>
 <tr><td><code>BODY</code></td><td><code>anchoXalto PX AT x,y</code>: lo que ocupa el dibujo <strong>quieto</strong> dentro de cada frame, y dónde empieza (su esquina de arriba a la izquierda, en píxeles del frame). Opcional</td></tr>
 <tr><td><code>PIVOT</code></td><td><code>x,y</code>: el punto del frame por el que se coloca el dibujo en el juego, el mismo en todos los frames. En personajes, entre los pies. Opcional</td></tr>
 </table></div>
-<p><strong>Celda y cuerpo no son lo mismo.</strong> El frame (la celda) tiene que dar cabida a la animación que más se
-sale: la espada en un ataque, la capa al correr, un salto. Por eso suele ser mayor que el dibujo quieto: un personaje
-«de 16» se dibuja en celdas de 24 o de 32, siempre en el mismo sitio de la celda. <code>BODY</code> dice dónde está
+<p><strong>Celda y cuerpo no son lo mismo.</strong> La celda da cabida a la animación que más se sale
+(<a href="#celda">3.1</a>), así que suele ser mayor que el dibujo quieto. <code>BODY</code> dice dónde está
 ese cuerpo dentro de la celda y cuánto mide, y <code>PIVOT</code>, por qué punto se coloca: quien use la hoja pone el
 <code>PIVOT</code> en la posición del personaje y usa <code>BODY</code> (no la celda) para lo que ocupa en el juego.
 Cuando la hoja lleva <code>PIVOT</code>, una <strong>muesca</strong> de color <code>#D6336C</code> lo marca en el borde
