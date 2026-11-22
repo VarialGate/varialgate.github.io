@@ -9,10 +9,10 @@ hacia dónde mira y una descripción breve), más una barra final con el enlace
 a la especificación: https://varialgate.github.io/specs/spritevpg/
 
 Uso:
-  spritevpg.py make  HOJA.png FICHA.json -o PATRON.png [--preview 4]
+  spritevpg.py make  HOJA.png DATOS.json -o PATRON.png [--preview 4]
   spritevpg.py read  PATRON.png -o CARPETA [--gifs]
-  spritevpg.py info  PATRON.png|FICHA.json
-  spritevpg.py validate PATRON.png|FICHA.json
+  spritevpg.py info  PATRON.png
+  spritevpg.py validate PATRON.png
 
 Solo necesita Pillow. La ficha se lee del propio dibujo (cada carácter cae en
 una celda fija y se reconoce comparando píxeles): funciona con PNG sin
@@ -415,7 +415,8 @@ def read(path, outdir, gifs=False):
     os.makedirs(outdir, exist_ok=True)
     base = slug(card['name'])
     sheet.save(os.path.join(outdir, f'{base}.sheet.png'))
-    json.dump(card, open(os.path.join(outdir, f'{base}.spritevpg.json'), 'w', encoding='utf-8'),
+    # Los datos leídos, en el mismo JSON que acepta `make`.
+    json.dump(card, open(os.path.join(outdir, f'{base}.card.json'), 'w', encoding='utf-8'),
               ensure_ascii=False, indent=2)
     for r, row in enumerate(card['rows']):
         fr = [sheet.crop((c * fw, r * fh, (c + 1) * fw, (r + 1) * fh)) for c in range(row['frames'])]
@@ -477,14 +478,14 @@ def summary(card):
 def main(argv=None):
     p = argparse.ArgumentParser(description='SpriteVPG: sprite patterns.')
     sub = p.add_subparsers(dest='cmd', required=True)
-    m = sub.add_parser('make', help='hoja limpia + ficha -> sprite pattern')
+    m = sub.add_parser('make', help='hoja limpia + datos (JSON) -> sprite pattern')
     m.add_argument('sheet'); m.add_argument('card')
     m.add_argument('-o', '--out', required=True)
     m.add_argument('--preview', type=int, default=0, help='guarda también una copia ampliada xN')
-    r = sub.add_parser('read', help='sprite pattern -> ficha, hoja limpia y frames')
+    r = sub.add_parser('read', help='sprite pattern -> hoja limpia, frames y datos')
     r.add_argument('pattern'); r.add_argument('-o', '--out', required=True)
     r.add_argument('--gifs', action='store_true', help='un GIF por animación')
-    for name, hlp in (('info', 'resumen legible'), ('validate', 'comprueba la ficha')):
+    for name, hlp in (('info', 'resumen legible'), ('validate', 'comprueba los datos')):
         sub.add_parser(name, help=hlp).add_argument('path')
     a = p.parse_args(argv)
 
@@ -498,7 +499,7 @@ def main(argv=None):
         print(f'{a.out}: {img.width}x{img.height}')
     elif a.cmd == 'read':
         card, k = read(a.pattern, a.out, a.gifs)
-        print(f'Ficha leída del dibujo (escala x{k}). {sum(r["frames"] for r in card["rows"])} frames en {a.out}/')
+        print(f'Datos leídos del dibujo (escala x{k}). {sum(r["frames"] for r in card["rows"])} frames en {a.out}/')
     elif a.cmd == 'info':
         print(summary(load(a.path)))
     else:

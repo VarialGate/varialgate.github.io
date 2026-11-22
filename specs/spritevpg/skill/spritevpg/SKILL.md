@@ -38,12 +38,12 @@ Especificación: https://varialgate.github.io/specs/spritevpg/spec.html
 ```bash
 pip install pillow                                     # si falta
 python3 scripts/spritevpg.py info     patron.png       # resumen legible
-python3 scripts/spritevpg.py validate patron.png       # o ficha.json
+python3 scripts/spritevpg.py validate patron.png
 python3 scripts/spritevpg.py read     patron.png -o salida/ --gifs
-python3 scripts/spritevpg.py make     hoja.png ficha.json -o nombre.spritevpg.png --preview 4
+python3 scripts/spritevpg.py make     hoja.png datos.json -o nombre.spritevpg.png --preview 4
 ```
 
-Lee la ficha del propio dibujo: funciona con PNG sin metadatos y con copias ampliadas a escala entera. No funciona con
+Lee los datos del propio dibujo: funciona con PNG sin metadatos y con copias ampliadas a escala entera. No funciona con
 JPEG ni con imágenes reescaladas con suavizado.
 
 ## Entender un sprite pattern
@@ -56,7 +56,8 @@ JPEG ni con imágenes reescaladas con suavizado.
 ## Recortar e importar
 
 - `read -o salida/ --gifs` deja `<nombre>.sheet.png` (la hoja sin márgenes), una carpeta por fila con sus frames
-  (`walk/0.png`…), `<nombre>.spritevpg.json` y un GIF por animación.
+  (`walk/0.png`…), un GIF por animación y `<nombre>.card.json` (los datos leídos, listos para volver a pasárselos a
+  `make`).
 - En un motor no hace falta recortar: los frames empiezan en 0,0.
   - Unity: Grid By Cell Size, offset 0.
   - Godot: «Añadir frames desde hoja», sin offset.
@@ -66,7 +67,8 @@ JPEG ni con imágenes reescaladas con suavizado.
 
 1. **Hoja limpia**: frames del mismo tamaño en rejilla desde `(0, 0)`, fondo transparente, una fila por animación, con
    los frames seguidos desde la izquierda.
-2. **Ficha** (parte de `templates/card.template.json`):
+2. **Datos** para la herramienta, en un JSON (parte de `templates/card.template.json`). Ese JSON es solo la manera
+   de pasarle los datos: el formato es la imagen, y no hay que entregarlo con ella.
 
    ```json
    { "name": "Caballero azul", "kind": "character", "view": "side", "facing": "right",
@@ -80,7 +82,7 @@ JPEG ni con imágenes reescaladas con suavizado.
    Una entrada por fila, en orden. `ms`: un número (todos los frames igual) o una lista (uno por frame). Sin `ms`,
    imágenes sueltas. Nombres de fila en minúsculas: `[a-z0-9_-]`. `kind`, `view`, `facing` y `description` son
    opcionales, pero ponlos siempre que los sepas: es lo que le dice a otra IA qué está importando.
-3. `make hoja.png ficha.json -o <nombre>.spritevpg.png --preview 4`. Enseña la copia `@4x`.
+3. `make hoja.png datos.json -o <nombre>.spritevpg.png --preview 4`. Enseña la copia `@4x`.
 
 ## Las seis vistas
 
@@ -95,7 +97,7 @@ JPEG ni con imágenes reescaladas con suavizado.
 
 ## Ampliar un patrón (otra animación con el mismo estilo)
 
-1. `read` el patrón: hoja limpia, frames y ficha.
+1. `read` el patrón: hoja limpia, frames y datos.
 2. Genera los frames nuevos **forzando la vista de `view`** y la dirección de `facing`. Con un modelo de imagen:
    pásale un frame existente ampliado (a escala entera) como referencia en la primera celda de una plantilla, fondo
    magenta `#FF00FF`, y un prompt como: «Pixel art sprite sheet of the same character as in the first cell:

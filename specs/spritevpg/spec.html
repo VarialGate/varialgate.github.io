@@ -44,7 +44,7 @@ habitual de las especificaciones (RFC 2119).</p>
   <a class="sub" href="#barra">5.4 Barra final</a>
   <a href="#vistas">6. Las vistas</a>
   <a href="#leer">7. Leer un sprite pattern</a>
-  <a href="#ficha">8. La ficha en JSON</a>
+  <a href="#herramienta">8. La herramienta</a>
   <a href="#motores">9. Importar en un motor</a>
   <a href="#futuro">10. Lo que no entra en la 1.0</a>
   <a href="#recursos">11. Recursos</a>
@@ -246,33 +246,32 @@ original la letra mide 6 px de alto.</p>
     <code>(0, 0, columnas·fw, filas·fh)</code> (reduciendo antes a escala nativa con vecino más próximo si
     <code>k &gt; 1</code>). Esa es la hoja limpia.</li>
 </ol>
-<p>La herramienta de referencia lo hace todo (solo necesita Pillow):</p>
-<pre><code>python3 spritevpg.py make hoja.png ficha.json -o nombre.spritevpg.png --preview 4
+<h2 id="herramienta"><span class="n">8</span>La herramienta</h2>
+<p>El formato es la imagen: no hay ningún fichero más. Para generar y leer sprite patterns hay una herramienta de
+referencia, <a href="skill/spritevpg/scripts/spritevpg.py">spritevpg.py</a> (Python 3; solo necesita Pillow):</p>
+<pre><code>python3 spritevpg.py make hoja.png datos.json -o nombre.spritevpg.png --preview 4
 python3 spritevpg.py read nombre.spritevpg.png -o salida/ --gifs
-python3 spritevpg.py info nombre.spritevpg.png</code></pre>
-
-<h2 id="ficha"><span class="n">8</span>La ficha en JSON</h2>
-<p>Lo mismo que dice la imagen, para programas. Es lo que devuelve <code>read</code>; para <code>make</code> basta con
-<code>name</code>, <code>frame</code> y, por fila, <code>name</code>, <code>ms</code> y <code>loop</code>;
-<code>kind</code>, <code>view</code>, <code>facing</code> y <code>description</code> son opcionales. Esquema:
-<a href="schema/spritevpg-1.schema.json">spritevpg-1.schema.json</a>.</p>
+python3 spritevpg.py info nombre.spritevpg.png
+python3 spritevpg.py validate nombre.spritevpg.png</code></pre>
+<p>Para <strong>generar</strong>, se le da la hoja limpia (los frames en rejilla desde <code>0,0</code>, una animación
+por fila) y los datos que hay que escribir, en un JSON pequeño:</p>
 <pre><code>{
-  "format": "spritevpg", "version": "1.0",
-  "name": "CABALLERO AZUL",
+  "name": "Caballero azul",
   "kind": "character", "view": "side", "facing": "right",
-  "description": "CABALLERO CON ARMADURA AZUL, ESPADA Y ESCUDO",
+  "description": "Caballero con armadura azul, espada y escudo",
   "frame": { "w": 32, "h": 32 },
-  "grid": { "columns": 6, "rows": 3 },
   "rows": [
-    { "name": "idle",   "frames": 2, "ms": [400, 400], "loop": "loop" },
-    { "name": "walk",   "frames": 6, "ms": [110, 110, 110, 110, 110, 110], "loop": "loop" },
-    { "name": "attack", "frames": 4, "ms": [80, 120, 90, 160], "loop": "once" }
+    { "name": "idle",   "ms": 400, "loop": "loop" },
+    { "name": "walk",   "ms": 110, "loop": "loop" },
+    { "name": "attack", "ms": [80, 120, 90, 160], "loop": "once" }
   ]
 }</code></pre>
-<p><code>rows[r]</code> es la fila <code>r</code>. Sin <code>ms</code>, la fila son imágenes sueltas
-(<code>STILL</code>). <code>view</code> lleva los valores de la sección 6 en minúsculas (<code>three-quarter</code>,
-<code>top-down</code>…). El nombre de la hoja
-y la descripción se leen de la imagen en mayúsculas.</p>
+<p>Una entrada de <code>rows</code> por fila, en orden. <code>ms</code>: un número (todos los frames igual) o una lista
+(uno por frame); sin <code>ms</code>, la fila son imágenes sueltas. El número de frames lo cuenta la herramienta. Ese
+JSON es solo la manera de pasarle los datos: no forma parte del formato ni acompaña a la imagen.</p>
+<p>Para <strong>leer</strong>, <code>read</code> deja la hoja sin márgenes, una carpeta de frames por fila, con
+<code>--gifs</code> un GIF por animación, y los datos leídos de la imagen en ese mismo JSON, por si se quieren
+cambiar y volver a generar.</p>
 
 <h2 id="motores"><span class="n">9</span>Importar en un motor</h2>
 <div class="table-scroll"><table>
@@ -283,8 +282,7 @@ y la descripción se leen de la imagen en mayúsculas.</p>
 <tr><td>Aseprite</td><td>Importar hoja de sprites: tamaño de frame.</td></tr>
 <tr><td>Código propio</td><td>Fila <code>r</code>, columna <code>c</code>: <code>x = c·fw</code>, <code>y = r·fh</code>.</td></tr>
 </table></div>
-<p>O recortar antes: <code>spritevpg.py read</code> deja la hoja sin márgenes, una carpeta de frames por fila, la ficha
-en JSON y, con <code>--gifs</code>, un GIF por animación.</p>
+<p>O recortar antes con <code>spritevpg.py read</code> (sección 8).</p>
 
 <h2 id="futuro"><span class="n">10</span>Lo que no entra en la 1.0</h2>
 <p>La 1.0 se queda en lo imprescindible. Quedan para versiones posteriores, como zonas opcionales:
@@ -297,10 +295,8 @@ versión menor solo añadirá cosas opcionales: un lector 1.0 seguirá leyendo e
 <tr><th>Recurso</th><th>Fichero</th></tr>
 <tr><td>Figura de las seis vistas</td><td><a href="views.png">views.png</a></td></tr>
 <tr><td>Sprite pattern de ejemplo (nativo y ×4)</td><td><a href="example/caballero.spritevpg.png">caballero.spritevpg.png</a> · <a href="example/caballero.spritevpg@4x.png">@4x</a></td></tr>
-<tr><td>Su hoja limpia y su ficha de entrada</td><td><a href="example/caballero.sheet.png">caballero.sheet.png</a> · <a href="example/caballero.card.json">caballero.card.json</a></td></tr>
-<tr><td>Su ficha leída de la imagen</td><td><a href="example/caballero.spritevpg.json">caballero.spritevpg.json</a></td></tr>
+<tr><td>Su hoja limpia y los datos con los que se generó</td><td><a href="example/caballero.sheet.png">caballero.sheet.png</a> · <a href="example/caballero.card.json">caballero.card.json</a></td></tr>
 <tr><td>Fuente</td><td><a href="font/spritevpg-4x6.ttf">spritevpg-4x6.ttf</a> (<a href="font/LICENCIA.txt">licencia</a>)</td></tr>
-<tr><td>JSON Schema</td><td><a href="schema/spritevpg-1.schema.json">spritevpg-1.schema.json</a></td></tr>
 <tr><td>Skill de IA</td><td><a href="skill/spritevpg.zip">spritevpg.zip</a> · <a href="skill/spritevpg/SKILL.md">SKILL.md</a></td></tr>
 <tr><td>Herramienta (generar, leer, validar)</td><td><a href="skill/spritevpg/scripts/spritevpg.py">spritevpg.py</a></td></tr>
 </table></div>
