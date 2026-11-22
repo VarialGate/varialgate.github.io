@@ -204,7 +204,7 @@ def render(sheet, card):
     cols, nrows = card['grid']['columns'], card['grid']['rows']
     AW, AH = cols * fw, nrows * fh
     sheet = sheet.convert('RGBA').crop((0, 0, AW, AH))
-    link = norm(f'{FORMAT} {VERSION} · {URL}')
+    spec, link = norm(f'{FORMAT} {VERSION}'), norm(URL)   # las dos filas de la barra final
     lab_col = -(-(AW + 6) // CW)                  # rótulos, a la derecha de los frames
     room = max(26, len(link) + 2 - lab_col - 1)
     labels = [row_label(r, fh // CH, room) for r in card['rows']]
@@ -221,7 +221,7 @@ def render(sheet, card):
     right = subject_lines(card, wide - half - 3) if has_subject else []
     top = max(-(-(AH + 4) // CH), nxt + 1)        # barras de título
     bar = top + 1 + max(len(left), len(right)) + 1
-    W, H = wide * CW, (bar + 1) * CH
+    W, H = wide * CW, (bar + 2) * CH
     img = Image.new('RGBA', (W, H), PAPER)
     px = img.load()
     for y in range(AH):
@@ -257,7 +257,8 @@ def render(sheet, card):
     zone('SHEET', 0, half, top, left)
     if has_subject:
         zone('SUBJECT', half + 1, wide, top, right)
-    zone(link, 0, wide, bar, [])                  # barra final
+    zone(spec, 0, wide, bar, [])                  # barra final: formato y versión…
+    zone(link, 0, wide, bar + 1, [])              # …y, debajo, el enlace
     return img
 
 # ---------------------------------------------------------------- leer ------
@@ -296,15 +297,15 @@ def read_card(path):
     for k in range(1, 17):
         if img.width % (CW * k) or img.height % (CH * k):
             continue
-        last = decode_grid(img.crop((0, img.height - CH * k, img.width, img.height)), k)[0]
-        if row_text(last, True).strip().startswith(norm(FORMAT) + ' '):
+        last = decode_grid(img.crop((0, img.height - 2 * CH * k, img.width, img.height)), k)
+        if row_text(last[0], True).strip().startswith(norm(FORMAT) + ' ') and row_text(last[1], True).strip():
             break
     else:
         raise SystemExit('No es un sprite pattern: falta la barra final «SPRITEVPG …».')
     grid = decode_grid(img, k)
     # Barras de título: tramos en negativo cuyo texto es el nombre de una zona.
     bars = []
-    for r, line in enumerate(grid[:-1]):
+    for r, line in enumerate(grid[:-2]):
         c = 0
         while c < len(line):
             if line[c] and line[c][1]:
@@ -319,7 +320,7 @@ def read_card(path):
                 c += 1
     zones = {}
     for r, c0, c1, title in bars:
-        end = min([b[0] for b in bars if b[0] > r and not (b[2] < c0 or b[1] > c1)] + [len(grid) - 1])
+        end = min([b[0] for b in bars if b[0] > r and not (b[2] < c0 or b[1] > c1)] + [len(grid) - 2])
         lines = []
         for rr in range(r + 1, end):
             t = row_text(grid[rr][c0 + 1:c1 + 1])
@@ -338,7 +339,7 @@ def read_card(path):
     fw, fh = (int(x) for x in sh['FRAME'].split()[0].split('X'))
     g = sh['GRID'].split()
     cols, nrows = int(g[0]), int(g[3])
-    card = {'format': FORMAT, 'version': row_text(grid[-1], True).split()[1], 'name': sh['NAME']}
+    card = {'format': FORMAT, 'version': row_text(grid[-2], True).split()[1], 'name': sh['NAME']}
     for key in ('KIND', 'VIEW', 'FACING'):
         if key in su:
             card[key.lower()] = su[key].lower()

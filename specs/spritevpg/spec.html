@@ -63,7 +63,7 @@ ve cuando mira la imagen.</p>
     cuánto dura cada uno y cómo se reproduce;</li>
   <li>debajo, dos <strong>zonas con título</strong>: <code>SHEET</code> (cómo se corta) y <code>SUBJECT</code> (qué
     es);</li>
-  <li>y una barra final con el formato y el <strong>enlace a esta especificación</strong>.</li>
+  <li>y una barra final con el formato y su versión y, debajo, el <strong>enlace a esta especificación</strong>.</li>
 </ul>
 <p>Cada dato lleva su etiqueta delante, separada por dos puntos (<code>FRAMES: 6</code>), y sale una sola vez. Así lo entiende quien no conoce el formato, sea una persona
 o una IA que solo mira la imagen; y un programa lo lee de forma exacta, porque el texto va en una rejilla de
@@ -71,9 +71,9 @@ caracteres fija.</p>
 
 <h2 id="vista"><span class="n">2</span>Un vistazo</h2>
 <figure class="sheet">
-  <img class="px pattern" src="example/caballero.spritevpg@4x.png" width="990" alt="Sprite pattern de ejemplo: tres filas de frames de un caballero azul; a la derecha de cada fila, su rótulo: IDLE, FRAMES: 2, MS/FRAME: 400, PLAY: LOOP; WALK, FRAMES: 6, MS/FRAME: 110, PLAY: LOOP; ATTACK, FRAMES: 4, MS/FRAME: 80 120 90 160, PLAY: ONCE. Debajo, la zona SHEET (NAME, FRAME, GRID, ORIGIN) y la zona SUBJECT (KIND, VIEW, FACING, DESC). Al final, la barra SPRITEVPG 1.0 con el enlace a la especificación." loading="lazy">
+  <img class="px pattern" src="example/caballero.spritevpg@4x.png" width="990" alt="Sprite pattern de ejemplo: tres filas de frames de un caballero azul; a la derecha de cada fila, su rótulo: IDLE, FRAMES: 2, MS/FRAME: 400, PLAY: LOOP; WALK, FRAMES: 6, MS/FRAME: 110, PLAY: LOOP; ATTACK, FRAMES: 4, MS/FRAME: 80 120 90 160, PLAY: ONCE. Debajo, la zona SHEET (NAME, FRAME, GRID, ORIGIN) y la zona SUBJECT (KIND, VIEW, FACING, DESC). Al final, la barra con SPRITEVPG 1.0 y, debajo, el enlace a la especificación." loading="lazy">
   <figcaption>El ejemplo, ampliado ×4 (el damero lo pone esta página bajo lo transparente). Original:
-  <a href="example/caballero.spritevpg.png">caballero.spritevpg.png</a> (330×168).</figcaption>
+  <a href="example/caballero.spritevpg.png">caballero.spritevpg.png</a> (330×176).</figcaption>
 </figure>
 
 <h2 id="frames"><span class="n">3</span>La zona de frames</h2>
@@ -188,10 +188,11 @@ cada etiqueta son opcionales, pero <span class="kw">DEBERÍAN</span> ponerse sie
 </table></div>
 
 <h3 id="barra"><span class="n">5.4</span>La barra final</h3>
-<div class="paper">SPRITEVPG 1.0 · HTTPS://VARIALGATE.GITHUB.IO/SPECS/SPRITEVPG/</div>
-<p>La última fila de texto de la imagen, en negativo y a todo el ancho: <code>SPRITEVPG</code>, la versión y el enlace
-a esta especificación. Identifica el formato, dice dónde leer los detalles y sirve para calcular la escala de una
-copia ampliada.</p>
+<div class="paper">SPRITEVPG 1.0
+HTTPS://VARIALGATE.GITHUB.IO/SPECS/SPRITEVPG/</div>
+<p>Las dos últimas filas de texto de la imagen, en negativo y a todo el ancho: en la primera, <code>SPRITEVPG</code> y
+la versión; en la segunda, el enlace a esta especificación. Identifican el formato, dicen dónde leer los detalles y
+sirven para calcular la escala de una copia ampliada.</p>
 
 <h2 id="vistas"><span class="n">6</span>Las vistas</h2>
 <p>El valor de <code>VIEW</code> es una de estas seis. Forman parte del formato para que todo el mundo llame igual a
@@ -231,7 +232,7 @@ original la letra mide 6 px de alto.</p>
 <p><strong>Con un programa</strong>, de forma exacta:</p>
 <ol>
   <li><strong>Escala.</strong> Para <code>k = 1, 2, 3…</code>: si el ancho es múltiplo de <code>5k</code> y el alto de
-    <code>8k</code>, leer la última fila de celdas. Si es una barra en negativo que empieza por
+    <code>8k</code>, leer las dos últimas filas de celdas. Si son una barra en negativo y la primera empieza por
     <code>SPRITEVPG</code>, esa es la escala.</li>
   <li><strong>Texto.</strong> Leer todas las celdas, comparándolas con la tabla de la fuente y anotando cuáles van en
     negativo.</li>

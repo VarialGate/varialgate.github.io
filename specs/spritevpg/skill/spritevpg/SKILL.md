@@ -1,6 +1,6 @@
 ---
 name: spritevpg
-description: Entender, recortar, validar, generar y ampliar sprite patterns SpriteVPG (Sprite Varial Pixel Gen) — hojas de sprites PNG con los frames limpios desde la esquina de arriba a la izquierda, una animación por fila con su rótulo a la derecha (nombre, «FRAMES: 6», «MS/FRAME: 110», «PLAY: LOOP»), y debajo dos zonas con barra de título, SHEET (NAME, FRAME, GRID) y SUBJECT (KIND, VIEW, FACING, DESC), y una barra final «SPRITEVPG 1.0 · HTTPS://VARIALGATE.GITHUB.IO/SPECS/SPRITEVPG/». Úsalo cuando aparezca un fichero *.spritevpg.png o una hoja de sprites con ese aspecto, o cuando se pida crear, leer, importar en un motor, recortar, animar o añadir animaciones a una hoja de sprites en este formato.
+description: Entender, recortar, validar, generar y ampliar sprite patterns SpriteVPG (Sprite Varial Pixel Gen) — hojas de sprites PNG con los frames limpios desde la esquina de arriba a la izquierda, una animación por fila con su rótulo a la derecha (nombre, «FRAMES: 6», «MS/FRAME: 110», «PLAY: LOOP»), y debajo dos zonas con barra de título, SHEET (NAME, FRAME, GRID) y SUBJECT (KIND, VIEW, FACING, DESC), y una barra final con «SPRITEVPG 1.0» y, debajo, «HTTPS://VARIALGATE.GITHUB.IO/SPECS/SPRITEVPG/». Úsalo cuando aparezca un fichero *.spritevpg.png o una hoja de sprites con ese aspecto, o cuando se pida crear, leer, importar en un motor, recortar, animar o añadir animaciones a una hoja de sprites en este formato.
 ---
 
 # SpriteVPG: sprite patterns
@@ -26,7 +26,7 @@ Un **sprite pattern** es una hoja de sprites PNG que dice ella misma cómo se co
 - **`SHEET`**, debajo: `NAME: …`, `FRAME: 32X32 PX`, `GRID: 6 COLUMNS X 3 ROWS`, `ORIGIN: TOP-LEFT 0,0, NO GAPS`.
 - **`SUBJECT`** (opcional): `KIND:` (character, creature, item, prop, building, effect, tile, ui), `VIEW:` (una de
   las seis vistas de abajo), `FACING:` (right, left, up, down o una diagonal) y `DESC:` (frase breve).
-- **Barra final**: `SPRITEVPG 1.0 · HTTPS://VARIALGATE.GITHUB.IO/SPECS/SPRITEVPG/`.
+- **Barra final**, en dos filas: `SPRITEVPG 1.0` y, debajo, `HTTPS://VARIALGATE.GITHUB.IO/SPECS/SPRITEVPG/`.
 - Texto en mayúsculas con la fuente SpriteVPG 4×6, en celdas de 5×8 px, tinta `#1F2A44` sobre papel `#F3EEDD`.
 
 Especificación: https://varialgate.github.io/specs/spritevpg/spec.html
