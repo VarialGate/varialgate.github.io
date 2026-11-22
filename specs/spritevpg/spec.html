@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Especificación SpriteVPG 1.0 · Varial Gate</title>
+<meta name="description" content="Especificación de SpriteVPG 1.0: hojas de sprites (sprite patterns) con los frames limpios desde la esquina, una animación por fila y lo imprescindible para cortarlas y animarlas escrito en la propia imagen.">
+<meta name="theme-color" content="#0b0a14">
+<link rel="stylesheet" href="spritevpg.css">
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <a class="home" href="/">Varial Gate</a>
+  <nav>
+    <a href="./">Sumario</a>
+    <a href="spec.html" aria-current="page">Especificación</a>
+    <a href="#recursos">Descargas</a>
+  </nav>
+</header>
+
+<p class="eyebrow">ESPECIFICACIÓN 1.0</p>
+<h1 class="pixel-title">SPRITEVPG</h1>
+<p class="lead">Sprite Varial Pixel Gen: una hoja de sprites que dice ella misma cómo se corta y cómo se anima. Los
+frames van limpios desde la esquina de arriba a la izquierda, una animación por fila, y lo imprescindible va escrito
+al lado y debajo.</p>
+<p class="muted">Versión 1.0 · 22-11-2026 · Varial Gate. Las palabras <span class="kw">DEBE</span>,
+<span class="kw">NO DEBE</span>, <span class="kw">DEBERÍA</span> y <span class="kw">PUEDE</span> tienen el sentido
+habitual de las especificaciones (RFC 2119).</p>
+
+<div class="layout">
+<aside aria-label="Índice">
+  <a href="#intro">1. Qué es</a>
+  <a href="#vista">2. Un vistazo</a>
+  <a href="#frames">3. La zona de frames</a>
+  <a class="sub" href="#celda">3.1 El tamaño de celda</a>
+  <a href="#texto">4. El texto</a>
+  <a class="sub" href="#rejilla">4.1 Rejilla de caracteres</a>
+  <a class="sub" href="#fuente">4.2 Fuente</a>
+  <a class="sub" href="#colores">4.3 Colores</a>
+  <a href="#zonas">5. La información</a>
+  <a class="sub" href="#z-rows">5.1 Rótulo de cada fila</a>
+  <a class="sub" href="#z-sheet">5.2 SHEET</a>
+  <a class="sub" href="#z-subject">5.3 SUBJECT</a>
+  <a class="sub" href="#z-agents">5.4 AGENTS</a>
+  <a class="sub" href="#barra">5.5 Barra final</a>
+  <a href="#vistas">6. Las vistas</a>
+  <a href="#leer">7. Leer un sprite pattern</a>
+  <a href="#herramienta">8. La herramienta</a>
+  <a href="#motores">9. Importar en un motor</a>
+  <a href="#futuro">10. Lo que no entra en la 1.0</a>
+  <a href="#recursos">11. Recursos</a>
+</aside>
+<main>
+
+<h2 id="intro"><span class="n">1</span>Qué es</h2>
+<p>Una hoja de sprites normal no dice de qué tamaño son los frames, qué animación hay en cada fila ni a qué ritmo va.
+Eso suele ir en un fichero aparte que se pierde, o en metadatos que borran las redes y los mensajeros y que una IA no
+ve cuando mira la imagen.</p>
+<p>Un <strong>sprite pattern</strong> lleva lo imprescindible dibujado en la propia imagen, como un patrón de costura:</p>
+<ul>
+  <li>los <strong>frames</strong>, en una rejilla pura desde <code>(0, 0)</code>, con <strong>una animación por
+    fila</strong>;</li>
+  <li>a la derecha de cada fila, su <strong>rótulo</strong>: el nombre de la animación, cuántos frames tiene,
+    cuánto dura cada uno y cómo se reproduce;</li>
+  <li>debajo, las <strong>zonas con título</strong>: <code>SHEET</code> (cómo se corta), <code>SUBJECT</code> (qué
+    es) y, si el autor quiere, <code>AGENTS</code> (qué debe hacer una IA al usarla en una aplicación y al ampliarla);</li>
+  <li>y una barra final con el formato y su versión y, debajo, el <strong>enlace a esta especificación</strong>.</li>
+</ul>
+<p>Cada dato lleva su etiqueta delante, separada por dos puntos (<code>FRAMES: 6</code>), y sale una sola vez. Así lo entiende quien no conoce el formato, sea una persona
+o una IA que solo mira la imagen; y un programa lo lee de forma exacta, porque el texto va en una rejilla de
+caracteres fija.</p>
+
+<h2 id="vista"><span class="n">2</span>Un vistazo</h2>
+<figure class="sheet">
+  <img class="px pattern" src="example/caballero.spritevpg@4x.png" width="990" alt="Sprite pattern de ejemplo: tres filas de frames de un caballero azul; a la derecha de cada fila, su rótulo: IDLE, FRAMES: 2, MS/FRAME: 400, PLAY: LOOP; WALK, FRAMES: 6, MS/FRAME: 110, PLAY: LOOP; ATTACK, FRAMES: 4, MS/FRAME: 80 120 90 160, PLAY: ONCE. Debajo, la zona SHEET (NAME, FRAME, GRID, ORIGIN, BODY, PIVOT), la zona SUBJECT (KIND, VIEW, FACING, DESC) y la zona AGENTS con tres indicaciones IMPLEMENT y tres EXTEND. Al final, la barra con SPRITEVPG 1.0 y, debajo, el enlace a la especificación." loading="lazy">
+  <figcaption>El ejemplo, ampliado ×4 (el damero lo pone esta página bajo lo transparente). Original:
+  <a href="example/caballero.spritevpg.png">caballero.spritevpg.png</a> (330×272).</figcaption>
+</figure>
+
+<h2 id="frames"><span class="n">3</span>La zona de frames</h2>
+<div class="must">
+<p>Un sprite pattern <span class="kw">DEBE</span> ser un PNG con transparencia. La zona de frames
+<span class="kw">DEBE</span> empezar en <code>(0, 0)</code> y medir <code>columnas·fw</code> por
+<code>filas·fh</code>, sin margen ni separación. Dentro <span class="kw">NO DEBE</span> haber nada más que los
+frames: ni texto ni marcas.</p>
+</div>
+<ul>
+  <li>Todos los frames miden lo mismo, <code>fw × fh</code>. El frame de la fila <code>r</code> y la columna
+    <code>c</code> está en <code>x = c·fw</code>, <code>y = r·fh</code>.</li>
+  <li><strong>Una fila, una animación</strong> (o un grupo de imágenes sueltas). Sus frames van seguidos desde la
+    izquierda, en orden; las celdas que sobran a la derecha quedan transparentes.</li>
+  <li>Una línea de tinta de 1 px bordea la zona por fuera (la columna <code>x = columnas·fw</code> y la fila
+    <code>y = filas·fh</code>), con una marca de 3 px en cada borde entre filas y entre columnas.</li>
+  <li>La hoja <span class="kw">PUEDE</span> ampliarse a escala entera sin suavizado y sigue siendo válida.
+    <span class="kw">NO DEBE</span> guardarse en JPEG ni otro formato con pérdida.</li>
+  <li>Nombre recomendado: <code>&lt;nombre&gt;.spritevpg.png</code>.</li>
+</ul>
+
+<h3 id="celda"><span class="n">3.1</span>Elegir el tamaño de celda</h3>
+<p>La hoja tiene <strong>un único tamaño de celda</strong>, el mismo en todas las filas: así cualquier motor la corta
+con una rejilla. Ese tamaño lo marca la animación que más se sale, no el dibujo quieto.</p>
+<ul>
+  <li><strong>Si una animación necesita más sitio</strong> (un ataque que alarga la espada, un salto), se agrandan
+    <strong>todas</strong> las celdas, no solo las de su fila. Un personaje que quieto ocupa 16 px suele ir en celdas
+    de 24 o de 32.</li>
+  <li><strong>El cuerpo va en el mismo sitio de la celda en todas las filas</strong>: si no, daría un salto al cambiar
+    de animación. Ese sitio lo dicen <code>BODY</code> y <code>PIVOT</code> (<a href="#z-sheet">5.2</a>).</li>
+  <li><strong>No tiene que ir centrado.</strong> Si el ataque solo se sale por la derecha, las celdas se ensanchan por
+    la derecha y el cuerpo se queda a la izquierda en todas: las demás animaciones solo tienen más transparente a
+    ese lado.</li>
+  <li><strong>El espacio vacío no cuesta</strong>: lo transparente casi no pesa en un PNG. Lo que no se debe hacer
+    nunca es encoger o deformar los frames que se salen para meterlos en la celda: el personaje cambiaría de tamaño
+    al animarse.</li>
+</ul>
+<p>Cuando una sola animación es desproporcionada (un ataque tres veces más ancho que el personaje), agrandar todas
+las celdas deja de compensar. Entonces:</p>
+<ul>
+  <li><strong>Sacar el efecto aparte.</strong> El personaje hace el gesto en su celda normal, y el arco del espadazo,
+    el proyectil o la explosión van en otro sprite pattern, de tipo <code>EFFECT</code>, que el juego dibuja encima.
+    Se indica en <code>AGENTS</code>: <code>IMPLEMENT: EN ATTACK, DIBUJAR ENCIMA EL EFECTO SLASH DESDE EL TERCER
+    FRAME.</code></li>
+  <li><strong>O dar a esa animación su propia hoja</strong>, con su tamaño de celda y el <code>PIVOT</code> sobre el
+    mismo punto del personaje (los pies), para que encaje con las demás al cambiar de una a otra.</li>
+</ul>
+
+<h2 id="texto"><span class="n">4</span>El texto</h2>
+
+<h3 id="rejilla"><span class="n">4.1</span>La rejilla de caracteres</h3>
+<div class="must">
+<p>Toda la imagen se divide en <strong>celdas de texto de 5×8 px</strong> con origen en <code>(0, 0)</code>. Todo
+carácter <span class="kw">DEBE</span> caer exactamente en una celda. El ancho de la imagen es múltiplo de 5 y el alto,
+múltiplo de 8.</p>
+</div>
+<p>Dentro de la celda, la fila 0 es para la tilde, las filas 1 a 6 y las columnas 0 a 3 para el glifo de 4×6, y la
+fila 7 y la columna 4 quedan libres. Un carácter va en tinta sobre papel o, en las barras de título, <strong>en
+negativo</strong> (papel sobre tinta, con la celda entera rellena). Así el texto se lee sin ambigüedad: se mira cada
+celda y se compara con la tabla de la fuente.</p>
+
+<h3 id="fuente"><span class="n">4.2</span>La fuente: SpriteVPG 4×6</h3>
+<p><a href="font/spritevpg-4x6.ttf">SpriteVPG 4×6</a>: mayúsculas, cifras, vocales con tilde, Ü, Ñ y los signos
+<code>. , : ; - + / ( ) [ ] = # &lt; &gt; * % _ " ' ! ? ¿ ¡ &amp; ·</code>, sin suavizado. El texto se escribe siempre en
+mayúsculas.</p>
+<p class="paper">ABCDEFGHIJKLMNÑOPQRSTUVWXYZ ÁÉÍÓÚÜ
+0123456789 .,:;-+/()[]=#&lt;&gt;*%_"'!?¿¡&amp;·</p>
+<p class="muted">En la TTF, a 8 px por em (o múltiplos: 16, 24, 32…) un píxel de la fuente es un píxel de pantalla.
+Licencia SIL Open Font License 1.1. La tabla de glifos, píxel a píxel, está en
+<a href="skill/spritevpg/scripts/spritevpg.py">spritevpg.py</a>.</p>
+
+<h3 id="colores"><span class="n">4.3</span>Colores</h3>
+<div class="table-scroll"><table>
+<tr><th>Uso</th><th>Color</th></tr>
+<tr><td>Papel (fondo de los márgenes)</td><td><span class="swatch" style="background:#F3EEDD"></span><code>#F3EEDD</code></td></tr>
+<tr><td>Tinta (texto, borde y barras)</td><td><span class="swatch" style="background:#1F2A44"></span><code>#1F2A44</code></td></tr>
+<tr><td>Muescas del punto de apoyo</td><td><span class="swatch" style="background:#D6336C"></span><code>#D6336C</code></td></tr>
+<tr><td>Regla entre los rótulos de fila</td><td><span class="swatch" style="background:#9AA3B5"></span><code>#9AA3B5</code></td></tr>
+</table></div>
+<p>Papel y tinta <span class="kw">DEBEN</span> ser exactamente esos colores: con ellos se lee el texto. Los frames
+pueden usar cualquiera.</p>
+
+<h2 id="zonas"><span class="n">5</span>La información</h2>
+<p>Todo dato se escribe como <strong><code>ETIQUETA: valor</code></strong>, con dos puntos entre la etiqueta y el
+valor. Un texto que no cabe sigue en la línea de abajo, sangrado: una línea que empieza con espacio continúa la
+anterior.</p>
+
+<h3 id="z-rows"><span class="n">5.1</span>El rótulo de cada fila: cómo se anima</h3>
+<p>A la derecha de la zona de frames (desde la primera columna de texto tras <code>columnas·fw + 6</code> px), junto a
+cada fila, va su rótulo: el <strong>nombre</strong> de la animación y, sangrados debajo, sus datos.</p>
+<div class="paper">ATTACK
+  FRAMES: 4
+  MS/FRAME: 80 120 90 160
+  PLAY: ONCE</div>
+<div class="table-scroll"><table>
+<tr><th>Línea</th><th>Significado</th></tr>
+<tr><td>Nombre</td><td>El de la animación: letras, cifras, <code>_</code> y <code>-</code>. Se recomiendan <code>idle</code>, <code>walk</code>, <code>run</code>, <code>jump</code>, <code>attack</code>, <code>hurt</code>, <code>death</code>…</td></tr>
+<tr><td><code>FRAMES</code></td><td>Cuántos frames tiene, desde la izquierda de la fila</td></tr>
+<tr><td><code>MS/FRAME</code></td><td>Milisegundos que dura cada frame. Un número: todos igual. Varios: uno por frame, en orden</td></tr>
+<tr><td><code>PLAY</code></td><td><code>LOOP</code> (en bucle), <code>ONCE</code> (una vez; se queda en el último frame) o <code>STILL</code> (no es una animación: son imágenes sueltas, y no lleva <code>MS/FRAME</code>)</td></tr>
+</table></div>
+<ul>
+  <li>Hay <strong>un rótulo por fila, en el orden de las filas</strong>. Cada uno <span class="kw">DEBERÍA</span> ir a
+    la altura de su fila, con una regla gris entre uno y otro.</li>
+  <li>Si la fila es baja y no caben las cuatro líneas, los datos van seguidos, separados por <code>·</code>:
+    <code>ITEMS · FRAMES: 5 · PLAY: STILL</code>. Si aun así no caben junto a su fila, los rótulos van uno debajo de
+    otro: lo que cuenta es el orden.</li>
+</ul>
+
+<p>Debajo de la zona de frames van las <strong>zonas</strong>: <code>SHEET</code> y <code>SUBJECT</code>, una al lado
+de la otra, y <code>AGENTS</code>, a todo el ancho. Cada una empieza con una
+<strong>barra de título</strong> en negativo con su nombre (desde la segunda celda de la barra) y sigue con sus líneas,
+con los valores alineados. Un lector las localiza por su barra, no por su posición.</p>
+
+<h3 id="z-sheet"><span class="n">5.2</span><code>SHEET</code>: cómo se corta</h3>
+<div class="paper">NAME:   CABALLERO AZUL
+FRAME:  32X32 PX
+GRID:   6 COLUMNS X 3 ROWS
+ORIGIN: TOP-LEFT 0,0, NO GAPS
+BODY:   21X32 PX AT 5,0
+PIVOT:  15,31</div>
+<div class="table-scroll"><table>
+<tr><th>Etiqueta</th><th>Valor</th></tr>
+<tr><td><code>NAME</code></td><td>El nombre de la hoja. Obligatoria</td></tr>
+<tr><td><code>FRAME</code></td><td><code>anchoXalto PX</code>: el tamaño de cada frame. Obligatoria</td></tr>
+<tr><td><code>GRID</code></td><td><code>n COLUMNS X m ROWS</code>: columnas y filas de la zona de frames. Obligatoria</td></tr>
+<tr><td><code>ORIGIN</code></td><td>Siempre <code>TOP-LEFT 0,0, NO GAPS</code>: los frames empiezan arriba a la izquierda, sin margen ni separación. Es una constante del formato; se escribe para quien no lo conoce</td></tr>
+<tr><td><code>BODY</code></td><td><code>anchoXalto PX AT x,y</code>: lo que ocupa el dibujo <strong>quieto</strong> dentro de cada frame, y dónde empieza (su esquina de arriba a la izquierda, en píxeles del frame). Opcional</td></tr>
+<tr><td><code>PIVOT</code></td><td><code>x,y</code>: el punto del frame por el que se coloca el dibujo en el juego, el mismo en todos los frames. En personajes, entre los pies. Opcional</td></tr>
+</table></div>
+<p><strong>Celda y cuerpo no son lo mismo.</strong> La celda da cabida a la animación que más se sale
+(<a href="#celda">3.1</a>), así que suele ser mayor que el dibujo quieto. <code>BODY</code> dice dónde está
+ese cuerpo dentro de la celda y cuánto mide, y <code>PIVOT</code>, por qué punto se coloca: quien use la hoja pone el
+<code>PIVOT</code> en la posición del personaje y usa <code>BODY</code> (no la celda) para lo que ocupa en el juego.
+Cuando la hoja lleva <code>PIVOT</code>, una <strong>muesca</strong> de color <code>#D6336C</code> lo marca en el borde
+de la zona de frames: a la derecha de cada fila, a su altura, y debajo de cada columna.</p>
+
+<h3 id="z-subject"><span class="n">5.3</span><code>SUBJECT</code>: qué es</h3>
+<div class="paper">KIND:   CHARACTER
+VIEW:   SIDE
+FACING: RIGHT
+DESC:   CABALLERO CON ARMADURA AZUL, ESPADA Y ESCUDO</div>
+<p>Dice a quien importa la hoja qué tiene delante, y a quien la amplía, cómo tiene que dibujar lo nuevo. La zona y
+cada etiqueta son opcionales, pero <span class="kw">DEBERÍAN</span> ponerse siempre que se sepan.</p>
+<div class="table-scroll"><table>
+<tr><th>Etiqueta</th><th>Valor</th></tr>
+<tr><td><code>KIND</code></td><td><code>CHARACTER</code> (personaje), <code>CREATURE</code> (criatura), <code>ITEM</code> (objeto que se coge o se usa), <code>PROP</code> (decorado), <code>BUILDING</code> (construcción), <code>EFFECT</code> (efecto), <code>TILE</code> (casilla) o <code>UI</code> (interfaz)</td></tr>
+<tr><td><code>VIEW</code></td><td>Una de las seis vistas de la <a href="#vistas">sección 6</a>: <code>SIDE</code>, <code>FRONT</code>, <code>THREE-QUARTER</code>, <code>NEAR-TOP-DOWN</code>, <code>TOP-DOWN</code> o <code>ISOMETRIC</code></td></tr>
+<tr><td><code>FACING</code></td><td>Hacia dónde mira el dibujo: <code>RIGHT</code>, <code>LEFT</code>, <code>UP</code>, <code>DOWN</code>, <code>DOWN-RIGHT</code>, <code>DOWN-LEFT</code>, <code>UP-RIGHT</code> o <code>UP-LEFT</code></td></tr>
+<tr><td><code>DESC</code></td><td>Una frase breve, en el idioma de quien la escribe</td></tr>
+</table></div>
+
+<h3 id="z-agents"><span class="n">5.4</span><code>AGENTS</code>: indicaciones para una IA</h3>
+<div class="paper">IMPLEMENT: PARA MIRAR A LA IZQUIERDA, VOLTEAR EN HORIZONTAL.
+IMPLEMENT: AÑADIR UNA SOMBRA ELÍPTICA BAJO LOS PIES.
+IMPLEMENT: EN ATTACK, EL GOLPE HACE DAÑO EN EL TERCER FRAME.
+EXTEND:    CONTORNO OSCURO DE 1 PX, TRES TONOS DE AZUL, LUZ
+           ARRIBA A LA IZQUIERDA.
+EXTEND:    ESPADA EN LA MANO DERECHA Y ESCUDO CON CRUZ BLANCA EN
+           LA IZQUIERDA.</div>
+<p>Las indicaciones del autor para la IA que trabaje con <strong>esta hoja</strong>. Son propias de cada hoja, no
+instrucciones generales del formato (esas están en esta especificación). La zona es opcional, y el texto, libre, en
+el idioma de quien lo escribe. Cada indicación lleva delante cuándo se aplica:</p>
+<div class="table-scroll"><table>
+<tr><th>Etiqueta</th><th>Cuándo</th><th>Qué conviene poner</th></tr>
+<tr><td><code>IMPLEMENT</code></td><td>Al <strong>usar</strong> la hoja en un juego o una aplicación: lo que tiene que programar quien la integra</td><td>Lo que debe hacer el código y que no está dibujado: de qué dirección se saca otra volteando, los <strong>efectos que añade la aplicación</strong> (una sombra, un brillo, un parpadeo al recibir daño, partículas), en qué frame pasa algo (el golpe, un paso), con qué se encadena una animación</td></tr>
+<tr><td><code>EXTEND</code></td><td>Al <strong>ampliar</strong> la hoja con una IA: otra animación, otra dirección, otro objeto del conjunto</td><td>El estilo (contorno, tonos por color, dirección de la luz), las proporciones y el tamaño del dibujo dentro del frame, y lo que no debe cambiar (qué lleva en cada mano, qué se ve siempre)</td></tr>
+<tr><td><code>NOTE</code></td><td>Siempre</td><td>Cualquier otra cosa que deba saber</td></tr>
+</table></div>
+<ul>
+  <li>Una indicación por línea; si no cabe, sigue en la de abajo, sangrada.</li>
+  <li>No hace falta repetir lo que ya dicen las otras zonas: la vista y hacia dónde mira están en
+    <code>SUBJECT</code>; el tamaño de frame, en <code>SHEET</code>; el ritmo, en el rótulo de cada fila.</li>
+  <li>Una IA que use o amplíe la hoja <span class="kw">DEBERÍA</span> seguir estas indicaciones; si no puede
+    cumplir alguna (un efecto que su motor no tiene), <span class="kw">DEBERÍA</span> decirlo en vez de ignorarla.</li>
+</ul>
+
+<h3 id="barra"><span class="n">5.5</span>La barra final</h3>
+<div class="paper">SPRITEVPG 1.0
+HTTPS://VARIALGATE.GITHUB.IO/SPECS/SPRITEVPG/</div>
+<p>Las dos últimas filas de texto de la imagen, en negativo y a todo el ancho: en la primera, <code>SPRITEVPG</code> y
+la versión; en la segunda, el enlace a esta especificación. Identifican el formato, dicen dónde leer los detalles y
+sirven para calcular la escala de una copia ampliada.</p>
+
+<h2 id="vistas"><span class="n">6</span>Las vistas</h2>
+<p>El valor de <code>VIEW</code> es una de estas seis. Forman parte del formato para que todo el mundo llame igual a
+cada una y, sobre todo, para que quien amplíe la hoja (otra animación, otro objeto del mismo conjunto) sepa qué
+vista tiene que forzar.</p>
+<figure class="sheet">
+  <img class="px" src="views.png" width="900" alt="La misma casa y el mismo personaje dibujados en las seis vistas: SIDE, FRONT, THREE-QUARTER, NEAR-TOP-DOWN, TOP-DOWN e ISOMETRIC." loading="lazy">
+  <figcaption>La misma casa y el mismo personaje en las seis vistas.</figcaption>
+</figure>
+<div class="table-scroll"><table>
+<tr><th>Valor</th><th>Vista</th><th>Qué se ve</th><th>Para qué juegos</th></tr>
+<tr><td><code>SIDE</code></td><td>Lateral</td><td>De lado, a la altura de los ojos. No se ve la parte de arriba</td><td>Plataformas, lucha</td></tr>
+<tr><td><code>FRONT</code></td><td>Frontal</td><td>De frente, a la altura de los ojos. No se ve la parte de arriba</td><td>Iconos, inventario, retratos</td></tr>
+<tr><td><code>THREE-QUARTER</code></td><td>3/4 cenital</td><td>Desde arriba a unos 45°: se ven el techo y la fachada, y el techo ocupa un tercio del alto</td><td>RPG clásicos de 16 bits</td></tr>
+<tr><td><code>NEAR-TOP-DOWN</code></td><td>Cenital oblicua</td><td>Casi desde encima: el techo ocupa casi todo y la fachada es una franja fina abajo</td><td>Gestión y colonias</td></tr>
+<tr><td><code>TOP-DOWN</code></td><td>Cenital</td><td>Desde arriba del todo: solo techos, copas y cabezas</td><td>Estrategia, mapas</td></tr>
+<tr><td><code>ISOMETRIC</code></td><td>Isométrica</td><td>En diagonal desde una esquina, proyección 2:1: la parte de arriba es un rombo y se ven dos caras laterales</td><td>Construcción, tácticas</td></tr>
+</table></div>
+<h4>Para forzar la vista al generar con IA</h4>
+<p>Estas frases, en inglés, son las que mejor siguen los modelos de imagen. Se añaden al prompt tal cual, junto con
+«Use exactly this same camera angle in every frame»:</p>
+<div class="table-scroll"><table>
+<tr><th>Vista</th><th>Frase</th></tr>
+<tr><td><code>SIDE</code></td><td>side view: seen straight from the side at eye level, the top is not visible</td></tr>
+<tr><td><code>FRONT</code></td><td>front view: seen straight from the front at eye level, the top is not visible</td></tr>
+<tr><td><code>THREE-QUARTER</code></td><td>three-quarter top-down view (3/4 overhead, like a classic 16-bit RPG): seen from above at about 45 degrees, showing the top and the front face, with the top taking about a third of the height</td></tr>
+<tr><td><code>NEAR-TOP-DOWN</code></td><td>near top-down view (like a colony management game): seen from almost directly above, mostly the top is visible plus a thin strip of the front face at the bottom</td></tr>
+<tr><td><code>TOP-DOWN</code></td><td>top-down view: seen from directly above, only roofs, tree crowns and tops are visible; walls, trunks and front faces are not visible at all</td></tr>
+<tr><td><code>ISOMETRIC</code></td><td>isometric view: 2:1 pixel art isometric projection, the top is a diamond and two side faces are visible</td></tr>
+</table></div>
+<p class="muted">Con personajes, añadir hacia dónde mira (<code>FACING</code>): «facing right», «facing down-right»…</p>
+
+<h2 id="leer"><span class="n">7</span>Leer un sprite pattern</h2>
+<p><strong>Mirando la imagen</strong> (una persona, o una IA sin herramientas): <code>SHEET</code> dice cómo cortar,
+<code>SUBJECT</code> qué es, el rótulo de cada fila, cómo se anima, y <code>AGENTS</code>, qué programar al usarla y
+qué respetar al ampliarla. Mejor con una copia ampliada (×4): a tamaño
+original la letra mide 6 px de alto.</p>
+<p><strong>Con un programa</strong>, de forma exacta:</p>
+<ol>
+  <li><strong>Escala.</strong> Para <code>k = 1, 2, 3…</code>: si el ancho es múltiplo de <code>5k</code> y el alto de
+    <code>8k</code>, leer las dos últimas filas de celdas. Si son una barra en negativo y la primera empieza por
+    <code>SPRITEVPG</code>, esa es la escala.</li>
+  <li><strong>Texto.</strong> Leer todas las celdas, comparándolas con la tabla de la fuente y anotando cuáles van en
+    negativo.</li>
+  <li><strong>Zonas.</strong> Cada tramo en negativo cuyo texto es <code>SHEET</code>, <code>SUBJECT</code> o
+    <code>AGENTS</code> es una barra de título. El contenido de la zona son las líneas de debajo, a su ancho, hasta la siguiente barra; las que
+    empiezan con espacio continúan la anterior. En cada línea, la etiqueta va antes de los dos puntos.</li>
+  <li><strong>Rótulos.</strong> El texto a la derecha de la zona de frames, por encima de las barras, de arriba
+    abajo, uniendo las líneas sangradas a la anterior: el rótulo número <code>r</code> es el de la fila
+    <code>r</code>.</li>
+  <li><strong>Frames.</strong> Con <code>FRAME</code> y <code>GRID</code>: recortar
+    <code>(0, 0, columnas·fw, filas·fh)</code> (reduciendo antes a escala nativa con vecino más próximo si
+    <code>k &gt; 1</code>). Esa es la hoja limpia.</li>
+</ol>
+<h2 id="herramienta"><span class="n">8</span>La herramienta</h2>
+<p>El formato es la imagen: no hay ningún fichero más. Para generar y leer sprite patterns hay una herramienta de
+referencia, <a href="skill/spritevpg/scripts/spritevpg.py">spritevpg.py</a> (Python 3; solo necesita Pillow):</p>
+<pre><code>python3 spritevpg.py make hoja.png datos.json -o nombre.spritevpg.png --preview 4
+python3 spritevpg.py read nombre.spritevpg.png -o salida/ --gifs
+python3 spritevpg.py info nombre.spritevpg.png
+python3 spritevpg.py validate nombre.spritevpg.png</code></pre>
+<p>Para <strong>generar</strong>, se le da la hoja limpia (los frames en rejilla desde <code>0,0</code>, una animación
+por fila) y los datos que hay que escribir, en un JSON pequeño:</p>
+<pre><code>{
+  "name": "Caballero azul",
+  "kind": "character", "view": "side", "facing": "right",
+  "description": "Caballero con armadura azul, espada y escudo",
+  "agents": {
+    "implement": ["Para mirar a la izquierda, voltear en horizontal.",
+                  "Añadir una sombra elíptica bajo los pies."],
+    "extend": ["Contorno oscuro de 1 px, tres tonos de azul, luz arriba a la izquierda."]
+  },
+  "frame": { "w": 32, "h": 32 },
+  "body": { "x": 5, "y": 0, "w": 21, "h": 32 },
+  "pivot": { "x": 15, "y": 31 },
+  "rows": [
+    { "name": "idle",   "ms": 400, "loop": "loop" },
+    { "name": "walk",   "ms": 110, "loop": "loop" },
+    { "name": "attack", "ms": [80, 120, 90, 160], "loop": "once" }
+  ]
+}</code></pre>
+<p>Una entrada de <code>rows</code> por fila, en orden. <code>ms</code>: un número (todos los frames igual) o una lista
+(uno por frame); sin <code>ms</code>, la fila son imágenes sueltas. <code>body</code> y <code>pivot</code> admiten <code>"auto"</code>: la herramienta mide el primer frame y pone el
+apoyo en el centro de su base. <code>agents</code>: las indicaciones de la zona
+<code>AGENTS</code>, en listas <code>implement</code>, <code>extend</code> y <code>note</code>. El número de frames lo cuenta la herramienta. Ese
+JSON es solo la manera de pasarle los datos: no forma parte del formato ni acompaña a la imagen.</p>
+<p>Para <strong>leer</strong>, <code>read</code> deja la hoja sin márgenes, una carpeta de frames por fila, con
+<code>--gifs</code> un GIF por animación, y los datos leídos de la imagen en ese mismo JSON, por si se quieren
+cambiar y volver a generar.</p>
+
+<h2 id="motores"><span class="n">9</span>Importar en un motor</h2>
+<div class="table-scroll"><table>
+<tr><th>Motor</th><th>Cómo</th></tr>
+<tr><td>Unity</td><td>Sprite Editor → Slice → Grid By Cell Size: <code>fw × fh</code>, Offset 0, Padding 0. Las celdas de los márgenes se descartan.</td></tr>
+<tr><td>Godot 4</td><td>SpriteFrames → Añadir frames desde hoja: tamaño de frame, sin offset ni separación; elegir los frames de cada fila.</td></tr>
+<tr><td>Tiled</td><td>Tileset: casilla <code>fw × fh</code>, Margin 0, Spacing 0.</td></tr>
+<tr><td>Aseprite</td><td>Importar hoja de sprites: tamaño de frame.</td></tr>
+<tr><td>Código propio</td><td>Fila <code>r</code>, columna <code>c</code>: <code>x = c·fw</code>, <code>y = r·fh</code>.</td></tr>
+</table></div>
+<p>O recortar antes con <code>spritevpg.py read</code> (sección 8).</p>
+
+<h2 id="futuro"><span class="n">10</span>Lo que no entra en la 1.0</h2>
+<p>La 1.0 se queda en lo imprescindible. Quedan para versiones posteriores, como zonas opcionales:
+las cajas de colisión y de golpe, los puntos de enganche, los eventos por frame (un paso, el
+golpe), las direcciones y sus volteos, los estados de objetos y construcciones y la paleta. Una
+versión menor solo añadirá cosas opcionales: un lector 1.0 seguirá leyendo esas hojas ignorando lo nuevo.</p>
+
+<h2 id="recursos"><span class="n">11</span>Recursos</h2>
+<div class="table-scroll"><table>
+<tr><th>Recurso</th><th>Fichero</th></tr>
+<tr><td>Figura de las seis vistas</td><td><a href="views.png">views.png</a></td></tr>
+<tr><td>Sprite pattern de ejemplo (nativo y ×4)</td><td><a href="example/caballero.spritevpg.png">caballero.spritevpg.png</a> · <a href="example/caballero.spritevpg@4x.png">@4x</a></td></tr>
+<tr><td>Su hoja limpia y los datos con los que se generó</td><td><a href="example/caballero.sheet.png">caballero.sheet.png</a> · <a href="example/caballero.card.json">caballero.card.json</a></td></tr>
+<tr><td>Fuente</td><td><a href="font/spritevpg-4x6.ttf">spritevpg-4x6.ttf</a> (<a href="font/LICENCIA.txt">licencia</a>)</td></tr>
+<tr><td>Skill de IA</td><td><a href="skill/spritevpg.zip">spritevpg.zip</a> · <a href="skill/spritevpg/SKILL.md">SKILL.md</a></td></tr>
+<tr><td>Herramienta (generar, leer, validar)</td><td><a href="skill/spritevpg/scripts/spritevpg.py">spritevpg.py</a></td></tr>
+</table></div>
+
+</main>
+</div>
+<footer>SpriteVPG 1.0 · <a href="/">Varial Gate</a> · Especificación y fuente de uso libre; el ejemplo, CC BY 4.0.</footer>
+</div>
+</body>
+</html>

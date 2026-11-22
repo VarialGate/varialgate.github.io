@@ -1,0 +1,34 @@
+{
+  "name": "Nombre de la hoja",
+  "kind": "character",
+  "view": "side",
+  "facing": "right",
+  "description": "Qué es, en una frase breve",
+  "frame": {
+    "w": 32,
+    "h": 32
+  },
+  "body": "auto",
+  "pivot": "auto",
+  "rows": [
+    {
+      "name": "idle",
+      "ms": 300,
+      "loop": "loop"
+    },
+    {
+      "name": "walk",
+      "ms": 120,
+      "loop": "loop"
+    }
+  ],
+  "agents": {
+    "implement": [
+      "Lo que debe hacer el código que use la hoja: volteos, efectos que añade la aplicación, en qué frame pasa algo."
+    ],
+    "extend": [
+      "Estilo: contorno, tonos por color, dirección de la luz.",
+      "Proporciones, y lo que no debe cambiar al añadir frames."
+    ]
+  }
+}

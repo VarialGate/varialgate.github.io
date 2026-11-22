@@ -1,0 +1,10 @@
+SpriteVPG 4x6
+Copyright 2026 Varial Gate
+
+Esta fuente se publica con la licencia SIL Open Font License, versión 1.1
+(https://openfontlicense.org): se puede usar, modificar y redistribuir, también
+en productos comerciales, siempre que no se venda sola y que las versiones
+modificadas no se llamen «SpriteVPG».
+
+La fuente se genera desde la tabla de glifos de skill/spritevpg/scripts/spritevpg.py
+con font/build_font.py.
