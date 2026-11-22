@@ -72,9 +72,9 @@ caracteres fija.</p>
 
 <h2 id="vista"><span class="n">2</span>Un vistazo</h2>
 <figure class="sheet">
-  <img class="px pattern" src="example/caballero.spritevpg@4x.png" width="990" alt="Sprite pattern de ejemplo: tres filas de frames de un caballero azul; a la derecha de cada fila, su rótulo: IDLE, FRAMES: 2, MS/FRAME: 400, PLAY: LOOP; WALK, FRAMES: 6, MS/FRAME: 110, PLAY: LOOP; ATTACK, FRAMES: 4, MS/FRAME: 80 120 90 160, PLAY: ONCE. Debajo, la zona SHEET (NAME, FRAME, GRID, ORIGIN), la zona SUBJECT (KIND, VIEW, FACING, DESC) y la zona AGENTS con tres indicaciones IMPLEMENT y tres EXTEND. Al final, la barra con SPRITEVPG 1.0 y, debajo, el enlace a la especificación." loading="lazy">
+  <img class="px pattern" src="example/caballero.spritevpg@4x.png" width="990" alt="Sprite pattern de ejemplo: tres filas de frames de un caballero azul; a la derecha de cada fila, su rótulo: IDLE, FRAMES: 2, MS/FRAME: 400, PLAY: LOOP; WALK, FRAMES: 6, MS/FRAME: 110, PLAY: LOOP; ATTACK, FRAMES: 4, MS/FRAME: 80 120 90 160, PLAY: ONCE. Debajo, la zona SHEET (NAME, FRAME, GRID, ORIGIN, BODY, PIVOT), la zona SUBJECT (KIND, VIEW, FACING, DESC) y la zona AGENTS con tres indicaciones IMPLEMENT y tres EXTEND. Al final, la barra con SPRITEVPG 1.0 y, debajo, el enlace a la especificación." loading="lazy">
   <figcaption>El ejemplo, ampliado ×4 (el damero lo pone esta página bajo lo transparente). Original:
-  <a href="example/caballero.spritevpg.png">caballero.spritevpg.png</a> (330×264).</figcaption>
+  <a href="example/caballero.spritevpg.png">caballero.spritevpg.png</a> (330×272).</figcaption>
 </figure>
 
 <h2 id="frames"><span class="n">3</span>La zona de frames</h2>
@@ -124,6 +124,7 @@ Licencia SIL Open Font License 1.1. La tabla de glifos, píxel a píxel, está e
 <tr><th>Uso</th><th>Color</th></tr>
 <tr><td>Papel (fondo de los márgenes)</td><td><span class="swatch" style="background:#F3EEDD"></span><code>#F3EEDD</code></td></tr>
 <tr><td>Tinta (texto, borde y barras)</td><td><span class="swatch" style="background:#1F2A44"></span><code>#1F2A44</code></td></tr>
+<tr><td>Muescas del punto de apoyo</td><td><span class="swatch" style="background:#D6336C"></span><code>#D6336C</code></td></tr>
 <tr><td>Regla entre los rótulos de fila</td><td><span class="swatch" style="background:#9AA3B5"></span><code>#9AA3B5</code></td></tr>
 </table></div>
 <p>Papel y tinta <span class="kw">DEBEN</span> ser exactamente esos colores: con ellos se lee el texto. Los frames
@@ -165,14 +166,25 @@ con los valores alineados. Un lector las localiza por su barra, no por su posici
 <div class="paper">NAME:   CABALLERO AZUL
 FRAME:  32X32 PX
 GRID:   6 COLUMNS X 3 ROWS
-ORIGIN: TOP-LEFT 0,0, NO GAPS</div>
+ORIGIN: TOP-LEFT 0,0, NO GAPS
+BODY:   21X32 PX AT 5,0
+PIVOT:  15,31</div>
 <div class="table-scroll"><table>
 <tr><th>Etiqueta</th><th>Valor</th></tr>
 <tr><td><code>NAME</code></td><td>El nombre de la hoja. Obligatoria</td></tr>
 <tr><td><code>FRAME</code></td><td><code>anchoXalto PX</code>: el tamaño de cada frame. Obligatoria</td></tr>
 <tr><td><code>GRID</code></td><td><code>n COLUMNS X m ROWS</code>: columnas y filas de la zona de frames. Obligatoria</td></tr>
 <tr><td><code>ORIGIN</code></td><td>Siempre <code>TOP-LEFT 0,0, NO GAPS</code>: los frames empiezan arriba a la izquierda, sin margen ni separación. Es una constante del formato; se escribe para quien no lo conoce</td></tr>
+<tr><td><code>BODY</code></td><td><code>anchoXalto PX AT x,y</code>: lo que ocupa el dibujo <strong>quieto</strong> dentro de cada frame, y dónde empieza (su esquina de arriba a la izquierda, en píxeles del frame). Opcional</td></tr>
+<tr><td><code>PIVOT</code></td><td><code>x,y</code>: el punto del frame por el que se coloca el dibujo en el juego, el mismo en todos los frames. En personajes, entre los pies. Opcional</td></tr>
 </table></div>
+<p><strong>Celda y cuerpo no son lo mismo.</strong> El frame (la celda) tiene que dar cabida a la animación que más se
+sale: la espada en un ataque, la capa al correr, un salto. Por eso suele ser mayor que el dibujo quieto: un personaje
+«de 16» se dibuja en celdas de 24 o de 32, siempre en el mismo sitio de la celda. <code>BODY</code> dice dónde está
+ese cuerpo dentro de la celda y cuánto mide, y <code>PIVOT</code>, por qué punto se coloca: quien use la hoja pone el
+<code>PIVOT</code> en la posición del personaje y usa <code>BODY</code> (no la celda) para lo que ocupa en el juego.
+Cuando la hoja lleva <code>PIVOT</code>, una <strong>muesca</strong> de color <code>#D6336C</code> lo marca en el borde
+de la zona de frames: a la derecha de cada fila, a su altura, y debajo de cada columna.</p>
 
 <h3 id="z-subject"><span class="n">5.3</span><code>SUBJECT</code>: qué es</h3>
 <div class="paper">KIND:   CHARACTER
@@ -293,6 +305,8 @@ por fila) y los datos que hay que escribir, en un JSON pequeño:</p>
     "extend": ["Contorno oscuro de 1 px, tres tonos de azul, luz arriba a la izquierda."]
   },
   "frame": { "w": 32, "h": 32 },
+  "body": { "x": 5, "y": 0, "w": 21, "h": 32 },
+  "pivot": { "x": 15, "y": 31 },
   "rows": [
     { "name": "idle",   "ms": 400, "loop": "loop" },
     { "name": "walk",   "ms": 110, "loop": "loop" },
@@ -300,7 +314,8 @@ por fila) y los datos que hay que escribir, en un JSON pequeño:</p>
   ]
 }</code></pre>
 <p>Una entrada de <code>rows</code> por fila, en orden. <code>ms</code>: un número (todos los frames igual) o una lista
-(uno por frame); sin <code>ms</code>, la fila son imágenes sueltas. <code>agents</code>: las indicaciones de la zona
+(uno por frame); sin <code>ms</code>, la fila son imágenes sueltas. <code>body</code> y <code>pivot</code> admiten <code>"auto"</code>: la herramienta mide el primer frame y pone el
+apoyo en el centro de su base. <code>agents</code>: las indicaciones de la zona
 <code>AGENTS</code>, en listas <code>implement</code>, <code>extend</code> y <code>note</code>. El número de frames lo cuenta la herramienta. Ese
 JSON es solo la manera de pasarle los datos: no forma parte del formato ni acompaña a la imagen.</p>
 <p>Para <strong>leer</strong>, <code>read</code> deja la hoja sin márgenes, una carpeta de frames por fila, con
@@ -320,7 +335,7 @@ cambiar y volver a generar.</p>
 
 <h2 id="futuro"><span class="n">10</span>Lo que no entra en la 1.0</h2>
 <p>La 1.0 se queda en lo imprescindible. Quedan para versiones posteriores, como zonas opcionales:
-el punto de apoyo, las cajas de colisión y de golpe, los puntos de enganche, los eventos por frame (un paso, el
+las cajas de colisión y de golpe, los puntos de enganche, los eventos por frame (un paso, el
 golpe), las direcciones y sus volteos, los estados de objetos y construcciones y la paleta. Una
 versión menor solo añadirá cosas opcionales: un lector 1.0 seguirá leyendo esas hojas ignorando lo nuevo.</p>
 

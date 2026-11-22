@@ -100,6 +100,7 @@ def norm(s):
 PAPER = (243, 238, 221, 255)     # papel de patrón
 INK = (31, 42, 68, 255)          # tinta azul marino
 RULE = (154, 163, 181, 255)      # reglas entre filas
+PIVOT = (214, 51, 108, 255)      # muescas del punto de apoyo
 
 LOOPS = ('loop', 'once')
 KINDS = ('character', 'creature', 'item', 'prop', 'building', 'effect', 'tile', 'ui')
@@ -112,6 +113,8 @@ DIRS = ('down', 'up', 'left', 'right', 'down-left', 'down-right', 'up-left', 'up
 #  "description": "Caballero con armadura azul…",                 (opcional)
 #  "agents": {"implement": ["Voltear para la izquierda…"],         (opcional)
 #             "extend": ["Contorno oscuro de 1 px…"]},
+#  "body": {"x": 5, "y": 0, "w": 21, "h": 32} o "auto",            (opcional)
+#  "pivot": {"x": 15, "y": 31} o "auto",                          (opcional)
 #  "frame": {"w": 32, "h": 32}, "grid": {"columns": 6, "rows": 3},
 #  "rows": [{"name": "idle", "frames": 2, "ms": [400, 400], "loop": "loop"}, ...]}
 # Una fila sin "ms" son imágenes sueltas (no es una animación).
@@ -168,9 +171,15 @@ def keyed(pairs, width):
 
 def sheet_lines(card, width):
     f, g = card['frame'], card['grid']
-    return keyed([('NAME', card['name']), ('FRAME', f'{f["w"]}X{f["h"]} PX'),
-                  ('GRID', f'{g["columns"]} COLUMNS X {g["rows"]} ROWS'),
-                  ('ORIGIN', 'TOP-LEFT 0,0, NO GAPS')], width)
+    pairs = [('NAME', card['name']), ('FRAME', f'{f["w"]}X{f["h"]} PX'),
+             ('GRID', f'{g["columns"]} COLUMNS X {g["rows"]} ROWS'),
+             ('ORIGIN', 'TOP-LEFT 0,0, NO GAPS')]
+    b, pv = card.get('body'), card.get('pivot')
+    if b:        # lo que ocupa el dibujo quieto dentro de cada frame
+        pairs.append(('BODY', f'{b["w"]}X{b["h"]} PX AT {b["x"]},{b["y"]}'))
+    if pv:       # el punto del frame por el que se coloca en el juego
+        pairs.append(('PIVOT', f'{pv["x"]},{pv["y"]}'))
+    return keyed(pairs, width)
 
 def subject_lines(card, width):
     pairs = [(key.upper() if key != 'description' else 'DESC', card[key])
@@ -265,6 +274,18 @@ def render(sheet, card):
     for ls, ty in zip(labels, pos):
         for j, t in enumerate(ls):
             draw_text(px, lab_col, ty + j, t, INK)
+    pv = card.get('pivot')
+    if pv:       # muescas del punto de apoyo: a la derecha de cada fila y bajo cada columna
+        for r in range(nrows):
+            for t in range(3):
+                for y in range(r * fh + pv['y'] - t, r * fh + pv['y'] + t + 1):
+                    if 0 <= y <= AH:
+                        px[AW + 1 + t, y] = PIVOT
+        for c in range(cols):
+            for t in range(3):
+                for x in range(c * fw + pv['x'] - t, c * fw + pv['x'] + t + 1):
+                    if 0 <= x <= AW:
+                        px[x, AH + 1 + t] = PIVOT
 
     def zone(title, c0, c1, row, lines):
         for y in range(row * CH, (row + 1) * CH):  # barra de título, en negativo
@@ -367,6 +388,12 @@ def read_card(path):
             card[key.lower()] = su[key].lower()
     if 'DESC' in su:
         card['description'] = su['DESC']
+    if 'BODY' in sh:
+        m = re.fullmatch(r'(\d+)X(\d+) PX AT (-?\d+),(-?\d+)', sh['BODY'])
+        card['body'] = {'x': int(m.group(3)), 'y': int(m.group(4)), 'w': int(m.group(1)), 'h': int(m.group(2))}
+    if 'PIVOT' in sh:
+        x, y = sh['PIVOT'].split(',')
+        card['pivot'] = {'x': int(x), 'y': int(y)}
     for t in zones.get('AGENTS', []):
         key, _, text = t.partition(':')
         if key.lower() not in AGENT_KEYS:
@@ -405,6 +432,20 @@ def complete(card, sheet):
     out = {'format': FORMAT, 'version': VERSION, 'name': card['name'],
            **{k: card[k] for k in ('kind', 'view', 'facing', 'description', 'agents') if card.get(k)},
            'frame': {'w': fw, 'h': fh}, 'grid': {'columns': cols, 'rows': nrows}, 'rows': []}
+    # "body": "auto" mide el primer frame; "pivot": "auto" es el centro de su base.
+    body, pivot = card.get('body'), card.get('pivot')
+    if body == 'auto' or (pivot == 'auto' and not body):
+        x0, y0, x1, y1 = sheet.crop((0, 0, fw, fh)).getbbox()
+        measured = {'x': x0, 'y': y0, 'w': x1 - x0, 'h': y1 - y0}
+        if body == 'auto':
+            body = measured
+    if pivot == 'auto':
+        b = body or measured
+        pivot = {'x': b['x'] + (b['w'] - 1) // 2, 'y': b['y'] + b['h'] - 1}
+    if body:
+        out['body'] = body
+    if pivot:
+        out['pivot'] = pivot
     for r, row in enumerate(card['rows']):
         n = frames_in_row(sheet, r, cols, fw, fh)
         new = {'name': row['name'].lower(), 'frames': n}
@@ -466,6 +507,13 @@ def validate(card):
     for key, known in (('kind', KINDS), ('view', VIEWS), ('facing', DIRS)):
         if card.get(key) and card[key] not in known:
             err.append(f'{key} no válido: {card[key]} (valen: {", ".join(known)})')
+    fw, fh = card.get('frame', {}).get('w', 0), card.get('frame', {}).get('h', 0)
+    b, pv = card.get('body'), card.get('pivot')
+    if b and not (b['w'] > 0 and b['h'] > 0 and 0 <= b['x'] and 0 <= b['y']
+                  and b['x'] + b['w'] <= fw and b['y'] + b['h'] <= fh):
+        err.append('body no cabe en el frame')
+    if pv and not (0 <= pv['x'] < fw and 0 <= pv['y'] < fh):
+        err.append('pivot fuera del frame')
     rows = card.get('rows', [])
     if card.get('grid', {}).get('rows') != len(rows):
         err.append('grid.rows no coincide con el número de filas')
@@ -500,6 +548,11 @@ def summary(card):
             out.append(f'- fila {r}: {row["name"]}, {row["frames"]} frames, {ms}, {mode}')
         else:
             out.append(f'- fila {r}: {row["name"]}, {row["frames"]} imágenes sueltas')
+    if card.get('body'):
+        b = card['body']
+        out.append(f'El dibujo quieto ocupa {b["w"]}x{b["h"]} px dentro del frame, desde {b["x"]},{b["y"]}.')
+    if card.get('pivot'):
+        out.append(f'Punto de apoyo: {card["pivot"]["x"]},{card["pivot"]["y"]} dentro de cada frame.')
     for key, note in agent_notes(card):
         out.append({'IMPLEMENT': 'Al usarla en una app: ', 'EXTEND': 'Al ampliarla: ', 'NOTE': 'Nota: '}[key] + note)
     return '\n'.join(out)

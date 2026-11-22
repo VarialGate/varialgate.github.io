@@ -23,7 +23,10 @@ Un **sprite pattern** es una hoja de sprites PNG que dice ella misma cómo se co
   `MS/FRAME`: un número (todos igual) o uno por frame. `PLAY`: `LOOP` (en bucle), `ONCE` (una vez, se queda en el
   último frame) o `STILL` (imágenes sueltas, no una animación; sin `MS/FRAME`). En filas bajas va seguido:
   `ITEMS · FRAMES: 5 · PLAY: STILL`.
-- **`SHEET`**, debajo: `NAME: …`, `FRAME: 32X32 PX`, `GRID: 6 COLUMNS X 3 ROWS`, `ORIGIN: TOP-LEFT 0,0, NO GAPS`.
+- **`SHEET`**, debajo: `NAME: …`, `FRAME: 32X32 PX`, `GRID: 6 COLUMNS X 3 ROWS`, `ORIGIN: TOP-LEFT 0,0, NO GAPS` y,
+  opcionales, `BODY: 21X32 PX AT 5,0` (lo que ocupa el dibujo quieto dentro del frame y dónde empieza) y
+  `PIVOT: 15,31` (el punto del frame por el que se coloca en el juego; lo marcan unas muescas rosas en el borde).
+  El frame suele ser mayor que el cuerpo, para que quepa la animación que más se sale.
 - **`SUBJECT`** (opcional): `KIND:` (character, creature, item, prop, building, effect, tile, ui), `VIEW:` (una de
   las seis vistas de abajo), `FACING:` (right, left, up, down o una diagonal) y `DESC:` (frase breve).
 - **`AGENTS`** (opcional): las indicaciones del autor para la IA que trabaje con esta hoja, una por línea, texto
@@ -67,6 +70,8 @@ JPEG ni con imágenes reescaladas con suavizado.
 - **Sigue las indicaciones `IMPLEMENT` de la zona `AGENTS`** (las da `info` como «Al usarla en una app»): implementa en el
   código los volteos y los efectos que pidan (sombra, brillo, golpe en tal frame). Si alguna no se puede cumplir en
   ese motor, dilo; no la ignores en silencio.
+- Si la hoja lleva `PIVOT`, coloca cada frame por ese punto (no por la esquina de la celda); y si lleva `BODY`, usa
+  ese rectángulo, no la celda entera, para lo que ocupa el personaje (colisión, selección).
 - En un motor no hace falta recortar: los frames empiezan en 0,0.
   - Unity: Grid By Cell Size, offset 0.
   - Godot: «Añadir frames desde hoja», sin offset.
@@ -75,7 +80,8 @@ JPEG ni con imágenes reescaladas con suavizado.
 ## Generar un sprite pattern
 
 1. **Hoja limpia**: frames del mismo tamaño en rejilla desde `(0, 0)`, fondo transparente, una fila por animación, con
-   los frames seguidos desde la izquierda.
+   los frames seguidos desde la izquierda. La celda debe dar cabida a la animación que más se sale: si el personaje
+   quieto ocupa 16 px, usa celdas de 24 o 32 y dibújalo siempre en el mismo sitio de la celda.
 2. **Datos** para la herramienta, en un JSON (parte de `templates/card.template.json`). Ese JSON es solo la manera
    de pasarle los datos: el formato es la imagen, y no hay que entregarlo con ella.
 
@@ -85,7 +91,7 @@ JPEG ni con imágenes reescaladas con suavizado.
      "agents": { "implement": [ "Para mirar a la izquierda, voltear en horizontal.",
                                 "Añadir una sombra elíptica bajo los pies." ],
                  "extend": [ "Contorno oscuro de 1 px, tres tonos de azul, luz arriba a la izquierda." ] },
-     "frame": { "w": 32, "h": 32 },
+     "frame": { "w": 32, "h": 32 }, "body": "auto", "pivot": "auto",
      "rows": [ { "name": "idle", "ms": 400, "loop": "loop" },
                { "name": "attack", "ms": [80, 120, 90, 160], "loop": "once" },
                { "name": "items" } ] }
@@ -94,6 +100,8 @@ JPEG ni con imágenes reescaladas con suavizado.
    Una entrada por fila, en orden. `ms`: un número (todos los frames igual) o una lista (uno por frame). Sin `ms`,
    imágenes sueltas. Nombres de fila en minúsculas: `[a-z0-9_-]`. `kind`, `view`, `facing` y `description` son
    opcionales, pero ponlos siempre que los sepas: es lo que le dice a otra IA qué está importando.
+   `body` y `pivot`: con `"auto"` la herramienta mide el primer frame y pone el apoyo en el centro de su base; o dalos
+   a mano (`{"x":5,"y":0,"w":21,"h":32}` y `{"x":15,"y":31}`).
    `agents`: lo que tendría que saber otra IA y no está en los datos. En `implement`, lo que debe programar quien
    la use (volteos, efectos que añade la aplicación, en qué frame pasa algo); en `extend`, el estilo (contorno, tonos, luz),
    las proporciones y lo que no debe cambiar. Pocas líneas, concretas. No repitas la vista ni el tamaño.
@@ -127,5 +135,5 @@ JPEG ni con imágenes reescaladas con suavizado.
 
 - Nada dentro de la zona de frames salvo frames.
 - PNG siempre; nunca JPEG. Ampliar solo a escala entera y sin suavizado.
-- El formato 1.0 solo lleva esto. Apoyo, cajas de colisión, eventos y estilo no forman parte: si hacen falta,
+- El formato 1.0 solo lleva esto. Cajas de colisión y eventos por frame no forman parte: si hacen falta,
   pregúntalos; no los inventes.

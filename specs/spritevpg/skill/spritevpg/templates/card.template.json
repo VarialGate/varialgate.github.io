@@ -8,6 +8,8 @@
     "w": 32,
     "h": 32
   },
+  "body": "auto",
+  "pivot": "auto",
   "rows": [
     {
       "name": "idle",
