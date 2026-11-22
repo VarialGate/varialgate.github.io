@@ -41,7 +41,8 @@ habitual de las especificaciones (RFC 2119).</p>
   <a class="sub" href="#z-rows">5.1 Rótulo de cada fila</a>
   <a class="sub" href="#z-sheet">5.2 SHEET</a>
   <a class="sub" href="#z-subject">5.3 SUBJECT</a>
-  <a class="sub" href="#barra">5.4 Barra final</a>
+  <a class="sub" href="#z-agents">5.4 AGENTS</a>
+  <a class="sub" href="#barra">5.5 Barra final</a>
   <a href="#vistas">6. Las vistas</a>
   <a href="#leer">7. Leer un sprite pattern</a>
   <a href="#herramienta">8. La herramienta</a>
@@ -61,8 +62,8 @@ ve cuando mira la imagen.</p>
     fila</strong>;</li>
   <li>a la derecha de cada fila, su <strong>rótulo</strong>: el nombre de la animación, cuántos frames tiene,
     cuánto dura cada uno y cómo se reproduce;</li>
-  <li>debajo, dos <strong>zonas con título</strong>: <code>SHEET</code> (cómo se corta) y <code>SUBJECT</code> (qué
-    es);</li>
+  <li>debajo, las <strong>zonas con título</strong>: <code>SHEET</code> (cómo se corta), <code>SUBJECT</code> (qué
+    es) y, si el autor quiere, <code>AGENTS</code> (qué debe respetar quien la amplíe con IA);</li>
   <li>y una barra final con el formato y su versión y, debajo, el <strong>enlace a esta especificación</strong>.</li>
 </ul>
 <p>Cada dato lleva su etiqueta delante, separada por dos puntos (<code>FRAMES: 6</code>), y sale una sola vez. Así lo entiende quien no conoce el formato, sea una persona
@@ -71,9 +72,9 @@ caracteres fija.</p>
 
 <h2 id="vista"><span class="n">2</span>Un vistazo</h2>
 <figure class="sheet">
-  <img class="px pattern" src="example/caballero.spritevpg@4x.png" width="990" alt="Sprite pattern de ejemplo: tres filas de frames de un caballero azul; a la derecha de cada fila, su rótulo: IDLE, FRAMES: 2, MS/FRAME: 400, PLAY: LOOP; WALK, FRAMES: 6, MS/FRAME: 110, PLAY: LOOP; ATTACK, FRAMES: 4, MS/FRAME: 80 120 90 160, PLAY: ONCE. Debajo, la zona SHEET (NAME, FRAME, GRID, ORIGIN) y la zona SUBJECT (KIND, VIEW, FACING, DESC). Al final, la barra con SPRITEVPG 1.0 y, debajo, el enlace a la especificación." loading="lazy">
+  <img class="px pattern" src="example/caballero.spritevpg@4x.png" width="990" alt="Sprite pattern de ejemplo: tres filas de frames de un caballero azul; a la derecha de cada fila, su rótulo: IDLE, FRAMES: 2, MS/FRAME: 400, PLAY: LOOP; WALK, FRAMES: 6, MS/FRAME: 110, PLAY: LOOP; ATTACK, FRAMES: 4, MS/FRAME: 80 120 90 160, PLAY: ONCE. Debajo, la zona SHEET (NAME, FRAME, GRID, ORIGIN), la zona SUBJECT (KIND, VIEW, FACING, DESC) y la zona AGENTS con tres indicaciones de estilo. Al final, la barra con SPRITEVPG 1.0 y, debajo, el enlace a la especificación." loading="lazy">
   <figcaption>El ejemplo, ampliado ×4 (el damero lo pone esta página bajo lo transparente). Original:
-  <a href="example/caballero.spritevpg.png">caballero.spritevpg.png</a> (330×176).</figcaption>
+  <a href="example/caballero.spritevpg.png">caballero.spritevpg.png</a> (330×240).</figcaption>
 </figure>
 
 <h2 id="frames"><span class="n">3</span>La zona de frames</h2>
@@ -155,7 +156,8 @@ cada fila, va su rótulo: el <strong>nombre</strong> de la animación y, sangrad
     otro: lo que cuenta es el orden.</li>
 </ul>
 
-<p>Debajo de la zona de frames van dos <strong>zonas</strong>, una al lado de la otra. Cada una empieza con una
+<p>Debajo de la zona de frames van las <strong>zonas</strong>: <code>SHEET</code> y <code>SUBJECT</code>, una al lado
+de la otra, y <code>AGENTS</code>, a todo el ancho. Cada una empieza con una
 <strong>barra de título</strong> en negativo con su nombre (desde la segunda celda de la barra) y sigue con sus líneas,
 con los valores alineados. Un lector las localiza por su barra, no por su posición.</p>
 
@@ -187,7 +189,29 @@ cada etiqueta son opcionales, pero <span class="kw">DEBERÍAN</span> ponerse sie
 <tr><td><code>DESC</code></td><td>Una frase breve, en el idioma de quien la escribe</td></tr>
 </table></div>
 
-<h3 id="barra"><span class="n">5.4</span>La barra final</h3>
+<h3 id="z-agents"><span class="n">5.4</span><code>AGENTS</code>: para quien la amplíe con IA</h3>
+<div class="paper">- PIXEL ART DE 16 BITS: CONTORNO OSCURO DE 1 PX, TRES TONOS DE
+  AZUL, LUZ ARRIBA A LA IZQUIERDA.
+- FIGURA DE 4 CABEZAS DE ALTO, UNOS 30 PX; LOS PIES, SOBRE LA
+  ÚLTIMA FILA DEL FRAME.
+- ESPADA EN LA MANO DERECHA Y ESCUDO CON CRUZ BLANCA EN LA
+  IZQUIERDA; PENACHO SIEMPRE VISIBLE.</div>
+<p>Las indicaciones del autor para quien vaya a <strong>ampliar esta hoja con una IA</strong>: otra animación, otra
+dirección, otro objeto del mismo conjunto. Son propias de cada hoja, no instrucciones generales del formato (esas
+están en esta especificación). La zona es opcional.</p>
+<ul>
+  <li>Texto libre, en el idioma de quien lo escribe. Cada indicación empieza con un guion; si no cabe, sigue en la
+    línea de abajo, sangrada.</li>
+  <li>Qué conviene poner: el <strong>estilo</strong> (resolución, contorno, tonos por color, dirección de la luz), las
+    <strong>proporciones</strong> y el tamaño del dibujo dentro del frame, y <strong>lo que no debe cambiar</strong>
+    (qué lleva en cada mano, qué se ve siempre).</li>
+  <li>Qué no hace falta repetir: la vista y hacia dónde mira ya están en <code>SUBJECT</code>, y el tamaño de frame,
+    en <code>SHEET</code>.</li>
+</ul>
+<p>Quien amplíe la hoja <span class="kw">DEBERÍA</span> seguir estas indicaciones además de forzar la vista de
+<code>VIEW</code> (<a href="#vistas">sección 6</a>).</p>
+
+<h3 id="barra"><span class="n">5.5</span>La barra final</h3>
 <div class="paper">SPRITEVPG 1.0
 HTTPS://VARIALGATE.GITHUB.IO/SPECS/SPRITEVPG/</div>
 <p>Las dos últimas filas de texto de la imagen, en negativo y a todo el ancho: en la primera, <code>SPRITEVPG</code> y
@@ -227,7 +251,7 @@ vista tiene que forzar.</p>
 
 <h2 id="leer"><span class="n">7</span>Leer un sprite pattern</h2>
 <p><strong>Mirando la imagen</strong> (una persona, o una IA sin herramientas): <code>SHEET</code> dice cómo cortar,
-<code>SUBJECT</code> qué es, y el rótulo de cada fila, cómo se anima. Mejor con una copia ampliada (×4): a tamaño
+<code>SUBJECT</code> qué es, el rótulo de cada fila, cómo se anima, y <code>AGENTS</code>, qué respetar al ampliarla. Mejor con una copia ampliada (×4): a tamaño
 original la letra mide 6 px de alto.</p>
 <p><strong>Con un programa</strong>, de forma exacta:</p>
 <ol>
@@ -236,8 +260,8 @@ original la letra mide 6 px de alto.</p>
     <code>SPRITEVPG</code>, esa es la escala.</li>
   <li><strong>Texto.</strong> Leer todas las celdas, comparándolas con la tabla de la fuente y anotando cuáles van en
     negativo.</li>
-  <li><strong>Zonas.</strong> Cada tramo en negativo cuyo texto es <code>SHEET</code> o <code>SUBJECT</code> es una
-    barra de título. El contenido de la zona son las líneas de debajo, a su ancho, hasta la siguiente barra; las que
+  <li><strong>Zonas.</strong> Cada tramo en negativo cuyo texto es <code>SHEET</code>, <code>SUBJECT</code> o
+    <code>AGENTS</code> es una barra de título. El contenido de la zona son las líneas de debajo, a su ancho, hasta la siguiente barra; las que
     empiezan con espacio continúan la anterior. En cada línea, la etiqueta va antes de los dos puntos.</li>
   <li><strong>Rótulos.</strong> El texto a la derecha de la zona de frames, por encima de las barras, de arriba
     abajo, uniendo las líneas sangradas a la anterior: el rótulo número <code>r</code> es el de la fila
@@ -259,6 +283,10 @@ por fila) y los datos que hay que escribir, en un JSON pequeño:</p>
   "name": "Caballero azul",
   "kind": "character", "view": "side", "facing": "right",
   "description": "Caballero con armadura azul, espada y escudo",
+  "agents": [
+    "Pixel art de 16 bits: contorno oscuro de 1 px, tres tonos de azul, luz arriba a la izquierda.",
+    "Figura de 4 cabezas de alto, unos 30 px; los pies, sobre la última fila del frame."
+  ],
   "frame": { "w": 32, "h": 32 },
   "rows": [
     { "name": "idle",   "ms": 400, "loop": "loop" },
@@ -267,7 +295,8 @@ por fila) y los datos que hay que escribir, en un JSON pequeño:</p>
   ]
 }</code></pre>
 <p>Una entrada de <code>rows</code> por fila, en orden. <code>ms</code>: un número (todos los frames igual) o una lista
-(uno por frame); sin <code>ms</code>, la fila son imágenes sueltas. El número de frames lo cuenta la herramienta. Ese
+(uno por frame); sin <code>ms</code>, la fila son imágenes sueltas. <code>agents</code>: las indicaciones de la zona
+<code>AGENTS</code>, una por elemento. El número de frames lo cuenta la herramienta. Ese
 JSON es solo la manera de pasarle los datos: no forma parte del formato ni acompaña a la imagen.</p>
 <p>Para <strong>leer</strong>, <code>read</code> deja la hoja sin márgenes, una carpeta de frames por fila, con
 <code>--gifs</code> un GIF por animación, y los datos leídos de la imagen en ese mismo JSON, por si se quieren
@@ -287,7 +316,7 @@ cambiar y volver a generar.</p>
 <h2 id="futuro"><span class="n">10</span>Lo que no entra en la 1.0</h2>
 <p>La 1.0 se queda en lo imprescindible. Quedan para versiones posteriores, como zonas opcionales:
 el punto de apoyo, las cajas de colisión y de golpe, los puntos de enganche, los eventos por frame (un paso, el
-golpe), las direcciones y sus volteos, los estados de objetos y construcciones, la paleta y la guía de estilo. Una
+golpe), las direcciones y sus volteos, los estados de objetos y construcciones y la paleta. Una
 versión menor solo añadirá cosas opcionales: un lector 1.0 seguirá leyendo esas hojas ignorando lo nuevo.</p>
 
 <h2 id="recursos"><span class="n">11</span>Recursos</h2>

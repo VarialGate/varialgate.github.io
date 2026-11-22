@@ -29,5 +29,10 @@
       ],
       "loop": "once"
     }
+  ],
+  "agents": [
+    "Pixel art de 16 bits: contorno oscuro de 1 px, tres tonos de azul, luz arriba a la izquierda.",
+    "Figura de 4 cabezas de alto, unos 30 px; los pies, sobre la última fila del frame.",
+    "Espada en la mano derecha y escudo con cruz blanca en la izquierda; penacho siempre visible."
   ]
 }

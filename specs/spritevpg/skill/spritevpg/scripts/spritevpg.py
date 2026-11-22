@@ -5,7 +5,8 @@ Un sprite pattern es una hoja de sprites PNG con los frames limpios desde la
 esquina de arriba a la izquierda y una animación por fila. A la derecha de
 cada fila va su rótulo (nombre, FRAMES, MS/FRAME y PLAY) y debajo, dos zonas
 con título: SHEET (nombre, tamaño de frame y rejilla) y SUBJECT (tipo, vista,
-hacia dónde mira y una descripción breve), más una barra final con el enlace
+hacia dónde mira y una descripción breve); opcionalmente, AGENTS (lo que debe
+respetar quien amplíe la hoja con IA); y una barra final con el enlace
 a la especificación: https://varialgate.github.io/specs/spritevpg/
 
 Uso:
@@ -109,6 +110,7 @@ DIRS = ('down', 'up', 'left', 'right', 'down-left', 'down-right', 'up-left', 'up
 # {"format": "spritevpg", "version": "1.0", "name": "Caballero azul",
 #  "kind": "character", "view": "side", "facing": "right",        (opcionales)
 #  "description": "Caballero con armadura azul…",                 (opcional)
+#  "agents": ["Contorno oscuro de 1 px…", "…"],                   (opcional)
 #  "frame": {"w": 32, "h": 32}, "grid": {"columns": 6, "rows": 3},
 #  "rows": [{"name": "idle", "frames": 2, "ms": [400, 400], "loop": "loop"}, ...]}
 # Una fila sin "ms" son imágenes sueltas (no es una animación).
@@ -146,7 +148,7 @@ def frames_in_row(sheet, r, cols, fw, fh):
             n += 1
     return n
 
-ZONES = ('SHEET', 'SUBJECT')
+ZONES = ('SHEET', 'SUBJECT', 'AGENTS')
 
 def keyed(pairs, width):
     """Líneas `CLAVE: valor` con los valores alineados; el valor que no cabe
@@ -173,6 +175,21 @@ def subject_lines(card, width):
     pairs = [(key.upper() if key != 'description' else 'DESC', card[key])
              for key in ('kind', 'view', 'facing', 'description') if card.get(key)]
     return keyed(pairs, width) if pairs else []
+
+def agents_lines(card, width):
+    """Instrucciones del autor para quien amplíe la hoja con IA: una por
+    línea, con guion; lo que no cabe sigue debajo, sangrado."""
+    out = []
+    for note in card.get('agents', []):
+        cur = '-'
+        for word in norm(note).split(' '):
+            if len(cur) + 1 + len(word) > width:
+                out.append(cur)
+                cur = '  ' + word
+            else:
+                cur += ' ' + word
+        out.append(cur)
+    return out
 
 def row_chunks(row):
     """Lo que se escribe junto a una fila: el nombre y sus datos, `CLAVE: valor`."""
@@ -219,8 +236,10 @@ def render(sheet, card):
     half = (wide - 1) // 2 if has_subject else wide
     left = sheet_lines(card, half - 2)
     right = subject_lines(card, wide - half - 3) if has_subject else []
+    notes = agents_lines(card, wide - 2)
     top = max(-(-(AH + 4) // CH), nxt + 1)        # barras de título
-    bar = top + 1 + max(len(left), len(right)) + 1
+    ag = top + 1 + max(len(left), len(right)) + 1
+    bar = ag + (1 + len(notes) + 1 if notes else 0)
     W, H = wide * CW, (bar + 2) * CH
     img = Image.new('RGBA', (W, H), PAPER)
     px = img.load()
@@ -257,6 +276,8 @@ def render(sheet, card):
     zone('SHEET', 0, half, top, left)
     if has_subject:
         zone('SUBJECT', half + 1, wide, top, right)
+    if notes:
+        zone('AGENTS', 0, wide, ag, notes)
     zone(spec, 0, wide, bar, [])                  # barra final: formato y versión…
     zone(link, 0, wide, bar + 1, [])              # …y, debajo, el enlace
     return img
@@ -345,6 +366,8 @@ def read_card(path):
             card[key.lower()] = su[key].lower()
     if 'DESC' in su:
         card['description'] = su['DESC']
+    if zones.get('AGENTS'):
+        card['agents'] = [t.lstrip('- ').strip() for t in zones['AGENTS']]
     card.update({'frame': {'w': fw, 'h': fh}, 'grid': {'columns': cols, 'rows': nrows}, 'rows': []})
     # Rótulos de fila: a la derecha de los frames, por encima de las barras.
     lab_col = -(-(cols * fw + 6) // CW)
@@ -376,7 +399,7 @@ def complete(card, sheet):
     fw, fh = card['frame']['w'], card['frame']['h']
     cols, nrows = sheet.width // fw, len(card['rows'])
     out = {'format': FORMAT, 'version': VERSION, 'name': card['name'],
-           **{k: card[k] for k in ('kind', 'view', 'facing', 'description') if card.get(k)},
+           **{k: card[k] for k in ('kind', 'view', 'facing', 'description', 'agents') if card.get(k)},
            'frame': {'w': fw, 'h': fh}, 'grid': {'columns': cols, 'rows': nrows}, 'rows': []}
     for r, row in enumerate(card['rows']):
         n = frames_in_row(sheet, r, cols, fw, fh)
@@ -473,6 +496,8 @@ def summary(card):
             out.append(f'- fila {r}: {row["name"]}, {row["frames"]} frames, {ms}, {mode}')
         else:
             out.append(f'- fila {r}: {row["name"]}, {row["frames"]} imágenes sueltas')
+    for note in card.get('agents', []):
+        out.append('Para ampliarla: ' + note)
     return '\n'.join(out)
 
 def main(argv=None):

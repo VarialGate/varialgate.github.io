@@ -19,5 +19,10 @@
       "ms": 120,
       "loop": "loop"
     }
+  ],
+  "agents": [
+    "Estilo: resolución, contorno, tonos por color, dirección de la luz.",
+    "Proporciones y tamaño del dibujo dentro del frame.",
+    "Lo que no debe cambiar al añadir frames."
   ]
 }
