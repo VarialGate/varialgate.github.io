@@ -1,0 +1,360 @@
+{
+  "format": "spritevpg",
+  "version": "1.0",
+  "$schema": "https://varialgate.github.io/specs/spritevpg/schema/spritevpg-1.schema.json",
+  "lang": "es",
+  "entity": {
+    "kind": "character",
+    "name": "caballero_azul",
+    "displayName": "Caballero azul",
+    "description": "Caballero humano con armadura de placas azul, casco con penacho, espada y escudo con cruz.",
+    "tags": [
+      "humano",
+      "jugador",
+      "cuerpo a cuerpo"
+    ]
+  },
+  "art": {
+    "view": "side",
+    "facing": "right",
+    "light": "top-left",
+    "outline": {
+      "style": "dark",
+      "width": 1
+    },
+    "shadow": "none",
+    "palette": [
+      {
+        "color": "#020426"
+      },
+      {
+        "color": "#000325"
+      },
+      {
+        "color": "#175ca5"
+      },
+      {
+        "color": "#122d67"
+      },
+      {
+        "color": "#175ea2"
+      },
+      {
+        "color": "#112e64"
+      },
+      {
+        "color": "#1760ab"
+      },
+      {
+        "color": "#112a62"
+      },
+      {
+        "color": "#65798b"
+      },
+      {
+        "color": "#6a7f93"
+      },
+      {
+        "color": "#cae7fb"
+      },
+      {
+        "color": "#cae3f4"
+      },
+      {
+        "color": "#53b1e4"
+      },
+      {
+        "color": "#63798c"
+      },
+      {
+        "color": "#304264"
+      },
+      {
+        "color": "#c2e1f7"
+      }
+    ]
+  },
+  "grid": {
+    "columns": 6,
+    "rows": 3,
+    "frameSize": {
+      "w": 32,
+      "h": 32
+    },
+    "margin": 0,
+    "spacing": 0
+  },
+  "defaults": {
+    "pivot": {
+      "x": 16,
+      "y": 31
+    },
+    "boxes": {
+      "collision": {
+        "x": 10,
+        "y": 26,
+        "w": 12,
+        "h": 6
+      },
+      "hurt": {
+        "x": 8,
+        "y": 3,
+        "w": 16,
+        "h": 29
+      }
+    },
+    "points": {
+      "hand_r": {
+        "x": 13,
+        "y": 20
+      }
+    }
+  },
+  "directions": {
+    "set": [
+      "right",
+      "left"
+    ],
+    "mirror": {
+      "left": {
+        "from": "right",
+        "flip": "x"
+      }
+    }
+  },
+  "animations": [
+    {
+      "name": "idle",
+      "direction": "right",
+      "loop": "loop",
+      "frames": [
+        {
+          "frame": 0,
+          "ms": 400
+        },
+        {
+          "frame": 1,
+          "ms": 400
+        }
+      ]
+    },
+    {
+      "name": "walk",
+      "direction": "right",
+      "loop": "loop",
+      "frames": [
+        {
+          "frame": 6,
+          "ms": 110
+        },
+        {
+          "frame": 7,
+          "ms": 110,
+          "events": [
+            "footstep"
+          ]
+        },
+        {
+          "frame": 8,
+          "ms": 110
+        },
+        {
+          "frame": 9,
+          "ms": 110
+        },
+        {
+          "frame": 10,
+          "ms": 110,
+          "events": [
+            "footstep"
+          ]
+        },
+        {
+          "frame": 11,
+          "ms": 110
+        }
+      ]
+    },
+    {
+      "name": "attack",
+      "direction": "right",
+      "loop": "once",
+      "next": "idle",
+      "frames": [
+        {
+          "frame": 12,
+          "ms": 80
+        },
+        {
+          "frame": 13,
+          "ms": 120,
+          "points": {
+            "hand_r": {
+              "x": 14,
+              "y": 6
+            }
+          }
+        },
+        {
+          "frame": 14,
+          "ms": 90,
+          "events": [
+            "hit",
+            "sound:sword-swing"
+          ],
+          "boxes": {
+            "hit": {
+              "x": 20,
+              "y": 4,
+              "w": 11,
+              "h": 22
+            }
+          },
+          "points": {
+            "hand_r": {
+              "x": 21,
+              "y": 17
+            }
+          }
+        },
+        {
+          "frame": 15,
+          "ms": 160,
+          "events": [
+            "hit-end"
+          ]
+        }
+      ]
+    }
+  ],
+  "world": {
+    "pixelsPerUnit": 32
+  },
+  "style": {
+    "summary": "Pixel art de 16 bits, contorno oscuro de 1 px, azules con 3 tonos, luz arriba a la izquierda.",
+    "proportions": "Figura de 4 cabezas de alto, unos 30 px en frames de 32; pies sobre la última fila.",
+    "rules": [
+      "El penacho del casco siempre visible.",
+      "Espada en la mano derecha y escudo con cruz blanca en la izquierda.",
+      "Nunca usar el magenta #ff00ff."
+    ],
+    "reference": {
+      "frame": 0
+    }
+  },
+  "ai": {
+    "summary": "Caballero jugable en vista lateral: reposo, andar y ataque con espada. Mira a la derecha; la izquierda es la derecha volteada.",
+    "howTo": [
+      "Cortar los frames desde 0,0 en celdas de 32x32.",
+      "Colocar cada frame por el apoyo (16,31).",
+      "Activar la caja de golpe solo en el frame con el evento hit."
+    ]
+  },
+  "provenance": {
+    "generator": {
+      "app": "Varial Pixel Gen",
+      "model": "google/gemini-3-pro-image, google/gemini-nano-banana-2.1"
+    },
+    "created": "2026-11-22",
+    "author": "Varial Gate",
+    "license": "CC-BY-4.0"
+  },
+  "frames": [
+    {
+      "i": 0,
+      "x": 0,
+      "y": 0,
+      "w": 32,
+      "h": 32
+    },
+    {
+      "i": 1,
+      "x": 32,
+      "y": 0,
+      "w": 32,
+      "h": 32
+    },
+    {
+      "i": 6,
+      "x": 0,
+      "y": 32,
+      "w": 32,
+      "h": 32
+    },
+    {
+      "i": 7,
+      "x": 32,
+      "y": 32,
+      "w": 32,
+      "h": 32
+    },
+    {
+      "i": 8,
+      "x": 64,
+      "y": 32,
+      "w": 32,
+      "h": 32
+    },
+    {
+      "i": 9,
+      "x": 96,
+      "y": 32,
+      "w": 32,
+      "h": 32
+    },
+    {
+      "i": 10,
+      "x": 128,
+      "y": 32,
+      "w": 32,
+      "h": 32
+    },
+    {
+      "i": 11,
+      "x": 160,
+      "y": 32,
+      "w": 32,
+      "h": 32
+    },
+    {
+      "i": 12,
+      "x": 0,
+      "y": 64,
+      "w": 32,
+      "h": 32
+    },
+    {
+      "i": 13,
+      "x": 32,
+      "y": 64,
+      "w": 32,
+      "h": 32
+    },
+    {
+      "i": 14,
+      "x": 64,
+      "y": 64,
+      "w": 32,
+      "h": 32
+    },
+    {
+      "i": 15,
+      "x": 96,
+      "y": 64,
+      "w": 32,
+      "h": 32
+    }
+  ],
+  "image": {
+    "file": "caballero.spritevpg.png",
+    "w": 285,
+    "h": 573,
+    "pixelArt": true,
+    "framesArea": {
+      "x": 0,
+      "y": 0,
+      "w": 192,
+      "h": 96
+    }
+  }
+}

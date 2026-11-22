@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SpriteVPG · Sprite patterns · Varial Gate</title>
+<meta name="description" content="SpriteVPG (Sprite Varial Pixel Gen): hojas de sprites que llevan dibujada toda su información para motores, personas e IAs. Sumario de la especificación, ejemplo, fuente y skill.">
+<meta name="theme-color" content="#0b0a14">
+<meta property="og:title" content="SpriteVPG · Sprite patterns">
+<meta property="og:description" content="Hojas de sprites que se bastan solas: frames limpios y toda la información en los márgenes.">
+<meta property="og:image" content="https://varialgate.github.io/specs/spritevpg/example/caballero.spritevpg@4x.png">
+<link rel="stylesheet" href="spritevpg.css">
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <a class="home" href="/">Varial Gate</a>
+  <nav>
+    <a href="./" aria-current="page">Sumario</a>
+    <a href="spec.html">Especificación</a>
+    <a href="spec.html#recursos">Descargas</a>
+  </nav>
+</header>
+
+<section class="hero">
+  <div>
+    <p class="eyebrow">SPRITE VARIAL PIXEL GEN · 1.0</p>
+    <h1 class="pixel-title">SPRITEVPG</h1>
+    <p class="lead">Un formato de hoja de sprites que se basta sola: el <strong>sprite pattern</strong>. Los frames van
+    limpios desde la esquina de arriba a la izquierda, listos para cualquier motor, y los márgenes de la derecha y de
+    abajo llevan, como un patrón de costura, todo lo que hace falta para entenderla, animarla, colocarla en el juego
+    y ampliarla con el mismo estilo.</p>
+    <p>Pensado para que una IA lo procese con solo mirarlo: rótulos con una fuente de píxeles fija para leer, y un QR
+    con la ficha completa para los datos exactos.</p>
+    <p><a href="spec.html"><strong>Leer la especificación →</strong></a></p>
+  </div>
+  <figure>
+    <img class="px" src="example/caballero.spritevpg@4x.png" width="1140" height="2292" alt="Sprite pattern de ejemplo: un caballero azul con reposo, andar y ataque, y en los márgenes los rótulos, el detalle de las cajas de colisión, las animaciones, las instrucciones y un QR con la ficha.">
+    <figcaption>El sprite pattern de ejemplo, ampliado ×4.</figcaption>
+  </figure>
+</section>
+
+<h2>Qué hay aquí</h2>
+<div class="cards">
+  <div class="card">
+    <span class="tag">DOC</span>
+    <h3>Especificación</h3>
+    <p>La imagen, los márgenes, la ficha JSON, el QR, cómo leerlo y generarlo, y cómo importarlo en un motor.</p>
+    <div class="links"><a href="spec.html">Abrir</a></div>
+  </div>
+  <div class="card">
+    <span class="tag">PNG</span>
+    <h3>Sprite pattern de ejemplo</h3>
+    <p>Un caballero en vista lateral: reposo, andar y ataque con golpe, cajas, mano, apoyo y dirección volteada.</p>
+    <div class="links"><a href="example/caballero.spritevpg.png">Nativo</a><a href="example/caballero.spritevpg@4x.png">×4</a><a href="example/caballero.spritevpg.json">Ficha</a></div>
+  </div>
+  <div class="card">
+    <span class="tag">TTF</span>
+    <h3>Fuente SpriteVPG 5×7</h3>
+    <p>La fuente de píxeles de los rótulos: mayúsculas, cifras y signos, sin suavizado. Licencia SIL OFL 1.1.</p>
+    <div class="links"><a href="font/spritevpg-5x7.ttf" download>Descargar</a><a href="spec.html#fuente">Detalles</a></div>
+  </div>
+  <div class="card">
+    <span class="tag">IA</span>
+    <h3>Skill de IA</h3>
+    <p>Enseña a un asistente a entender, procesar y generar sprite patterns, con una herramienta en Python.</p>
+    <div class="links"><a href="skill/spritevpg.zip" download>spritevpg.zip</a><a href="skill/spritevpg/SKILL.md">SKILL.md</a></div>
+  </div>
+  <div class="card">
+    <span class="tag">JSON</span>
+    <h3>JSON Schema</h3>
+    <p>Para validar una ficha con cualquier herramienta.</p>
+    <div class="links"><a href="schema/spritevpg-1.schema.json">Abrir</a></div>
+  </div>
+</div>
+
+<h2>Sumario de la especificación</h2>
+<ol class="toc">
+  <li><span class="num">1</span><div><a href="spec.html#intro">Introducción</a>
+    <p>Por qué una hoja que lleva dibujada su información: los metadatos se pierden y una IA no los ve.</p></div></li>
+  <li><span class="num">2</span><div><a href="spec.html#terminos">Términos</a>
+    <p>Sprite pattern, ficha, entidad, zona de frames, frame, apoyo y coordenadas.</p></div></li>
+  <li><span class="num">3</span><div><a href="spec.html#vista">Un vistazo</a>
+    <p>El ejemplo completo y el esquema de zonas.</p></div></li>
+  <li><span class="num">4</span><div><a href="spec.html#imagen">La imagen</a>
+    <p>PNG, zona de frames desde 0,0 sin margen ni separación, transparencia, tamaño, escala y formatos.</p></div></li>
+  <li><span class="num">5</span><div><a href="spec.html#margenes">Los márgenes</a>
+    <p>Qué se dibuja en cada sitio, con qué colores y con qué fuente.</p>
+    <ol>
+      <li><a href="spec.html#derecha">Rótulos de fila</a></li>
+      <li><a href="spec.html#franja">Franja inferior</a></li>
+      <li><a href="spec.html#registro">Marcas de registro</a></li>
+      <li><a href="spec.html#cabecera">Cabecera</a></li>
+      <li><a href="spec.html#pie">Pie</a></li>
+      <li><a href="spec.html#colores">Colores reservados</a></li>
+      <li><a href="spec.html#fuente">Fuente</a></li>
+    </ol></div></li>
+  <li><span class="num">6</span><div><a href="spec.html#ficha">La ficha</a>
+    <p>El JSON con todo: entidad, arte, frames, apoyo, cajas, puntos, direcciones, animaciones, estados, mundo,
+    estilo, instrucciones para IA y procedencia.</p>
+    <ol>
+      <li><a href="spec.html#f-image">image</a></li>
+      <li><a href="spec.html#f-entity">entity</a></li>
+      <li><a href="spec.html#f-art">art</a></li>
+      <li><a href="spec.html#f-frames">grid y frames</a></li>
+      <li><a href="spec.html#f-defaults">defaults</a></li>
+      <li><a href="spec.html#f-directions">directions</a></li>
+      <li><a href="spec.html#f-animations">animations</a></li>
+      <li><a href="spec.html#f-states">states</a></li>
+      <li><a href="spec.html#f-world">world</a></li>
+      <li><a href="spec.html#f-style">style</a></li>
+      <li><a href="spec.html#f-ai">ai</a></li>
+      <li><a href="spec.html#f-provenance">provenance</a></li>
+    </ol></div></li>
+  <li><span class="num">7</span><div><a href="spec.html#qr">El QR y el bloque iTXt</a>
+    <p>La ficha exacta en un QR (zlib y Base45, prefijo SVPG1:), repartida si no cabe, y su copia en el PNG.</p></div></li>
+  <li><span class="num">8</span><div><a href="spec.html#leer">Leer un sprite pattern</a>
+    <p>Los pasos para sacar la hoja limpia, los frames y las animaciones, también de una copia ampliada.</p></div></li>
+  <li><span class="num">9</span><div><a href="spec.html#generar">Generar un sprite pattern</a>
+    <p>De una hoja limpia y una ficha, con la herramienta de referencia.</p></div></li>
+  <li><span class="num">10</span><div><a href="spec.html#motores">Importar en un motor</a>
+    <p>Unity, Godot, Tiled, Aseprite y código propio: sin desplazamientos.</p></div></li>
+  <li><span class="num">11</span><div><a href="spec.html#ia">Para IAs</a>
+    <p>Qué hace el skill: entender, procesar y generar sprite patterns, y ampliarlos con el mismo estilo.</p></div></li>
+  <li><span class="num">12</span><div><a href="spec.html#versiones">Versiones</a>
+    <p>Compatibilidad entre versiones menores y mayores.</p></div></li>
+  <li><span class="num">13</span><div><a href="spec.html#recursos">Recursos</a>
+    <p>Todos los ficheros para descargar.</p></div></li>
+</ol>
+
+<footer>SpriteVPG 1.0 · <a href="/">Varial Gate</a> · Especificación y fuente de uso libre; el ejemplo, CC BY 4.0.</footer>
+</div>
+</body>
+</html>
