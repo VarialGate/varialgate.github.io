@@ -30,9 +30,16 @@
       "loop": "once"
     }
   ],
-  "agents": [
-    "Pixel art de 16 bits: contorno oscuro de 1 px, tres tonos de azul, luz arriba a la izquierda.",
-    "Figura de 4 cabezas de alto, unos 30 px; los pies, sobre la última fila del frame.",
-    "Espada en la mano derecha y escudo con cruz blanca en la izquierda; penacho siempre visible."
-  ]
+  "agents": {
+    "import": [
+      "Para mirar a la izquierda, voltear en horizontal.",
+      "Añadir una sombra elíptica bajo los pies.",
+      "En attack, el golpe hace daño en el tercer frame."
+    ],
+    "extend": [
+      "Contorno oscuro de 1 px, tres tonos de azul, luz arriba a la izquierda.",
+      "Figura de 4 cabezas de alto; los pies, sobre la última fila del frame.",
+      "Espada en la mano derecha y escudo con cruz blanca en la izquierda."
+    ]
+  }
 }

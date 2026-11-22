@@ -20,9 +20,13 @@
       "loop": "loop"
     }
   ],
-  "agents": [
-    "Estilo: resolución, contorno, tonos por color, dirección de la luz.",
-    "Proporciones y tamaño del dibujo dentro del frame.",
-    "Lo que no debe cambiar al añadir frames."
-  ]
+  "agents": {
+    "import": [
+      "Lo que debe hacer quien la importe: volteos, efectos que añade la aplicación, en qué frame pasa algo."
+    ],
+    "extend": [
+      "Estilo: contorno, tonos por color, dirección de la luz.",
+      "Proporciones, y lo que no debe cambiar al añadir frames."
+    ]
+  }
 }

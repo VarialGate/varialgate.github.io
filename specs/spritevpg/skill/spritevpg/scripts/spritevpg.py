@@ -6,7 +6,7 @@ esquina de arriba a la izquierda y una animación por fila. A la derecha de
 cada fila va su rótulo (nombre, FRAMES, MS/FRAME y PLAY) y debajo, dos zonas
 con título: SHEET (nombre, tamaño de frame y rejilla) y SUBJECT (tipo, vista,
 hacia dónde mira y una descripción breve); opcionalmente, AGENTS (lo que debe
-respetar quien amplíe la hoja con IA); y una barra final con el enlace
+hacer una IA al importar la hoja y al ampliarla); y una barra final con el enlace
 a la especificación: https://varialgate.github.io/specs/spritevpg/
 
 Uso:
@@ -110,7 +110,8 @@ DIRS = ('down', 'up', 'left', 'right', 'down-left', 'down-right', 'up-left', 'up
 # {"format": "spritevpg", "version": "1.0", "name": "Caballero azul",
 #  "kind": "character", "view": "side", "facing": "right",        (opcionales)
 #  "description": "Caballero con armadura azul…",                 (opcional)
-#  "agents": ["Contorno oscuro de 1 px…", "…"],                   (opcional)
+#  "agents": {"import": ["Voltear para la izquierda…"],            (opcional)
+#             "extend": ["Contorno oscuro de 1 px…"]},
 #  "frame": {"w": 32, "h": 32}, "grid": {"columns": 6, "rows": 3},
 #  "rows": [{"name": "idle", "frames": 2, "ms": [400, 400], "loop": "loop"}, ...]}
 # Una fila sin "ms" son imágenes sueltas (no es una animación).
@@ -176,20 +177,20 @@ def subject_lines(card, width):
              for key in ('kind', 'view', 'facing', 'description') if card.get(key)]
     return keyed(pairs, width) if pairs else []
 
+AGENT_KEYS = ('import', 'extend', 'note')
+
+def agent_notes(card):
+    """Las indicaciones para IAs como pares (etiqueta, texto). En los datos
+    van como {"import": […], "extend": […], "note": […]}; una lista suelta
+    son notas generales."""
+    a = card.get('agents') or {}
+    if isinstance(a, list):
+        a = {'note': a}
+    return [(k.upper(), t) for k in AGENT_KEYS for t in a.get(k, [])]
+
 def agents_lines(card, width):
-    """Instrucciones del autor para quien amplíe la hoja con IA: una por
-    línea, con guion; lo que no cabe sigue debajo, sangrado."""
-    out = []
-    for note in card.get('agents', []):
-        cur = '-'
-        for word in norm(note).split(' '):
-            if len(cur) + 1 + len(word) > width:
-                out.append(cur)
-                cur = '  ' + word
-            else:
-                cur += ' ' + word
-        out.append(cur)
-    return out
+    notes = agent_notes(card)
+    return keyed(notes, width) if notes else []
 
 def row_chunks(row):
     """Lo que se escribe junto a una fila: el nombre y sus datos, `CLAVE: valor`."""
@@ -366,8 +367,11 @@ def read_card(path):
             card[key.lower()] = su[key].lower()
     if 'DESC' in su:
         card['description'] = su['DESC']
-    if zones.get('AGENTS'):
-        card['agents'] = [t.lstrip('- ').strip() for t in zones['AGENTS']]
+    for t in zones.get('AGENTS', []):
+        key, _, text = t.partition(':')
+        if key.lower() not in AGENT_KEYS:
+            key, text = 'note', t
+        card.setdefault('agents', {}).setdefault(key.lower(), []).append(text.strip())
     card.update({'frame': {'w': fw, 'h': fh}, 'grid': {'columns': cols, 'rows': nrows}, 'rows': []})
     # Rótulos de fila: a la derecha de los frames, por encima de las barras.
     lab_col = -(-(cols * fw + 6) // CW)
@@ -496,8 +500,8 @@ def summary(card):
             out.append(f'- fila {r}: {row["name"]}, {row["frames"]} frames, {ms}, {mode}')
         else:
             out.append(f'- fila {r}: {row["name"]}, {row["frames"]} imágenes sueltas')
-    for note in card.get('agents', []):
-        out.append('Para ampliarla: ' + note)
+    for key, note in agent_notes(card):
+        out.append({'IMPORT': 'Al importarla: ', 'EXTEND': 'Al ampliarla: ', 'NOTE': 'Nota: '}[key] + note)
     return '\n'.join(out)
 
 def main(argv=None):

@@ -1,6 +1,6 @@
 ---
 name: spritevpg
-description: Entender, recortar, validar, generar y ampliar sprite patterns SpriteVPG (Sprite Varial Pixel Gen) — hojas de sprites PNG con los frames limpios desde la esquina de arriba a la izquierda, una animación por fila con su rótulo a la derecha (nombre, «FRAMES: 6», «MS/FRAME: 110», «PLAY: LOOP»), y debajo dos zonas con barra de título, SHEET (NAME, FRAME, GRID) SUBJECT (KIND, VIEW, FACING, DESC) y, opcionalmente, AGENTS (indicaciones para ampliarla con IA), y una barra final con «SPRITEVPG 1.0» y, debajo, «HTTPS://VARIALGATE.GITHUB.IO/SPECS/SPRITEVPG/». Úsalo cuando aparezca un fichero *.spritevpg.png o una hoja de sprites con ese aspecto, o cuando se pida crear, leer, importar en un motor, recortar, animar o añadir animaciones a una hoja de sprites en este formato.
+description: Entender, recortar, validar, generar y ampliar sprite patterns SpriteVPG (Sprite Varial Pixel Gen) — hojas de sprites PNG con los frames limpios desde la esquina de arriba a la izquierda, una animación por fila con su rótulo a la derecha (nombre, «FRAMES: 6», «MS/FRAME: 110», «PLAY: LOOP»), y debajo dos zonas con barra de título, SHEET (NAME, FRAME, GRID) SUBJECT (KIND, VIEW, FACING, DESC) y, opcionalmente, AGENTS (indicaciones IMPORT y EXTEND para una IA), y una barra final con «SPRITEVPG 1.0» y, debajo, «HTTPS://VARIALGATE.GITHUB.IO/SPECS/SPRITEVPG/». Úsalo cuando aparezca un fichero *.spritevpg.png o una hoja de sprites con ese aspecto, o cuando se pida crear, leer, importar en un motor, recortar, animar o añadir animaciones a una hoja de sprites en este formato.
 ---
 
 # SpriteVPG: sprite patterns
@@ -26,8 +26,12 @@ Un **sprite pattern** es una hoja de sprites PNG que dice ella misma cómo se co
 - **`SHEET`**, debajo: `NAME: …`, `FRAME: 32X32 PX`, `GRID: 6 COLUMNS X 3 ROWS`, `ORIGIN: TOP-LEFT 0,0, NO GAPS`.
 - **`SUBJECT`** (opcional): `KIND:` (character, creature, item, prop, building, effect, tile, ui), `VIEW:` (una de
   las seis vistas de abajo), `FACING:` (right, left, up, down o una diagonal) y `DESC:` (frase breve).
-- **`AGENTS`** (opcional): las indicaciones del autor para quien amplíe la hoja con IA, una por línea con guion:
-  estilo, proporciones y lo que no debe cambiar. Texto libre.
+- **`AGENTS`** (opcional): las indicaciones del autor para la IA que trabaje con esta hoja, una por línea, texto
+  libre, cada una con su etiqueta:
+  - `IMPORT:` qué hacer al importarla: volteos, efectos que debe añadir la aplicación (sombra, brillo, parpadeo), en
+    qué frame pasa algo;
+  - `EXTEND:` qué respetar al ampliarla: estilo, proporciones, lo que no debe cambiar;
+  - `NOTE:` cualquier otra cosa.
 - **Barra final**, en dos filas: `SPRITEVPG 1.0` y, debajo, `HTTPS://VARIALGATE.GITHUB.IO/SPECS/SPRITEVPG/`.
 - Texto en mayúsculas con la fuente SpriteVPG 4×6, en celdas de 5×8 px, tinta `#1F2A44` sobre papel `#F3EEDD`.
 
@@ -60,6 +64,9 @@ JPEG ni con imágenes reescaladas con suavizado.
 - `read -o salida/ --gifs` deja `<nombre>.sheet.png` (la hoja sin márgenes), una carpeta por fila con sus frames
   (`walk/0.png`…), un GIF por animación y `<nombre>.card.json` (los datos leídos, listos para volver a pasárselos a
   `make`).
+- **Sigue las indicaciones `IMPORT` de la zona `AGENTS`** (las da `info` como «Al importarla»): implementa en el
+  código los volteos y los efectos que pidan (sombra, brillo, golpe en tal frame). Si alguna no se puede cumplir en
+  ese motor, dilo; no la ignores en silencio.
 - En un motor no hace falta recortar: los frames empiezan en 0,0.
   - Unity: Grid By Cell Size, offset 0.
   - Godot: «Añadir frames desde hoja», sin offset.
@@ -75,8 +82,9 @@ JPEG ni con imágenes reescaladas con suavizado.
    ```json
    { "name": "Caballero azul", "kind": "character", "view": "side", "facing": "right",
      "description": "Caballero con armadura azul, espada y escudo",
-     "agents": [ "Contorno oscuro de 1 px, tres tonos de azul, luz arriba a la izquierda.",
-                 "Figura de 4 cabezas de alto; espada en la mano derecha." ],
+     "agents": { "import": [ "Para mirar a la izquierda, voltear en horizontal.",
+                             "Añadir una sombra elíptica bajo los pies." ],
+                 "extend": [ "Contorno oscuro de 1 px, tres tonos de azul, luz arriba a la izquierda." ] },
      "frame": { "w": 32, "h": 32 },
      "rows": [ { "name": "idle", "ms": 400, "loop": "loop" },
                { "name": "attack", "ms": [80, 120, 90, 160], "loop": "once" },
@@ -86,8 +94,9 @@ JPEG ni con imágenes reescaladas con suavizado.
    Una entrada por fila, en orden. `ms`: un número (todos los frames igual) o una lista (uno por frame). Sin `ms`,
    imágenes sueltas. Nombres de fila en minúsculas: `[a-z0-9_-]`. `kind`, `view`, `facing` y `description` son
    opcionales, pero ponlos siempre que los sepas: es lo que le dice a otra IA qué está importando.
-   `agents`: escribe ahí lo que tendría que saber quien amplíe la hoja y no se ve en los datos: el estilo (contorno,
-   tonos, luz), las proporciones y lo que no debe cambiar. Pocas líneas, concretas. No repitas la vista ni el tamaño.
+   `agents`: lo que tendría que saber otra IA y no está en los datos. En `import`, lo especial al importarla
+   (volteos, efectos que añade la aplicación, en qué frame pasa algo); en `extend`, el estilo (contorno, tonos, luz),
+   las proporciones y lo que no debe cambiar. Pocas líneas, concretas. No repitas la vista ni el tamaño.
 3. `make hoja.png datos.json -o <nombre>.spritevpg.png --preview 4`. Enseña la copia `@4x`.
 
 ## Las seis vistas
@@ -105,7 +114,7 @@ JPEG ni con imágenes reescaladas con suavizado.
 
 1. `read` el patrón: hoja limpia, frames y datos.
 2. Genera los frames nuevos **forzando la vista de `view`** y la dirección de `facing`, y **siguiendo las
-   indicaciones de `AGENTS`** (añádelas al prompt, traducidas al inglés si hace falta). Con un modelo de imagen:
+   indicaciones `EXTEND` de `AGENTS`** (añádelas al prompt, traducidas al inglés si hace falta). Con un modelo de imagen:
    pásale un frame existente ampliado (a escala entera) como referencia en la primera celda de una plantilla, fondo
    magenta `#FF00FF`, y un prompt como: «Pixel art sprite sheet of the same character as in the first cell:
    <animación>. Draw every frame in <frase de la vista>, facing <facing>. Use exactly this same camera angle in every
