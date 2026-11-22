@@ -104,12 +104,17 @@ JPEG ni con imágenes reescaladas con suavizado.
    Una entrada por fila, en orden. `ms`: un número (todos los frames igual) o una lista (uno por frame). Sin `ms`,
    imágenes sueltas. Nombres de fila en minúsculas: `[a-z0-9_-]`. `kind`, `view`, `facing` y `description` son
    opcionales, pero ponlos siempre que los sepas: es lo que le dice a otra IA qué está importando.
-   `body` y `pivot`: con `"auto"` la herramienta mide el primer frame y pone el apoyo en el centro de su base; o dalos
-   a mano (`{"x":5,"y":0,"w":21,"h":32}` y `{"x":15,"y":31}`).
+   `body` y `pivot`: con `"auto"` la herramienta mide el primer frame de la fila `idle` (o de la primera) y pone el
+   apoyo en el centro de su base. `body` es el **cuerpo quieto sin lo que sobresale** (arma, lanza, capa, efecto): si
+   la figura lleva algo así, dalo a mano (`{"x":5,"y":0,"w":21,"h":32}` y `{"x":15,"y":31}`).
    `agents`: lo que tendría que saber otra IA y no está en los datos. En `implement`, lo que debe programar quien
    la use (volteos, efectos que añade la aplicación, en qué frame pasa algo); en `extend`, el estilo (contorno, tonos, luz),
-   las proporciones y lo que no debe cambiar. Pocas líneas, concretas. No repitas la vista ni el tamaño.
-3. `make hoja.png datos.json -o <nombre>.spritevpg.png --preview 4`. Enseña la copia `@4x`.
+   las proporciones y lo que no debe cambiar. Pocas líneas, concretas. No repitas la vista ni el tamaño. Si nombras
+   un frame, cuenta desde 1 y mejor con palabras («el tercer frame»).
+3. `make hoja.png datos.json -o <nombre>.spritevpg.png --preview 4`. Enseña la copia `@4x`, y entrégala siempre
+   junto a la nativa cuando los frames son pequeños (16 px o menos): es la que se lee.
+4. Nombres de fila de 24 caracteres como mucho. No cambies el tamaño de los frames para que quepa un rótulo: la
+   herramienta compacta o baja el texto.
 
 ## Las seis vistas
 
@@ -137,7 +142,10 @@ JPEG ni con imágenes reescaladas con suavizado.
 
 ## Reglas
 
-- Nada dentro de la zona de frames salvo frames.
+- Nada dentro de la zona de frames salvo frames. Los frames mandan sobre el texto: nunca se mueven ni se agrandan
+  por los márgenes.
+- Lo leído vuelve en mayúsculas (nombre, descripción, indicaciones): no dependas de mayúsculas y minúsculas. En un
+  texto, «el frame 3» es el tercero de su fila.
 - PNG siempre; nunca JPEG. Ampliar solo a escala entera y sin suavizado.
 - El formato 1.0 solo lleva esto. Cajas de colisión y eventos por frame no forman parte: si hacen falta,
   pregúntalos; no los inventes.

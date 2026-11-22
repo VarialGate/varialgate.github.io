@@ -95,6 +95,13 @@ frames: ni texto ni marcas.</p>
   <li>La hoja <span class="kw">PUEDE</span> ampliarse a escala entera sin suavizado y sigue siendo válida.
     <span class="kw">NO DEBE</span> guardarse en JPEG ni otro formato con pérdida.</li>
   <li>Nombre recomendado: <code>&lt;nombre&gt;.spritevpg.png</code>.</li>
+  <li><strong>Los frames mandan sobre el texto.</strong> El tamaño de celda y la posición de los frames
+    <span class="kw">NO DEBEN</span> cambiar para hacer sitio a los márgenes: si el rótulo de una fila no cabe a su
+    altura, es el texto el que se compacta o se desplaza (<a href="#z-rows">5.1</a>), nunca la fila.</li>
+  <li><strong>Hojas pequeñas.</strong> Con frames de 16 px o menos, los márgenes ocupan más que los dibujos. Es
+    normal: la letra no encoge. Junto a la hoja a tamaño nativo (la que usa el juego) se
+    <span class="kw">DEBERÍA</span> publicar una <strong>copia ampliada</strong> a escala entera (×4 u ×8), que es
+    también un sprite pattern válido y es la que conviene enseñar o dar a una IA.</li>
 </ul>
 
 <h3 id="celda"><span class="n">3.1</span>Elegir el tamaño de celda</h3>
@@ -141,6 +148,11 @@ celda y se compara con la tabla de la fuente.</p>
 <p><a href="font/spritevpg-4x6.ttf">SpriteVPG 4×6</a>: mayúsculas, cifras, vocales con tilde, Ü, Ñ y los signos
 <code>. , : ; - + / ( ) [ ] = # &lt; &gt; * % _ " ' ! ? ¿ ¡ &amp; ·</code>, sin suavizado. El texto se escribe siempre en
 mayúsculas.</p>
+<p><strong>Las mayúsculas no se recuperan.</strong> Quien lee un sprite pattern obtiene el nombre, la descripción y
+las indicaciones en mayúsculas, y con <code>?</code> en lugar de los caracteres que la fuente no tiene. Por eso los
+nombres de fila solo usan minúsculas (se leen de vuelta en minúsculas) y un programa <span class="kw">NO DEBERÍA</span>
+depender de las mayúsculas y minúsculas del resto. Quien genera la hoja puede guardar aparte sus datos originales; eso
+queda fuera del formato.</p>
 <p class="paper">ABCDEFGHIJKLMNÑOPQRSTUVWXYZ ÁÉÍÓÚÜ
 0123456789 .,:;-+/()[]=#&lt;&gt;*%_"'!?¿¡&amp;·</p>
 <p class="muted">En la TTF, a 8 px por em (o múltiplos: 16, 24, 32…) un píxel de la fuente es un píxel de pantalla.
@@ -177,13 +189,23 @@ cada fila, va su rótulo: el <strong>nombre</strong> de la animación y, sangrad
 <tr><td><code>MS/FRAME</code></td><td>Milisegundos que dura cada frame. Un número: todos igual. Varios: uno por frame, en orden</td></tr>
 <tr><td><code>PLAY</code></td><td><code>LOOP</code> (en bucle), <code>ONCE</code> (una vez; se queda en el último frame) o <code>STILL</code> (no es una animación: son imágenes sueltas, y no lleva <code>MS/FRAME</code>)</td></tr>
 </table></div>
-<ul>
-  <li>Hay <strong>un rótulo por fila, en el orden de las filas</strong>. Cada uno <span class="kw">DEBERÍA</span> ir a
-    la altura de su fila, con una regla gris entre uno y otro.</li>
-  <li>Si la fila es baja y no caben las cuatro líneas, los datos van seguidos, separados por <code>·</code>:
-    <code>ITEMS · FRAMES: 5 · PLAY: STILL</code>. Si aun así no caben junto a su fila, los rótulos van uno debajo de
-    otro: lo que cuenta es el orden.</li>
-</ul>
+<p><strong>Dónde va cada rótulo.</strong> El alto de la fila manda: el rótulo se adapta a ella, y no al revés. Quien
+escribe la hoja <span class="kw">DEBE</span> aplicar estas reglas en orden:</p>
+<ol>
+  <li>Hay <strong>un rótulo por fila, en el orden de las filas</strong>, con una regla gris entre uno y otro. Quien
+    lee se guía solo por ese orden: el rótulo número <code>r</code> es el de la fila <code>r</code>.</li>
+  <li>Si el rótulo cabe en el alto de su fila (una línea de texto cada 8 px), va a su altura, centrado, con un dato
+    por línea.</li>
+  <li>Si la fila es baja y no caben todas las líneas, los datos van seguidos, separados por <code>·</code>:
+    <code>ITEMS · FRAMES: 5 · PLAY: STILL</code>.</li>
+  <li>Si aun así no cabe junto a su fila, el rótulo empieza justo debajo del anterior: los rótulos bajan y las zonas
+    de debajo empiezan más abajo. Los frames no se mueven.</li>
+  <li>Una línea demasiado ancha (una lista larga de <code>MS/FRAME</code>) se parte por un espacio y sigue en la de
+    abajo, sangrada.</li>
+</ol>
+<p><strong>Ancho.</strong> La imagen es tan ancha como pidan los frames, el rótulo más largo y el enlace de la barra
+final. Para que no crezca sin medida, los nombres de fila <span class="kw">DEBERÍAN</span> tener 24 caracteres como
+mucho, y las líneas de los rótulos, 26 (lo que no quepa se parte según la regla 5).</p>
 
 <p>Debajo de la zona de frames van las <strong>zonas</strong>: <code>SHEET</code> y <code>SUBJECT</code>, una al lado
 de la otra, y <code>AGENTS</code>, a todo el ancho. Cada una empieza con una
@@ -203,14 +225,21 @@ PIVOT:  15,31</div>
 <tr><td><code>FRAME</code></td><td><code>anchoXalto PX</code>: el tamaño de cada frame. Obligatoria</td></tr>
 <tr><td><code>GRID</code></td><td><code>n COLUMNS X m ROWS</code>: columnas y filas de la zona de frames. Obligatoria</td></tr>
 <tr><td><code>ORIGIN</code></td><td>Siempre <code>TOP-LEFT 0,0, NO GAPS</code>: los frames empiezan arriba a la izquierda, sin margen ni separación. Es una constante del formato; se escribe para quien no lo conoce</td></tr>
-<tr><td><code>BODY</code></td><td><code>anchoXalto PX AT x,y</code>: lo que ocupa el dibujo <strong>quieto</strong> dentro de cada frame, y dónde empieza (su esquina de arriba a la izquierda, en píxeles del frame). Opcional</td></tr>
+<tr><td><code>BODY</code></td><td><code>anchoXalto PX AT x,y</code>: lo que ocupa el <strong>cuerpo quieto</strong> dentro de cada frame, y dónde empieza (su esquina de arriba a la izquierda, en píxeles del frame). Opcional</td></tr>
 <tr><td><code>PIVOT</code></td><td><code>x,y</code>: el punto del frame por el que se coloca el dibujo en el juego, el mismo en todos los frames. En personajes, entre los pies. Opcional</td></tr>
 </table></div>
 <p><strong>Celda y cuerpo no son lo mismo.</strong> La celda da cabida a la animación que más se sale
 (<a href="#celda">3.1</a>), así que suele ser mayor que el dibujo quieto. <code>BODY</code> dice dónde está
 ese cuerpo dentro de la celda y cuánto mide, y <code>PIVOT</code>, por qué punto se coloca: quien use la hoja pone el
 <code>PIVOT</code> en la posición del personaje y usa <code>BODY</code> (no la celda) para lo que ocupa en el juego.
-Cuando la hoja lleva <code>PIVOT</code>, una <strong>muesca</strong> de color <code>#D6336C</code> lo marca en el borde
+</p>
+<p><strong>Qué entra en <code>BODY</code>.</strong> El cuerpo es lo que ocupa sitio en el juego: la figura en reposo
+<strong>sin lo que sobresale de ella</strong> (un arma, una lanza, una capa, un efecto). Es la caja que sirve para
+colisionar, seleccionar y medir proporciones; el dibujo puede salirse de ella. Se toma del <strong>primer frame de la
+fila <code>idle</code></strong> o, si no hay ninguna con ese nombre, del primer frame de la primera fila. Medir
+todos los píxeles de ese frame (lo que hace <code>"auto"</code> en la herramienta) da el cuerpo solo cuando la figura
+no lleva nada que sobresalga: si lleva una lanza, <code>BODY</code> <span class="kw">DEBERÍA</span> darse a mano.</p>
+<p>Cuando la hoja lleva <code>PIVOT</code>, una <strong>muesca</strong> de color <code>#D6336C</code> lo marca en el borde
 de la zona de frames: a la derecha de cada fila, a su altura, y debajo de cada columna.</p>
 
 <h3 id="z-subject"><span class="n">5.3</span><code>SUBJECT</code>: qué es</h3>
@@ -249,6 +278,8 @@ el idioma de quien lo escribe. Cada indicación lleva delante cuándo se aplica:
   <li>Una indicación por línea; si no cabe, sigue en la de abajo, sangrada.</li>
   <li>No hace falta repetir lo que ya dicen las otras zonas: la vista y hacia dónde mira están en
     <code>SUBJECT</code>; el tamaño de frame, en <code>SHEET</code>; el ritmo, en el rótulo de cada fila.</li>
+  <li><strong>Los frames se cuentan desde 1</strong> cuando se nombran en un texto: «el frame 3» es el tercero de
+    su fila (la columna 2 al recortar). Mejor aún, escribirlo sin ambigüedad: «el tercer frame».</li>
   <li>Una IA que use o amplíe la hoja <span class="kw">DEBERÍA</span> seguir estas indicaciones; si no puede
     cumplir alguna (un efecto que su motor no tiene), <span class="kw">DEBERÍA</span> decirlo en vez de ignorarla.</li>
 </ul>
@@ -341,8 +372,9 @@ por fila) y los datos que hay que escribir, en un JSON pequeño:</p>
   ]
 }</code></pre>
 <p>Una entrada de <code>rows</code> por fila, en orden. <code>ms</code>: un número (todos los frames igual) o una lista
-(uno por frame); sin <code>ms</code>, la fila son imágenes sueltas. <code>body</code> y <code>pivot</code> admiten <code>"auto"</code>: la herramienta mide el primer frame y pone el
-apoyo en el centro de su base. <code>agents</code>: las indicaciones de la zona
+(uno por frame); sin <code>ms</code>, la fila son imágenes sueltas. <code>body</code> y <code>pivot</code> admiten <code>"auto"</code>: la herramienta mide el primer frame de la fila
+<code>idle</code> (o de la primera) y pone el apoyo en el centro de su base; si la figura lleva algo que sobresale,
+mejor darlos a mano (<a href="#z-sheet">5.2</a>). <code>agents</code>: las indicaciones de la zona
 <code>AGENTS</code>, en listas <code>implement</code>, <code>extend</code> y <code>note</code>. El número de frames lo cuenta la herramienta. Ese
 JSON es solo la manera de pasarle los datos: no forma parte del formato ni acompaña a la imagen.</p>
 <p>Para <strong>leer</strong>, <code>read</code> deja la hoja sin márgenes, una carpeta de frames por fila, con

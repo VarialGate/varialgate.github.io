@@ -210,13 +210,27 @@ def row_chunks(row):
     out.append('PLAY: ' + (norm(row['loop']) if ms else 'STILL'))
     return out
 
+def fold(lines, width):
+    """Parte por los espacios las líneas más anchas que `width` (una lista
+    larga de MS/FRAME); lo que sigue va sangrado cuatro celdas."""
+    out = []
+    for line in lines:
+        while len(line) > width and ' ' in line.strip():
+            cut = line.rfind(' ', 5, width + 1)
+            if cut <= len(line) - len(line.lstrip()):
+                break
+            out.append(line[:cut])
+            line = '    ' + line[cut + 1:]
+        out.append(line)
+    return out
+
 def row_label(row, lines, width):
     """El rótulo de una fila en `lines` líneas como mucho: un dato por línea si
     caben; si no, seguidos y separados por «·». Las líneas de continuación van
-    sangradas dos celdas."""
+    sangradas dos celdas. Ninguna línea pasa de `width` si se puede partir."""
     chunks = row_chunks(row)
     if lines >= len(chunks):
-        return [chunks[0]] + ['  ' + c for c in chunks[1:]]
+        return fold([chunks[0]] + ['  ' + c for c in chunks[1:]], width)
     out, cur = [], chunks[0]
     for c in chunks[1:]:
         if len(cur) + 3 + len(c) <= width:
@@ -224,7 +238,7 @@ def row_label(row, lines, width):
         else:
             out.append(cur)
             cur = '  ' + c
-    return out + [cur]
+    return fold(out + [cur], width)
 
 def render(sheet, card):
     fw, fh = card['frame']['w'], card['frame']['h']
@@ -432,10 +446,14 @@ def complete(card, sheet):
     out = {'format': FORMAT, 'version': VERSION, 'name': card['name'],
            **{k: card[k] for k in ('kind', 'view', 'facing', 'description', 'agents') if card.get(k)},
            'frame': {'w': fw, 'h': fh}, 'grid': {'columns': cols, 'rows': nrows}, 'rows': []}
-    # "body": "auto" mide el primer frame; "pivot": "auto" es el centro de su base.
+    # "body": "auto" mide el primer frame de la fila de referencia (la que se
+    # llama "idle"; si no la hay, la primera); "pivot": "auto" es el centro de
+    # su base.
     body, pivot = card.get('body'), card.get('pivot')
     if body == 'auto' or (pivot == 'auto' and not body):
-        x0, y0, x1, y1 = sheet.crop((0, 0, fw, fh)).getbbox()
+        names = [str(r.get('name', '')).lower() for r in card['rows']]
+        ref = names.index('idle') if 'idle' in names else 0
+        x0, y0, x1, y1 = sheet.crop((0, ref * fh, fw, (ref + 1) * fh)).getbbox()
         measured = {'x': x0, 'y': y0, 'w': x1 - x0, 'h': y1 - y0}
         if body == 'auto':
             body = measured
