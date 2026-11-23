@@ -221,6 +221,8 @@ def row_chunks(row):
             out.append(f'{key.upper()}: {norm(row[key])}')
     return out
 
+LABEL_MIN, LABEL_MAX = 26, 72      # ancho de una línea de rótulo, en caracteres
+
 def fold(lines, width):
     """Parte por los espacios las líneas más anchas que `width` (una lista
     larga de MS/FRAME); lo que sigue va sangrado cuatro celdas."""
@@ -235,12 +237,10 @@ def fold(lines, width):
         out.append(line)
     return out
 
-def row_label(row, lines, width):
-    """El rótulo de una fila en `lines` líneas como mucho: un dato por línea si
-    caben; si no, seguidos y separados por «·». Las líneas de continuación van
-    sangradas dos celdas. Ninguna línea pasa de `width` si se puede partir."""
-    chunks = row_chunks(row)
-    if lines >= len(chunks):
+def label_lines(chunks, width, packed):
+    """El rótulo con líneas de `width` caracteres como mucho: un dato por
+    línea, o (`packed`) seguidos y separados por «·»."""
+    if not packed:
         return fold([chunks[0]] + ['  ' + c for c in chunks[1:]], width)
     out, cur = [], chunks[0]
     for c in chunks[1:]:
@@ -251,6 +251,20 @@ def row_label(row, lines, width):
             cur = '  ' + c
     return fold(out + [cur], width)
 
+def row_label(row, lines):
+    """El rótulo de una fila en `lines` líneas como mucho (las que caben en
+    el alto del frame). El alto de la fila manda: se prueba con líneas cada
+    vez más anchas, de LABEL_MIN a LABEL_MAX, primero con un dato por línea y
+    después seguidos; la imagen se ensancha lo que haga falta. Solo si ni con
+    LABEL_MAX cabe, el rótulo ocupa más líneas que su fila."""
+    chunks = row_chunks(row)
+    for width in range(LABEL_MIN, LABEL_MAX + 1):
+        for packed in (False, True):
+            ls = label_lines(chunks, width, packed)
+            if len(ls) <= lines:
+                return ls
+    return label_lines(chunks, LABEL_MAX, True)
+
 def render(sheet, card):
     fw, fh = card['frame']['w'], card['frame']['h']
     cols, nrows = card['grid']['columns'], card['grid']['rows']
@@ -258,13 +272,14 @@ def render(sheet, card):
     sheet = sheet.convert('RGBA').crop((0, 0, AW, AH))
     spec, link = norm(f'{FORMAT} {VERSION}'), norm(URL)   # las dos filas de la barra final
     lab_col = -(-(AW + 6) // CW)                  # rótulos, a la derecha de los frames
-    room = max(26, len(link) + 2 - lab_col - 1)
-    labels = [row_label(r, fh // CH, room) for r in card['rows']]
+    labels = [row_label(r, max(1, fh // CH)) for r in card['rows']]
     wide = max(len(link) + 2, lab_col + max(len(t) for ls in labels for t in ls) + 1)
-    # Cada rótulo va a la altura de su fila si cabe; si no, debajo del anterior.
+    # Cada rótulo va centrado en su fila, en la línea de texto más cercana; si
+    # el anterior llega hasta ahí (frames de menos de 8 px, o un rótulo que no
+    # cabe ni con LABEL_MAX), justo debajo de él.
     pos, nxt = [], 0
     for r, ls in enumerate(labels):
-        ideal = -(-(r * fh + max(0, (fh - len(ls) * CH) // 2)) // CH)
+        ideal = max(0, (2 * r * fh + fh - len(ls) * CH + CH) // (2 * CH))
         pos.append(max(nxt, ideal))
         nxt = pos[-1] + len(ls)
     has_subject = bool(subject_lines(card, 99))

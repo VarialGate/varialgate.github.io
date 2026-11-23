@@ -123,7 +123,7 @@ JPEG ni con imágenes reescaladas con suavizado.
 3. `make hoja.png datos.json -o <nombre>.spritevpg.png --preview 4`. Enseña la copia `@4x`, y entrégala siempre
    junto a la nativa cuando los frames son pequeños (16 px o menos): es la que se lee.
 4. Nombres de fila de 24 caracteres como mucho. No cambies el tamaño de los frames para que quepa un rótulo: la
-   herramienta compacta o baja el texto.
+   herramienta lo compacta y ensancha la imagen para que cada rótulo quede a la altura de su fila.
 
 ## Las seis vistas
 

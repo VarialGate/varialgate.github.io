@@ -96,8 +96,8 @@ frames: ni texto ni marcas.</p>
     <span class="kw">NO DEBE</span> guardarse en JPEG ni otro formato con pérdida.</li>
   <li>Nombre recomendado: <code>&lt;nombre&gt;.spritevpg.png</code>.</li>
   <li><strong>Los frames mandan sobre el texto.</strong> El tamaño de celda y la posición de los frames
-    <span class="kw">NO DEBEN</span> cambiar para hacer sitio a los márgenes: si el rótulo de una fila no cabe a su
-    altura, es el texto el que se compacta o se desplaza (<a href="#z-rows">5.1</a>), nunca la fila.</li>
+    <span class="kw">NO DEBEN</span> cambiar para hacer sitio a los márgenes: el rótulo de cada fila se compacta y
+    la imagen se ensancha para que quede a la altura de su animación (<a href="#z-rows">5.1</a>).</li>
   <li><strong>Hojas pequeñas.</strong> Con frames de 16 px o menos, los márgenes ocupan más que los dibujos. Es
     normal: la letra no encoge. Junto a la hoja a tamaño nativo (la que usa el juego) se
     <span class="kw">DEBERÍA</span> publicar una <strong>copia ampliada</strong> a escala entera (×4 u ×8), que es
@@ -213,23 +213,29 @@ al lado de otro; en la hoja van uno debajo de otro, cada uno junto a su fila.</p
     esa fila volteada en horizontal <strong>alrededor del <code>PIVOT</code></strong> (o del centro del frame si no
     hay). Una dirección que no está ni dibujada ni en un <code>MIRROR</code> no existe en la hoja.</li>
 </ul>
-<p><strong>Dónde va cada rótulo.</strong> El alto de la fila manda: el rótulo se adapta a ella, y no al revés. Quien
-escribe la hoja <span class="kw">DEBE</span> aplicar estas reglas en orden:</p>
+<p><strong>Dónde va cada rótulo.</strong> El alto de la fila manda: cada rótulo va <strong>a la altura de su
+animación</strong>, y lo que cede es el ancho de la imagen, que el formato no fija. Quien escribe la hoja
+<span class="kw">DEBE</span> aplicar estas reglas:</p>
 <ol>
   <li>Hay <strong>un rótulo por fila, en el orden de las filas</strong>, con una regla gris entre uno y otro. Quien
     lee se guía solo por ese orden: el rótulo número <code>r</code> es el de la fila <code>r</code>.</li>
-  <li>Si el rótulo cabe en el alto de su fila (una línea de texto cada 8 px), va a su altura, centrado, con un dato
-    por línea.</li>
-  <li>Si la fila es baja y no caben todas las líneas, los datos van seguidos, separados por <code>·</code>:
-    <code>ITEMS · FRAMES: 5 · PLAY: STILL</code>.</li>
-  <li>Si aun así no cabe junto a su fila, el rótulo empieza justo debajo del anterior: los rótulos bajan y las zonas
-    de debajo empiezan más abajo. Los frames no se mueven.</li>
-  <li>Una línea demasiado ancha (una lista larga de <code>MS/FRAME</code>) se parte por un espacio y sigue en la de
-    abajo, sangrada.</li>
+  <li>En el alto de una fila caben <code>alto del frame / 8</code> líneas de texto (redondeando hacia abajo, y al
+    menos una). El rótulo <span class="kw">DEBE</span> ocupar esas líneas como mucho.</li>
+  <li>Si caben todos los datos con uno por línea, van así. Si no, van seguidos, separados por <code>·</code>, en
+    las líneas que haya: <code>IDLE · FRAMES: 2 · MS/FRAME: 600 400 · PLAY: LOOP · FACING: DOWN</code>.</li>
+  <li><strong>Antes que bajar un rótulo, se ensancha la imagen</strong>: las líneas pueden medir hasta 72
+    caracteres. Se usa el ancho menor con el que el rótulo cabe en su fila (desde 26 caracteres).</li>
+  <li>El rótulo va <strong>centrado en su fila</strong>, en la línea de texto más cercana (las líneas van cada 8 px
+    y las filas no suelen medir un múltiplo de 8).</li>
+  <li>Solo cuando no hay otra salida (frames de menos de 8 px de alto, o un rótulo que no cabe ni con líneas de 72
+    caracteres) el rótulo ocupa más que su fila: entonces empieza justo debajo del anterior, sin pisarlo, y los
+    siguientes bajan con él. Una línea que pase de 72 caracteres se parte por un espacio y sigue en la de abajo,
+    sangrada.</li>
+  <li>Los frames no se mueven nunca.</li>
 </ol>
 <p><strong>Ancho.</strong> La imagen es tan ancha como pidan los frames, el rótulo más largo y el enlace de la barra
-final. Para que no crezca sin medida, los nombres de fila <span class="kw">DEBERÍAN</span> tener 24 caracteres como
-mucho, y las líneas de los rótulos, 26 (lo que no quepa se parte según la regla 5).</p>
+final. Lo único que conviene limitar es el <strong>nombre de la fila</strong>: <span class="kw">DEBERÍA</span> tener
+24 caracteres como mucho.</p>
 
 <p>Debajo de la zona de frames van las <strong>zonas</strong>: <code>SHEET</code> y <code>SUBJECT</code>, una al lado
 de la otra, y <code>AGENTS</code>, a todo el ancho. Cada una empieza con una
@@ -421,7 +427,7 @@ cambiar y volver a generar.</p>
 <div class="table-scroll"><table>
 <tr><th>Versión</th><th>Qué añade</th></tr>
 <tr><td>1.0</td><td>El formato: frames desde <code>0,0</code>, rótulos de fila, <code>SHEET</code>, <code>SUBJECT</code>, <code>AGENTS</code> y la barra final</td></tr>
-<tr><td>1.1</td><td><code>FACING</code> y <code>MIRROR</code> en el rótulo de cada fila, y <code>MIRROR</code> en <code>SUBJECT</code>: varias direcciones en una hoja y qué filas se voltean (<a href="#direcciones">5.1</a>). Además, aclaraciones que no cambian el formato: dónde va cada rótulo, qué entra en <code>BODY</code>, las mayúsculas, las hojas pequeñas y cómo se cuentan los frames</td></tr>
+<tr><td>1.1</td><td><code>FACING</code> y <code>MIRROR</code> en el rótulo de cada fila, y <code>MIRROR</code> en <code>SUBJECT</code>: varias direcciones en una hoja y qué filas se voltean (<a href="#direcciones">5.1</a>). Además, aclaraciones que no cambian el formato: dónde va cada rótulo (siempre a la altura de su fila, ensanchando la imagen si hace falta), qué entra en <code>BODY</code>, las mayúsculas, las hojas pequeñas y cómo se cuentan los frames</td></tr>
 </table></div>
 <p><strong>Compatibilidad.</strong> Una versión menor solo añade datos opcionales. Un lector 1.0 lee una hoja 1.1
 ignorando lo que no conoce (los frames, el corte y el ritmo son los mismos), y un lector 1.1 lee una hoja 1.0 tal
