@@ -1,6 +1,6 @@
 ---
 name: spritevpg
-description: Entender, recortar, validar, generar y ampliar sprite patterns SpriteVPG (Sprite Varial Pixel Gen) — hojas de sprites PNG con los frames limpios desde la esquina de arriba a la izquierda, una animación por fila con su rótulo a la derecha, dentro del alto de la fila (nombre, «FRAMES: 6», «MS/FRAME: 110», «PLAY: LOOP»; un «+» tras el nombre si la fila tiene más datos en la zona ROWS), y debajo dos zonas con barra de título, SHEET (NAME, FRAME, GRID) SUBJECT (KIND, VIEW, FACING, MIRROR, DESC), ROWS (el FACING y el MIRROR de las filas que cambian) y, opcionalmente, AGENTS (indicaciones IMPLEMENT y EXTEND para una IA), y una barra final con «SPRITEVPG 1.2» y, debajo, «HTTPS://VARIALGATE.GITHUB.IO/SPECS/SPRITEVPG/». Úsalo cuando aparezca un fichero *.spritevpg.png o una hoja de sprites con ese aspecto, o cuando se pida crear, leer, importar en un motor, recortar, animar o añadir animaciones a una hoja de sprites en este formato.
+description: Entender, recortar, validar, generar y ampliar sprite patterns SpriteVPG (Sprite Varial Pixel Gen) — hojas de sprites PNG con los frames limpios desde la esquina de arriba a la izquierda, una animación por fila con su rótulo a la derecha, dentro del alto de la fila (nombre, «FRAMES: 6», «MS/FRAME: 110», «PLAY: LOOP»; un «+» tras el nombre si la fila tiene más datos en la zona ROWS), y debajo dos zonas con barra de título, SHEET (NAME, FRAME, GRID) SUBJECT (KIND, VIEW, FACING, MIRROR, DESC), ROWS (el FACING y el MIRROR de las filas que cambian) y, opcionalmente, AGENTS (indicaciones IMPLEMENT y EXTEND para una IA), y una barra final con «SPRITEVPG 1.3» y, debajo, «HTTPS://VARIALGATE.GITHUB.IO/SPECS/SPRITEVPG/». Úsalo cuando aparezca un fichero *.spritevpg.png o una hoja de sprites con ese aspecto, o cuando se pida crear, leer, importar en un motor, recortar, animar o añadir animaciones a una hoja de sprites en este formato.
 ---
 
 # SpriteVPG: sprite patterns
@@ -23,8 +23,11 @@ Un **sprite pattern** es una hoja de sprites PNG que dice ella misma cómo se co
   `MS/FRAME`: un número (todos igual) o uno por frame. `PLAY`: `LOOP` (en bucle), `ONCE` (una vez, se queda en el
   último frame) o `STILL` (imágenes sueltas, no una animación; sin `MS/FRAME`). En filas bajas va seguido:
   `ITEMS · FRAMES: 5 · PLAY: STILL`.
-- El rótulo lleva solo lo esencial y **nunca sale del alto de su fila** (la imagen se ensancha lo que haga falta).
-  Si el nombre lleva detrás un `+` (`SLEEP + · FRAMES: 2 · …`), la fila tiene una línea en la zona `ROWS`.
+- El rótulo lleva solo lo esencial y **nunca sale del alto de su fila**: va centrado en ella al píxel (no en una
+  rejilla global), y la imagen se ensancha lo que haga falta. Si el nombre lleva detrás un `+`
+  (`SLEEP + · FRAMES: 2 · …`), la fila tiene una línea en la zona `ROWS`. Con frames de menos de 8 px de alto no hay
+  rótulos junto a las filas: todo está en `ROWS`, una línea por fila, en orden
+  (`SPARK: FRAMES: 3 · MS/FRAME: 60 · PLAY: ONCE`).
 - **`ROWS`** (opcional, 1.2): lo demás de cada fila, una línea por fila que empieza por su nombre:
   `WALK_SIDE: FACING: RIGHT · MIRROR: LEFT`.
 - **Direcciones.** `SUBJECT` dice hacia dónde mira la hoja (`FACING`) y, con `MIRROR: LEFT`, que volteada en
@@ -45,8 +48,9 @@ Un **sprite pattern** es una hoja de sprites PNG que dice ella misma cómo se co
     aplicación (sombra, brillo, parpadeo), en qué frame pasa algo;
   - `EXTEND:` qué respetar al ampliarla: estilo, proporciones, lo que no debe cambiar;
   - `NOTE:` cualquier otra cosa.
-- **Barra final**, en dos filas: `SPRITEVPG 1.2` (o `1.0` y `1.1` en hojas anteriores, que se leen igual) y, debajo, `HTTPS://VARIALGATE.GITHUB.IO/SPECS/SPRITEVPG/`.
-- Texto en mayúsculas con la fuente SpriteVPG 4×6, en celdas de 5×8 px, tinta `#1F2A44` sobre papel `#F3EEDD`.
+- **Barra final**, en dos filas: `SPRITEVPG 1.3` (o una versión anterior; la herramienta las lee todas) y, debajo, `HTTPS://VARIALGATE.GITHUB.IO/SPECS/SPRITEVPG/`.
+- Texto en mayúsculas con la fuente SpriteVPG 4×6, en celdas de 5×8 px (columnas cada 5 px desde la izquierda;
+  las líneas de las zonas, cada 8 px desde arriba; las de cada rótulo, desde donde lo centra su fila), tinta `#1F2A44` sobre papel `#F3EEDD`.
 
 Especificación: https://varialgate.github.io/specs/spritevpg/spec.html
 
@@ -162,5 +166,5 @@ JPEG ni con imágenes reescaladas con suavizado.
 - Lo leído vuelve en mayúsculas (nombre, descripción, indicaciones): no dependas de mayúsculas y minúsculas. En un
   texto, «el frame 3» es el tercero de su fila.
 - PNG siempre; nunca JPEG. Ampliar solo a escala entera y sin suavizado.
-- El formato 1.2 solo lleva esto. Sáltate las zonas con un título que no conozcas. Cajas de colisión y eventos por frame no forman parte: si hacen falta,
+- El formato 1.3 solo lleva esto. Sáltate las zonas con un título que no conozcas. Cajas de colisión y eventos por frame no forman parte: si hacen falta,
   pregúntalos; no los inventes.

@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Especificación SpriteVPG 1.2 · Varial Gate</title>
-<meta name="description" content="Especificación de SpriteVPG 1.2: hojas de sprites (sprite patterns) con los frames limpios desde la esquina, una animación por fila y lo imprescindible para cortarlas y animarlas escrito en la propia imagen.">
+<title>Especificación SpriteVPG 1.3 · Varial Gate</title>
+<meta name="description" content="Especificación de SpriteVPG 1.3: hojas de sprites (sprite patterns) con los frames limpios desde la esquina, una animación por fila y lo imprescindible para cortarlas y animarlas escrito en la propia imagen.">
 <meta name="theme-color" content="#0b0a14">
 <link rel="stylesheet" href="spritevpg.css">
 </head>
@@ -19,12 +19,12 @@
   </nav>
 </header>
 
-<p class="eyebrow">ESPECIFICACIÓN 1.2</p>
+<p class="eyebrow">ESPECIFICACIÓN 1.3</p>
 <h1 class="pixel-title">SPRITEVPG</h1>
 <p class="lead">Sprite Varial Pixel Gen: una hoja de sprites que dice ella misma cómo se corta y cómo se anima. Los
 frames van limpios desde la esquina de arriba a la izquierda, una animación por fila, y lo imprescindible va escrito
 al lado y debajo.</p>
-<p class="muted">Versión 1.2 · 23-11-2026 · Varial Gate (<a href="#futuro">qué cambia en cada versión</a>). Las palabras <span class="kw">DEBE</span>,
+<p class="muted">Versión 1.3 · 23-11-2026 · Varial Gate (<a href="#futuro">qué cambia en cada versión</a>). Las palabras <span class="kw">DEBE</span>,
 <span class="kw">NO DEBE</span>, <span class="kw">DEBERÍA</span> y <span class="kw">PUEDE</span> tienen el sentido
 habitual de las especificaciones (RFC 2119).</p>
 
@@ -74,7 +74,7 @@ caracteres fija.</p>
 
 <h2 id="vista"><span class="n">2</span>Un vistazo</h2>
 <figure class="sheet">
-  <img class="px pattern" src="example/caballero.spritevpg@4x.png" width="990" alt="Sprite pattern de ejemplo: tres filas de frames de un caballero azul; a la derecha de cada fila, su rótulo: IDLE, FRAMES: 2, MS/FRAME: 400, PLAY: LOOP; WALK, FRAMES: 6, MS/FRAME: 110, PLAY: LOOP; ATTACK, FRAMES: 4, MS/FRAME: 80 120 90 160, PLAY: ONCE. Debajo, la zona SHEET (NAME, FRAME, GRID, ORIGIN, BODY, PIVOT), la zona SUBJECT (KIND, VIEW, FACING, MIRROR, DESC) y la zona AGENTS con dos indicaciones IMPLEMENT y tres EXTEND. Al final, la barra con SPRITEVPG 1.2 y, debajo, el enlace a la especificación." loading="lazy">
+  <img class="px pattern" src="example/caballero.spritevpg@4x.png" width="990" alt="Sprite pattern de ejemplo: tres filas de frames de un caballero azul; a la derecha de cada fila, su rótulo: IDLE, FRAMES: 2, MS/FRAME: 400, PLAY: LOOP; WALK, FRAMES: 6, MS/FRAME: 110, PLAY: LOOP; ATTACK, FRAMES: 4, MS/FRAME: 80 120 90 160, PLAY: ONCE. Debajo, la zona SHEET (NAME, FRAME, GRID, ORIGIN, BODY, PIVOT), la zona SUBJECT (KIND, VIEW, FACING, MIRROR, DESC) y la zona AGENTS con dos indicaciones IMPLEMENT y tres EXTEND. Al final, la barra con SPRITEVPG 1.3 y, debajo, el enlace a la especificación." loading="lazy">
   <figcaption>El ejemplo, ampliado ×4 (el damero lo pone esta página bajo lo transparente). Original:
   <a href="example/caballero.spritevpg.png">caballero.spritevpg.png</a> (330×264).</figcaption>
 </figure>
@@ -136,9 +136,15 @@ las celdas deja de compensar. Entonces:</p>
 
 <h3 id="rejilla"><span class="n">4.1</span>La rejilla de caracteres</h3>
 <div class="must">
-<p>Toda la imagen se divide en <strong>celdas de texto de 5×8 px</strong> con origen en <code>(0, 0)</code>. Todo
-carácter <span class="kw">DEBE</span> caer exactamente en una celda. El ancho de la imagen es múltiplo de 5 y el alto,
-múltiplo de 8.</p>
+<p>El texto va en <strong>celdas de 5×8 px</strong>. En horizontal, las celdas se cuentan desde el borde izquierdo de
+la imagen: todo carácter <span class="kw">DEBE</span> empezar en una columna múltiplo de 5, y el ancho de la imagen es
+múltiplo de 5. En vertical, <strong>cada bloque de texto tiene su propio origen</strong>, el de lo que describe:</p>
+<ul>
+  <li>las <strong>zonas y la barra final</strong> van en líneas de 8 px contadas desde arriba (y, como el alto de la
+    imagen es múltiplo de 8, también desde abajo);</li>
+  <li>el <strong>rótulo de cada fila</strong> va en líneas de 8 px que empiezan donde lo centra su fila
+    (<a href="#z-rows">5.1</a>): así queda alineado al píxel con su animación sea cual sea el alto del frame.</li>
+</ul>
 </div>
 <p>Dentro de la celda, la fila 0 es para la tilde, las filas 1 a 6 y las columnas 0 a 3 para el glifo de 4×6, y la
 fila 7 y la columna 4 quedan libres. Un carácter va en tinta sobre papel o, en las barras de título, <strong>en
@@ -195,22 +201,24 @@ datos <span class="kw">DEBEN</span> estar siempre (salvo <code>MS/FRAME</code> c
 demás que se quiera decir de una fila va en la zona <code>ROWS</code> (<a href="#z-rowszone">5.4</a>), y entonces el
 nombre lleva detrás un <code>+</code>: «sigue abajo».</p>
 <div class="paper">SLEEP + · FRAMES: 2 · MS/FRAME: 600 400 · PLAY: LOOP</div>
-<p><strong>Dónde va cada rótulo.</strong> <strong>El rótulo no sale nunca del alto de su fila</strong>: así se ve de
-un vistazo qué texto es de qué animación. Lo que cede es el ancho de la imagen, que el formato no fija. Quien escribe
-la hoja <span class="kw">DEBE</span> aplicar estas reglas:</p>
+<p><strong>Dónde va cada rótulo.</strong> <strong>El rótulo no sale nunca del alto de su fila</strong> y va centrado
+en ella al píxel: así se ve de un vistazo qué texto es de qué animación, y el tamaño de los frames es libre. Lo que
+cede es el ancho de la imagen, que el formato no fija. Quien escribe la hoja <span class="kw">DEBE</span> aplicar estas
+reglas:</p>
 <ol>
-  <li>Hay <strong>un rótulo por fila, en el orden de las filas</strong>, con una regla gris entre uno y otro. Quien
-    lee se guía solo por ese orden: el rótulo número <code>r</code> es el de la fila <code>r</code>.</li>
-  <li>En el alto de una fila caben <code>alto del frame / 8</code> líneas de texto (redondeando hacia abajo, y al
-    menos una). El rótulo ocupa esas líneas como mucho.</li>
+  <li>En el alto de una fila caben <code>n = alto del frame / 8</code> líneas de texto (redondeando hacia abajo). El
+    rótulo ocupa <code>n</code> líneas como mucho.</li>
   <li>Si caben los datos con uno por línea, van así. Si no, van seguidos, separados por <code>·</code>, en las
     líneas que haya; en una sola línea caben siempre.</li>
   <li><strong>La imagen se ensancha lo que haga falta</strong> para que el rótulo quepa en su fila (una lista larga
     de <code>MS/FRAME</code>, uno por frame, da una línea larga: es esencial y no se mueve de ahí).</li>
-  <li>El rótulo va <strong>centrado en su fila</strong>, en la línea de texto más cercana (las líneas van cada 8 px
-    y las filas no suelen medir un múltiplo de 8).</li>
-  <li><strong>Única excepción:</strong> con frames de menos de 8 px de alto no cabe ni una línea de texto. Entonces
-    cada rótulo ocupa una línea y van seguidos, uno debajo de otro, sin pisarse.</li>
+  <li>El rótulo de la fila <code>r</code>, con <code>m</code> líneas, empieza en
+    <code>y = r·fh + (fh − 8·m) / 2</code> (redondeando hacia abajo): <strong>centrado en su fila</strong>. Sus
+    líneas no van en la rejilla de las zonas, sino cada 8 px desde ahí.</li>
+  <li>Entre un rótulo y el siguiente va una regla gris, en la última fila de píxeles de cada fila de frames
+    (<code>y = r·fh − 1</code>).</li>
+  <li><strong>Si no cabe ni una línea</strong> (frames de menos de 8 px de alto), no hay rótulos junto a las filas:
+    todos los datos de cada fila van en la zona <code>ROWS</code> (<a href="#z-rowszone">5.4</a>).</li>
   <li>Los frames no se mueven nunca.</li>
 </ol>
 <p><strong>Ancho.</strong> La imagen es tan ancha como pidan los frames, el rótulo más largo y el enlace de la barra
@@ -277,6 +285,12 @@ WALK_UP:   FACING: UP</div>
 <p>Lo que se quiere decir de una fila y no es esencial para reproducirla. La zona es opcional y solo lleva las filas
 que tienen algo: <strong>una línea por fila</strong>, que empieza por su nombre (el mismo del rótulo, que allí acaba
 en <code>+</code>) y sigue con sus datos, <code>ETIQUETA: valor</code>, separados por <code>·</code>.</p>
+<p><strong>Cuando los rótulos no caben junto a las filas</strong> (frames de menos de 8 px de alto), <code>ROWS</code>
+es obligatoria y lleva <strong>todas las filas, en orden</strong>, cada una con sus datos esenciales y, detrás, los
+demás:</p>
+<div class="paper">SPARK: FRAMES: 3 · MS/FRAME: 60 · PLAY: ONCE
+PUFF:  FRAMES: 2 · MS/FRAME: 90 120 · PLAY: ONCE
+BITS:  FRAMES: 4 · PLAY: STILL</div>
 <div class="table-scroll"><table>
 <tr><th>Etiqueta</th><th>Valor</th></tr>
 <tr><td><code>FACING</code></td><td>Hacia dónde mira el dibujo <strong>en esta fila</strong>, cuando no es lo que dice <code>SUBJECT</code>: los mismos valores que allí (<a href="#z-subject">5.3</a>)</td></tr>
@@ -329,7 +343,7 @@ el idioma de quien lo escribe. Cada indicación lleva delante cuándo se aplica:
 </ul>
 
 <h3 id="barra"><span class="n">5.6</span>La barra final</h3>
-<div class="paper">SPRITEVPG 1.2
+<div class="paper">SPRITEVPG 1.3
 HTTPS://VARIALGATE.GITHUB.IO/SPECS/SPRITEVPG/</div>
 <p>Las dos últimas filas de texto de la imagen, en negativo y a todo el ancho: en la primera, <code>SPRITEVPG</code> y
 la versión; en la segunda, el enlace a esta especificación. Identifican el formato, dicen dónde leer los detalles y
@@ -376,16 +390,21 @@ original la letra mide 6 px de alto.</p>
   <li><strong>Escala.</strong> Para <code>k = 1, 2, 3…</code>: si el ancho es múltiplo de <code>5k</code> y el alto de
     <code>8k</code>, leer las dos últimas filas de celdas. Si son una barra en negativo y la primera empieza por
     <code>SPRITEVPG</code>, esa es la escala.</li>
-  <li><strong>Texto.</strong> Leer todas las celdas, comparándolas con la tabla de la fuente y anotando cuáles van en
-    negativo.</li>
+  <li><strong>Texto.</strong> Leer las celdas de la rejilla de las zonas (5×8 desde arriba a la izquierda),
+    comparándolas con la tabla de la fuente y anotando cuáles van en negativo.</li>
   <li><strong>Zonas.</strong> Cada tramo en negativo cuyo texto es una sola palabra es una barra de título
     (<code>SHEET</code>, <code>SUBJECT</code>, <code>ROWS</code>, <code>AGENTS</code>, o una zona de una versión
     posterior, que se salta). El contenido de la zona son las líneas de debajo, a su ancho, hasta la siguiente barra;
     las que empiezan con espacio continúan la anterior. En cada línea, la etiqueta va antes de los dos puntos.</li>
-  <li><strong>Rótulos.</strong> El texto a la derecha de la zona de frames, por encima de las barras, de arriba
-    abajo, uniendo las líneas sangradas a la anterior: el rótulo número <code>r</code> es el de la fila
-    <code>r</code>. Su primera palabra es el nombre; un <code>+</code> detrás dice que la fila tiene una línea en
-    <code>ROWS</code>, que empieza por ese mismo nombre.</li>
+  <li><strong>Rótulos.</strong> Con <code>FRAME</code> y <code>GRID</code> ya leídos, para cada fila
+    <code>r</code>: probar <code>m = fh / 8, …, 1</code> líneas desde <code>y = r·fh + (fh − 8·m) / 2</code>, en
+    las columnas a la derecha de la zona de frames; vale el primer <code>m</code> con el que se leen <code>m</code>
+    líneas con texto. Las líneas sangradas continúan la anterior. La primera palabra es el nombre; un
+    <code>+</code> detrás dice que la fila tiene una línea en <code>ROWS</code>, que empieza por ese mismo nombre.
+    Si <code>fh &lt; 8</code> no hay rótulos: las filas se leen de <code>ROWS</code>, en orden.</li>
+  <li><strong>Hojas anteriores a la 1.3</strong> (lo dice la barra final): los rótulos van en la misma rejilla que
+    las zonas, de arriba abajo, y el número <code>r</code> es el de la fila <code>r</code>; en las 1.1,
+    <code>FACING</code> y <code>MIRROR</code> van en el propio rótulo.</li>
   <li><strong>Frames.</strong> Con <code>FRAME</code> y <code>GRID</code>: recortar
     <code>(0, 0, columnas·fw, filas·fh)</code> (reduciendo antes a escala nativa con vecino más próximo si
     <code>k &gt; 1</code>). Esa es la hoja limpia.</li>
@@ -443,15 +462,16 @@ cambiar y volver a generar.</p>
 <div class="table-scroll"><table>
 <tr><th>Versión</th><th>Qué añade</th></tr>
 <tr><td>1.0</td><td>El formato: frames desde <code>0,0</code>, rótulos de fila, <code>SHEET</code>, <code>SUBJECT</code>, <code>AGENTS</code> y la barra final</td></tr>
+<tr><td>1.3</td><td><strong>El rótulo de cada fila se alinea con su fila, no con una rejilla global</strong>: va centrado en ella al píxel, con cualquier alto de frame (<a href="#rejilla">4.1</a>, <a href="#z-rows">5.1</a>). Si no cabe ni una línea (frames de menos de 8 px), todos los datos de las filas van en <code>ROWS</code></td></tr>
 <tr><td>1.2</td><td><strong>El rótulo no sale del alto de su fila</strong> y lleva solo lo esencial; lo demás de cada fila (<code>FACING</code>, <code>MIRROR</code>) pasa a la zona nueva <code>ROWS</code>, con un <code>+</code> tras el nombre como referencia (<a href="#z-rows">5.1</a>, <a href="#z-rowszone">5.4</a>). Un lector debe saltarse las zonas que no conoce</td></tr>
 <tr><td>1.1</td><td><code>FACING</code> y <code>MIRROR</code> en el rótulo de cada fila (desde la 1.2, en <code>ROWS</code>), y <code>MIRROR</code> en <code>SUBJECT</code>: varias direcciones en una hoja y qué filas se voltean (<a href="#direcciones">5.1</a>). Además, aclaraciones que no cambian el formato: dónde va cada rótulo (siempre a la altura de su fila, ensanchando la imagen si hace falta), qué entra en <code>BODY</code>, las mayúsculas, las hojas pequeñas y cómo se cuentan los frames</td></tr>
 </table></div>
-<p><strong>Compatibilidad.</strong> Los frames, el corte y el ritmo se leen igual en todas las versiones: están en
-<code>SHEET</code> y en los rótulos desde la 1.0. Un lector 1.2 lee las hojas 1.0 y 1.1 tal cual (acepta
-<code>FACING</code> y <code>MIRROR</code> en el rótulo). Un lector anterior a la 1.2 puede reproducir una hoja 1.2,
-pero no ve la dirección de cada fila y <strong>no sabe saltarse la zona <code>ROWS</code></strong>: conviene
-actualizarlo. Desde la 1.2 las zonas desconocidas se saltan, así que las versiones siguientes podrán añadir zonas sin
-este problema. La barra final dice la versión con la que se escribió la hoja.</p>
+<p><strong>Compatibilidad.</strong> Un lector 1.3 lee las hojas de todas las versiones anteriores (la barra final
+dice con cuál se escribió cada una). Al revés no: la 1.2 y la 1.3 cambian dónde va el texto de las filas, así que un
+lector anterior <strong>no lee bien</strong> una hoja 1.3 salvo que el alto de sus frames sea múltiplo de 8 y no
+tenga zona <code>ROWS</code>. Los frames se cortan igual en todas (<code>FRAME</code> y <code>GRID</code> no han
+cambiado). Desde la 1.2 las zonas desconocidas se saltan, así que las versiones siguientes podrán añadir zonas sin
+romper a los lectores.</p>
 <p><strong>Quedan para versiones posteriores</strong>, como datos o zonas opcionales: los eventos por frame (un paso,
 el golpe; irán en <code>ROWS</code>), las variantes y la paleta (qué colores son intercambiables), las cajas de colisión y de golpe, los puntos
 de enganche y los estados de objetos y construcciones. Mientras tanto, lo que haga falta se cuenta en
@@ -470,7 +490,7 @@ de enganche y los estados de objetos y construcciones. Mientras tanto, lo que ha
 
 </main>
 </div>
-<footer>SpriteVPG 1.2 · <a href="/">Varial Gate</a> · Especificación y fuente de uso libre; el ejemplo, CC BY 4.0.</footer>
+<footer>SpriteVPG 1.3 · <a href="/">Varial Gate</a> · Especificación y fuente de uso libre; el ejemplo, CC BY 4.0.</footer>
 </div>
 </body>
 </html>

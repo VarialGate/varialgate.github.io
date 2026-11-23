@@ -25,7 +25,7 @@ import argparse, json, os, re, sys, unicodedata
 
 from PIL import Image
 
-FORMAT, VERSION = 'spritevpg', '1.2'
+FORMAT, VERSION = 'spritevpg', '1.3'
 URL = 'https://varialgate.github.io/specs/spritevpg/'
 
 # ---------------------------------------------------------------- fuente ----
@@ -142,14 +142,17 @@ def wrap(chunks, width, indent=2):
     return rows + [cur]
 
 # ---------------------------------------------------------------- dibujo ----
-def draw_text(px, col, row, s, fg):
+def draw_text(px, col, row, s, fg, y=None):
+    """Escribe `s` desde la columna de texto `col`, en la fila de texto `row`
+    o, con `y`, a esa altura en píxeles (los rótulos de fila, 1.3)."""
+    y0 = row * CH if y is None else y
     for i, ch in enumerate(s):
         if ch == ' ':
             continue
         for r, bits in enumerate(cell_rows(ch)):
             for c, b in enumerate(bits):
                 if b == '1':
-                    px[(col + i) * CW + c, row * CH + r] = fg
+                    px[(col + i) * CW + c, y0 + r] = fg
 
 def frames_in_row(sheet, r, cols, fw, fh):
     """Cuántos frames con dibujo tiene la fila (seguidos, desde la izquierda)."""
@@ -217,8 +220,6 @@ def row_chunks(row):
     if ms:
         out.append('MS/FRAME: ' + (str(ms[0]) if len(set(ms)) == 1 else ' '.join(map(str, ms))))
     out.append('PLAY: ' + (norm(row['loop']) if ms else 'STILL'))
-    if row_extras(row):                       # 1.2: «+» = sigue en la zona ROWS
-        out[0] += ' +'
     return out
 
 EXTRA_KEYS = ('facing', 'mirror')             # lo que va en la zona ROWS
@@ -227,11 +228,20 @@ def row_extras(row):
     """Los datos de una fila que no son esenciales: van en la zona ROWS."""
     return [(k.upper(), norm(row[k])) for k in EXTRA_KEYS if row.get(k)]
 
+def beside(fh):
+    """Si los rótulos caben junto a su fila: hace falta una línea de texto."""
+    return fh >= CH
+
 def rows_lines(card, width):
-    """La zona ROWS: una línea por fila con datos de más, `FILA: CLAVE: valor ·
-    CLAVE: valor`."""
-    pairs = [(norm(r['name']), ' · '.join(f'{k}: {v}' for k, v in row_extras(r)))
-             for r in card['rows'] if row_extras(r)]
+    """La zona ROWS: `FILA: CLAVE: valor · CLAVE: valor`. Con rótulos junto a
+    las filas, una línea por fila que tenga datos de más; si no caben (frames
+    de menos de 8 px de alto), una línea por fila, en orden, con todo."""
+    if beside(card['frame']['h']):
+        pairs = [(norm(r['name']), ' · '.join(f'{k}: {v}' for k, v in row_extras(r)))
+                 for r in card['rows'] if row_extras(r)]
+    else:
+        pairs = [(norm(r['name']), ' · '.join(row_chunks(r)[1:] + [f'{k}: {v}' for k, v in row_extras(r)]))
+                 for r in card['rows']]
     return keyed(pairs, width) if pairs else []
 
 LABEL_MIN = 26                     # ancho mínimo de la columna de rótulos, en caracteres
@@ -256,6 +266,8 @@ def row_label(row, lines):
     si no, seguidos, con líneas cada vez más anchas hasta que quepan (en una
     sola línea cabe siempre): la imagen se ensancha lo que haga falta."""
     chunks = row_chunks(row)
+    if row_extras(row):                       # «+» = sigue en la zona ROWS
+        chunks[0] += ' +'
     if len(chunks) <= lines:
         return label_lines(chunks, 0, False)
     width = LABEL_MIN
@@ -270,23 +282,19 @@ def render(sheet, card):
     sheet = sheet.convert('RGBA').crop((0, 0, AW, AH))
     spec, link = norm(f'{FORMAT} {VERSION}'), norm(URL)   # las dos filas de la barra final
     lab_col = -(-(AW + 6) // CW)                  # rótulos, a la derecha de los frames
-    labels = [row_label(r, max(1, fh // CH)) for r in card['rows']]
-    wide = max(len(link) + 2, lab_col + max(len(t) for ls in labels for t in ls) + 1)
-    # Cada rótulo va centrado en su fila, en la línea de texto más cercana; si
-    # el anterior llega hasta ahí (solo con frames de menos de 8 px de alto),
-    # justo debajo de él.
-    pos, nxt = [], 0
-    for r, ls in enumerate(labels):
-        ideal = max(0, (2 * r * fh + fh - len(ls) * CH + CH) // (2 * CH))
-        pos.append(max(nxt, ideal))
-        nxt = pos[-1] + len(ls)
+    # Rótulos: junto a su fila, dentro de su alto y centrados en ella al píxel
+    # (cada rótulo tiene su origen vertical; no van en la rejilla global). Si
+    # no cabe ni una línea (frames de menos de 8 px), todo va en la zona ROWS.
+    labels = [row_label(r, fh // CH) for r in card['rows']] if beside(fh) else []
+    pos = [r * fh + (fh - len(ls) * CH) // 2 for r, ls in enumerate(labels)]
+    wide = max(len(link) + 2, lab_col + max([len(t) for ls in labels for t in ls] + [0]) + 1)
     has_subject = bool(subject_lines(card, 99))
     half = (wide - 1) // 2 if has_subject else wide
     left = sheet_lines(card, half - 2)
     right = subject_lines(card, wide - half - 3) if has_subject else []
     extra = rows_lines(card, wide - 2)
     notes = agents_lines(card, wide - 2)
-    top = max(-(-(AH + 4) // CH), nxt + 1)        # barras de título
+    top = -(-(AH + 4) // CH)                      # barras de título
     rw = top + 1 + max(len(left), len(right)) + 1
     ag = rw + (1 + len(extra) + 1 if extra else 0)
     bar = ag + (1 + len(notes) + 1 if notes else 0)
@@ -305,15 +313,15 @@ def render(sheet, card):
     for r in range(1, nrows):                     # marca de celda y regla entre rótulos
         for x in range(AW + 1, AW + 4):
             px[x, r * fh] = INK
-        gy = pos[r] * CH - 1                      # por la fila libre de las celdas de texto
-        for x in range(lab_col * CW, W):
-            px[x, gy] = RULE
+        if labels:                                # justo encima de la fila: nunca pisa texto
+            for x in range(lab_col * CW, W):
+                px[x, r * fh - 1] = RULE
     for c in range(1, cols):
         for y in range(AH + 1, AH + 4):
             px[c * fw, y] = INK
-    for ls, ty in zip(labels, pos):
+    for ls, y0 in zip(labels, pos):
         for j, t in enumerate(ls):
-            draw_text(px, lab_col, ty + j, t, INK)
+            draw_text(px, lab_col, 0, t, INK, y=y0 + j * CH)
     pv = card.get('pivot')
     if pv:       # muescas del punto de apoyo: a la derecha de cada fila y bajo cada columna
         for r in range(nrows):
@@ -347,23 +355,24 @@ def render(sheet, card):
     return img
 
 # ---------------------------------------------------------------- leer ------
-def decode_grid(img, k=1):
+def decode_grid(img, k=1, y0=0, rows=None):
     """La rejilla de caracteres: (carácter, en negativo) por celda; None donde
-    no hay un carácter."""
+    no hay un carácter. Las líneas empiezan en el píxel `y0` (de la hoja a
+    escala nativa); por defecto, toda la imagen desde arriba."""
     px = img.convert('RGBA').load()
     grid = []
-    for row in range(img.height // k // CH):
+    for row in range(img.height // k // CH if rows is None else rows):
         line = []
         for col in range(img.width // k // CW):
             bits = []
             for r in range(GH):
                 for c in range(GW):
-                    p = px[(col * CW + c) * k, (row * CH + r) * k]
+                    p = px[(col * CW + c) * k, (y0 + row * CH + r) * k]
                     bits.append('1' if p == INK else '0' if p == PAPER else 'x')
             key = ''.join(bits)
             inv = key.translate(str.maketrans('01', '10'))
-            full = all(px[(col * CW + GW) * k, (row * CH + r) * k] == INK for r in range(CH)) and \
-                all(px[(col * CW + c) * k, (row * CH + GH) * k] == INK for c in range(GW))
+            full = all(px[(col * CW + GW) * k, (y0 + row * CH + r) * k] == INK for r in range(CH)) and \
+                all(px[(col * CW + c) * k, (y0 + row * CH + GH) * k] == INK for c in range(GW))
             if full and inv in LOOKUP:
                 line.append((LOOKUP[inv], True))
             elif key in LOOKUP:
@@ -426,7 +435,8 @@ def read_card(path):
     fw, fh = (int(x) for x in sh['FRAME'].split()[0].split('X'))
     g = sh['GRID'].split()
     cols, nrows = int(g[0]), int(g[3])
-    card = {'format': FORMAT, 'version': row_text(grid[-2], True).split()[1], 'name': sh['NAME']}
+    version = row_text(grid[-2], True).split()[1]
+    card = {'format': FORMAT, 'version': version, 'name': sh['NAME']}
     for key in ('KIND', 'VIEW', 'FACING', 'MIRROR'):
         if key in su:
             card[key.lower()] = su[key].lower()
@@ -451,17 +461,37 @@ def read_card(path):
         extras[name.strip().lower()] = {
             k.strip().lower(): v.strip().lower()
             for k, _, v in (part.partition(':') for part in rest.split('·')) if v.strip()}
-    # Rótulos de fila: a la derecha de los frames, por encima de las barras.
+    # Rótulos de fila, a la derecha de los frames.
     lab_col = -(-(cols * fw + 6) // CW)
+    old = tuple(int(x) for x in version.split('.')[:2]) < (1, 3)
+    def join(lines, into):
+        for t in lines:
+            if not t.strip():
+                continue
+            if t.startswith(' ') and into:
+                into[-1] += ' ' + t.strip()
+            else:
+                into.append(t.strip())
     logical = []
-    for line in grid[:min(b[0] for b in bars)]:
-        t = row_text(line[lab_col:])
-        if not t.strip():
-            continue
-        if t.startswith(' ') and logical:
-            logical[-1] += ' ' + t.strip()
-        else:
-            logical.append(t.strip())
+    if old:
+        # Hasta la 1.2 iban en la rejilla global, por encima de las barras.
+        join([row_text(line[lab_col:]) for line in grid[:min(b[0] for b in bars)]], logical)
+    elif beside(fh):
+        # 1.3: cada rótulo centrado en su fila, con su propio origen vertical.
+        # Se prueba de más a menos líneas: vale la que se lee entera.
+        for r in range(nrows):
+            for n in range(fh // CH, 0, -1):
+                lines = [row_text(line[lab_col:])
+                         for line in decode_grid(img, k, r * fh + (fh - n * CH) // 2, n)]
+                if all(t.strip() for t in lines):
+                    one = []
+                    join(lines, one)
+                    logical.append(' '.join(one))
+                    break
+    else:
+        # 1.3, frames de menos de 8 px de alto: todo está en ROWS, en orden.
+        logical = [t.replace(':', ' ·', 1) for t in zones.get('ROWS', [])]
+        extras = {}
     if len(logical) != nrows:
         raise SystemExit(f'Hay {len(logical)} rótulos para {nrows} filas.')
     for t in logical:
