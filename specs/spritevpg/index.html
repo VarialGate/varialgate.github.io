@@ -24,18 +24,18 @@
 
 <section class="hero">
   <div>
-    <p class="eyebrow">SPRITE VARIAL PIXEL GEN · 1.3</p>
+    <p class="eyebrow">SPRITE VARIAL PIXEL GEN · 2.0</p>
     <h1 class="pixel-title">SPRITEVPG</h1>
     <p class="lead">Una hoja de sprites que dice ella misma cómo se corta y cómo se anima: el <strong>sprite
     pattern</strong>. Los frames van limpios desde la esquina de arriba a la izquierda, una animación por fila; al
-    lado de cada fila, siempre a su altura, cómo se anima; y debajo, cómo se corta, qué es (tipo, vista, dirección y si se voltea) y las
-    indicaciones del autor para la IA que la use en una aplicación o la amplíe, con el enlace a la especificación.</p>
-    <p>Solo lo imprescindible, con cada dato tras su etiqueta: lo entiende una persona o una IA que no conozca el
-    formato con solo mirarlo, y un programa lo lee de forma exacta.</p>
+    lado de cada fila, a su altura, sus datos en una tabla; y debajo, cómo se corta, qué es, su paleta y las
+    indicaciones del autor para la IA que la use en una aplicación o la amplíe.</p>
+    <p>Estructurado y explícito: cada dato es una etiqueta y un valor simple, o una celda bajo su cabecera. Lo
+    entiende una persona o una IA que no conozca el formato con solo mirarlo, y un programa lo lee de forma exacta.</p>
     <p><a href="spec.html"><strong>Leer la especificación →</strong></a></p>
   </div>
   <figure>
-    <img class="px pattern" src="example/caballero.spritevpg@4x.png" width="1320" height="1056" alt="Sprite pattern de ejemplo: tres filas de frames de un caballero azul, cada una con su rótulo a la derecha (nombre, FRAMES, MS/FRAME y PLAY), y debajo las zonas SHEET y SUBJECT y la barra con el enlace a la especificación.">
+    <img class="px pattern" src="example/caballero.spritevpg@4x.png" width="1520" height="1504" alt="Sprite pattern de ejemplo: tres filas de frames de un caballero azul, cada una con sus datos en columnas a la derecha (nombre, frames, ms por frame y reproducción) y las cabeceras debajo; y, más abajo, las zonas SHEET, SUBJECT, PALETTE y AGENTS y la barra con la dirección de la especificación.">
     <figcaption>El sprite pattern de ejemplo, ampliado ×4.</figcaption>
   </figure>
 </section>
@@ -45,7 +45,7 @@
   <div class="card">
     <span class="tag">DOC</span>
     <h3>Especificación</h3>
-    <p>La zona de frames, el texto, los rótulos de fila, varias direcciones en una hoja, las zonas con título, las seis vistas, cómo leerlo y cómo importarlo en un motor.</p>
+    <p>La zona de frames, el texto, la tabla de animaciones, las zonas con título, la paleta, las seis vistas, cómo leerlo y cómo importarlo en un motor.</p>
     <div class="links"><a href="spec.html">Abrir</a></div>
   </div>
   <div class="card">
@@ -80,37 +80,37 @@
       <li><a href="spec.html#celda">Elegir el tamaño de celda</a></li>
     </ol></div></li>
   <li><span class="num">4</span><div><a href="spec.html#texto">El texto</a>
-    <p>La rejilla de caracteres, la fuente y los colores.</p>
+    <p>Las celdas de texto, la fuente y los colores.</p>
     <ol>
-      <li><a href="spec.html#rejilla">Rejilla de caracteres</a></li>
+      <li><a href="spec.html#rejilla">Celdas de texto</a></li>
       <li><a href="spec.html#fuente">Fuente</a></li>
       <li><a href="spec.html#colores">Colores</a></li>
     </ol></div></li>
   <li><span class="num">5</span><div><a href="spec.html#zonas">La información</a>
-    <p>Cada dato tras su etiqueta, una sola vez.</p>
+    <p>Datos con un valor simple, grupos y una tabla.</p>
     <ol>
-      <li><a href="spec.html#z-rows">Rótulo de cada fila: cómo se anima</a></li>
+      <li><a href="spec.html#z-rows">Tabla de animaciones: cómo se anima cada fila</a></li>
       <li><a href="spec.html#z-sheet">SHEET: cómo se corta</a></li>
       <li><a href="spec.html#z-subject">SUBJECT: qué es</a></li>
-      <li><a href="spec.html#z-rowszone">ROWS: lo demás de cada fila (direcciones y volteos)</a></li>
+      <li><a href="spec.html#z-palette">PALETTE: con qué colores está hecha</a></li>
       <li><a href="spec.html#z-agents">AGENTS: indicaciones para una IA, al usarla en una app y al ampliarla</a></li>
       <li><a href="spec.html#barra">Barra final</a></li>
     </ol></div></li>
   <li><span class="num">6</span><div><a href="spec.html#vistas">Las vistas</a>
     <p>Las seis vistas, con su dibujo y la frase para forzarlas al generar con IA.</p></div></li>
   <li><span class="num">7</span><div><a href="spec.html#leer">Leer un sprite pattern</a>
-    <p>Mirando la imagen, o con un programa: escala, texto, zonas, rótulos y frames.</p></div></li>
+    <p>Mirando la imagen, o con un programa: escala, texto, zonas, tabla, paleta y frames.</p></div></li>
   <li><span class="num">8</span><div><a href="spec.html#herramienta">La herramienta</a>
     <p>Generar, leer y validar sprite patterns con <code>spritevpg.py</code>.</p></div></li>
   <li><span class="num">9</span><div><a href="spec.html#motores">Importar en un motor</a>
     <p>Unity, Godot, Tiled, Aseprite y código propio: sin desplazamientos.</p></div></li>
   <li><span class="num">10</span><div><a href="spec.html#futuro">Versiones y lo que queda fuera</a>
-    <p>Qué añade cada versión (1.1: direcciones y volteos; 1.2: zona ROWS; 1.3: rótulos alineados con su fila, con cualquier alto de frame) y qué queda para más adelante.</p></div></li>
+    <p>Qué cambia en la 2.0 (tabla, datos estructurados, paleta) respecto a las 1.x y qué queda para más adelante.</p></div></li>
   <li><span class="num">11</span><div><a href="spec.html#recursos">Recursos</a>
     <p>Todos los ficheros para descargar.</p></div></li>
 </ol>
 
-<footer>SpriteVPG 1.3 · <a href="/">Varial Gate</a> · Especificación y fuente de uso libre; el ejemplo, CC BY 4.0.</footer>
+<footer>SpriteVPG 2.0 · <a href="/">Varial Gate</a> · Especificación y fuente de uso libre; el ejemplo, CC BY 4.0.</footer>
 </div>
 </body>
 </html>
