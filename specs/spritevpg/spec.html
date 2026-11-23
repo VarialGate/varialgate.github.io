@@ -24,7 +24,7 @@
 <p class="lead">Sprite Varial Pixel Gen: una hoja de sprites que dice ella misma cómo se corta y cómo se anima. Los
 frames van limpios desde la esquina de arriba a la izquierda, una animación por fila, y sus datos van escritos al
 lado y debajo, estructurados para que no haya que interpretar nada.</p>
-<p class="muted">Versión 2.0 · 23-11-2026 · Varial Gate (<a href="#futuro">qué cambia en cada versión</a>). Las palabras <span class="kw">DEBE</span>,
+<p class="muted">Versión 2.0 · 23-11-2026 · Varial Gate. Las palabras <span class="kw">DEBE</span>,
 <span class="kw">NO DEBE</span>, <span class="kw">DEBERÍA</span> y <span class="kw">PUEDE</span> tienen el sentido
 habitual de las especificaciones (RFC 2119).</p>
 
@@ -426,9 +426,6 @@ tamaño original la letra mide 6 px de alto.</p>
   <li><strong>Paleta.</strong> Los códigos <code>#RRGGBB</code> de la zona <code>PALETTE</code>, en orden.</li>
   <li><strong>Frames.</strong> Recortar <code>(0, 0, columnas·fw, filas·fh)</code> (reduciendo antes a escala nativa
     con vecino más próximo si <code>k &gt; 1</code>). Esa es la hoja limpia.</li>
-  <li><strong>Hojas 1.x</strong> (lo dice la barra final): tienen rótulos de fila en vez de tabla y otra forma de
-    escribir <code>SHEET</code>; la herramienta de referencia las sigue leyendo
-    (<a href="#futuro">sección 10</a>).</li>
 </ol>
 <h2 id="herramienta"><span class="n">8</span>La herramienta</h2>
 <p>El formato es la imagen: no hay ningún fichero más. Para generar y leer sprite patterns hay una herramienta de
@@ -481,17 +478,12 @@ cambiar y volver a generar.</p>
 <p>O recortar antes con <code>spritevpg.py read</code> (sección 8).</p>
 
 <h2 id="futuro"><span class="n">10</span>Versiones y lo que queda fuera</h2>
-<div class="table-scroll"><table>
-<tr><th>Versión</th><th>Qué cambia</th></tr>
-<tr><td>2.0</td><td>Rediseño para que sea <strong>estructurado y explícito</strong>: los datos de cada fila van en una <strong>tabla</strong> junto a ella, alineada con su fila al píxel y con las cabeceras debajo, en lugar de un rótulo; <code>SHEET</code> y <code>SUBJECT</code> se escriben en grupos con un valor simple por línea (<code>BODY</code> pasa a <code>SUBJECT</code> y <code>ORIGIN</code> desaparece); zona nueva <code>PALETTE</code>; títulos de zona en pestaña; números de columna y marca de corte; la letra V se distingue mejor de la U; la dirección de la barra final va sin <code>https://</code></td></tr>
-<tr><td>1.2</td><td>El rótulo de cada fila lleva solo lo esencial y lo demás (<code>FACING</code>, <code>MIRROR</code>) va en una zona <code>ROWS</code></td></tr>
-<tr><td>1.1</td><td><code>FACING</code> y <code>MIRROR</code> por fila, y <code>MIRROR</code> en <code>SUBJECT</code></td></tr>
-<tr><td>1.0</td><td>El formato: frames desde <code>0,0</code>, rótulos de fila, <code>SHEET</code>, <code>SUBJECT</code>, <code>AGENTS</code> y la barra final</td></tr>
-</table></div>
-<p><strong>Compatibilidad.</strong> La 2.0 no es compatible con las 1.x: un lector 1.x no lee una hoja 2.0. Al revés
-sí: la <a href="#herramienta">herramienta de referencia</a> lee todas (mira la versión de la barra final). En todas
-las versiones los frames están en el mismo sitio y se cortan igual. Dentro de la 2.x, una versión menor solo añadirá
-datos opcionales, columnas de la tabla o zonas, que un lector 2.0 se salta.</p>
+<p><strong>2.0</strong> es la primera versión estable. Las 1.x fueron borradores con otra forma de escribir los datos
+(rótulos de fila en vez de tabla) y <strong>no se admiten</strong>: una hoja 1.x hay que volver a generarla.</p>
+<p><strong>Compatibilidad a partir de aquí.</strong> Dentro de la 2.x, una versión menor solo añadirá datos
+opcionales, columnas de la tabla o zonas. Un lector <span class="kw">DEBE</span> saltarse los datos, las columnas y las
+zonas que no conoce, así que un lector 2.0 seguirá leyendo esas hojas. La barra final dice la versión con la que se
+escribió cada una.</p>
 <p><strong>Quedan para versiones posteriores</strong>: los eventos por frame (un paso, el golpe; serán columnas de la
 tabla), el papel de cada color y las variantes (qué colores son la piel o la ropa y cuáles se pueden cambiar), las
 cajas de colisión y de golpe, los puntos de enganche y los estados de objetos y construcciones. Mientras tanto, lo que

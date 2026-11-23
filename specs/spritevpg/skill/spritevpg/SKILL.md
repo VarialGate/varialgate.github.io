@@ -45,8 +45,7 @@ es una etiqueta y un valor simple (`ETIQUETA: valor`), o una celda de una tabla 
     aplicación (sombra, brillo, parpadeo), en qué frame pasa algo;
   - `EXTEND:` qué respetar al ampliarla: estilo, proporciones, lo que no debe cambiar;
   - `NOTE:` cualquier otra cosa.
-- **Barra final**, en dos líneas: `SPRITEVPG 2.0` y, debajo, `VARIALGATE.GITHUB.IO/SPECS/SPRITEVPG`. Las hojas 1.x
-  (rótulos de fila en vez de tabla) son más antiguas; la herramienta las lee igual.
+- **Barra final**, en dos líneas: `SPRITEVPG 2.0` y, debajo, `VARIALGATE.GITHUB.IO/SPECS/SPRITEVPG`.
 - Texto en mayúsculas con la fuente SpriteVPG 4×6, en celdas de 5×8 px, tinta `#1F2A44` sobre papel `#F3EEDD`. Lo
   leído vuelve en mayúsculas.
 

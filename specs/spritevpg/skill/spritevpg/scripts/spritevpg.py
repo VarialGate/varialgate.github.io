@@ -20,8 +20,7 @@ Uso:
 
 Solo necesita Pillow. Los datos se leen del propio dibujo (cada carácter cae
 en una celda fija y se reconoce comparando píxeles): funciona con PNG sin
-metadatos y con copias ampliadas a escala entera. Escribe la versión 2.0 y lee
-también las 1.x.
+metadatos y con copias ampliadas a escala entera.
 """
 import argparse, json, os, re, sys, unicodedata
 
@@ -86,7 +85,6 @@ def cell_rows(ch):
 CHARS = list(G) + list(ACCENTED)
 LOOKUP = {''.join(cell_rows(c)): c for c in CHARS}
 assert len(LOOKUP) == len(CHARS), 'glifos repetidos'
-LOOKUP['0000' + '100110011001100101100110'] = 'V'   # la V de las hojas 1.x
 
 def norm(s):
     """Texto tal como se puede dibujar: mayúsculas y solo caracteres de la fuente."""
@@ -418,9 +416,10 @@ def read_card(path):
     else:
         raise SystemExit('No es un sprite pattern: falta la barra final «SPRITEVPG …».')
     grid = decode_grid(img, k)
-    if int(row_text(grid[-2], True).split()[1].split('.')[0]) >= 2:
-        return read_card_v2(img, k, grid), k
-    return read_card_v1(img, k, grid), k
+    version = row_text(grid[-2], True).split()[1]
+    if int(version.split('.')[0]) != 2:
+        raise SystemExit(f'Versión {version}: esta herramienta lee SpriteVPG 2.x.')
+    return read_card_v2(img, k, grid), k
 
 def tree(lines):
     """Las líneas de una zona como datos: `CLAVE: valor` es un dato; una línea
@@ -444,7 +443,7 @@ def tree(lines):
     return out
 
 def read_card_v2(img, k, grid):
-    """Los datos de un patrón 2.x."""
+    """Los datos de un patrón, leídos de la rejilla de texto."""
     version = row_text(grid[-2], True).split()[1]
     # Títulos de zona: una pestaña en negativo con una sola palabra. La zona va
     # desde su pestaña hasta la siguiente de la misma línea (o hasta el borde),
@@ -525,122 +524,6 @@ def read_card_v2(img, k, grid):
         for key in EXTRA_KEYS:
             if v.get(key.upper(), '-') not in ('-', ''):
                 row[key] = v[key.upper()].lower()
-        card['rows'].append(row)
-    return card
-
-def read_card_v1(img, k, grid):
-    """Los datos de un patrón 1.x (rótulos en vez de tabla, zonas con barra)."""
-    # Barras de título: tramos en negativo cuyo texto es el nombre de una zona.
-    bars = []
-    for r, line in enumerate(grid[:-2]):
-        c = 0
-        while c < len(line):
-            if line[c] and line[c][1]:
-                e = c
-                while e + 1 < len(line) and line[e + 1] and line[e + 1][1]:
-                    e += 1
-                title = ''.join(x[0] for x in line[c:e + 1]).strip()
-                # Toda barra con una sola palabra es el título de una zona;
-                # las que no se conocen (de versiones posteriores) se saltan.
-                if title in ZONES or re.fullmatch(r'[A-Z]+', title):
-                    bars.append((r, c, e, title))
-                c = e + 1
-            else:
-                c += 1
-    zones = {}
-    for r, c0, c1, title in bars:
-        end = min([b[0] for b in bars if b[0] > r and not (b[2] < c0 or b[1] > c1)] + [len(grid) - 2])
-        lines = []
-        for rr in range(r + 1, end):
-            t = row_text(grid[rr][c0 + 1:c1 + 1])
-            if not t.strip():
-                continue
-            if t.startswith(' ') and lines:       # continúa la línea de arriba
-                lines[-1] += ' ' + t.strip()
-            else:
-                lines.append(t.strip())
-        zones[title] = lines
-    if 'SHEET' not in zones:
-        raise SystemExit('Falta la zona SHEET.')
-    def pairs(name):
-        return {t.partition(':')[0].strip(): t.partition(':')[2].strip() for t in zones.get(name, [])}
-    sh, su = pairs('SHEET'), pairs('SUBJECT')
-    fw, fh = (int(x) for x in sh['FRAME'].split()[0].split('X'))
-    g = sh['GRID'].split()
-    cols, nrows = int(g[0]), int(g[3])
-    version = row_text(grid[-2], True).split()[1]
-    card = {'format': FORMAT, 'version': version, 'name': sh['NAME']}
-    for key in ('KIND', 'VIEW', 'FACING', 'MIRROR'):
-        if key in su:
-            card[key.lower()] = su[key].lower()
-    if 'DESC' in su:
-        card['description'] = su['DESC']
-    if 'BODY' in sh:
-        m = re.fullmatch(r'(\d+)X(\d+) PX AT (-?\d+),(-?\d+)', sh['BODY'])
-        card['body'] = {'x': int(m.group(3)), 'y': int(m.group(4)), 'w': int(m.group(1)), 'h': int(m.group(2))}
-    if 'PIVOT' in sh:
-        x, y = sh['PIVOT'].split(',')
-        card['pivot'] = {'x': int(x), 'y': int(y)}
-    for t in zones.get('AGENTS', []):
-        key, _, text = t.partition(':')
-        if key.lower() not in AGENT_KEYS:
-            key, text = 'note', t
-        card.setdefault('agents', {}).setdefault(key.lower(), []).append(text.strip())
-    card.update({'frame': {'w': fw, 'h': fh}, 'grid': {'columns': cols, 'rows': nrows}, 'rows': []})
-    # Zona ROWS (1.2): lo demás de cada fila, `FILA: CLAVE: valor · CLAVE: valor`.
-    extras = {}
-    for t in zones.get('ROWS', []):
-        name, _, rest = t.partition(':')
-        extras[name.strip().lower()] = {
-            k.strip().lower(): v.strip().lower()
-            for k, _, v in (part.partition(':') for part in rest.split('·')) if v.strip()}
-    # Rótulos de fila, a la derecha de los frames.
-    lab_col = -(-(cols * fw + 6) // CW)
-    old = tuple(int(x) for x in version.split('.')[:2]) < (1, 3)
-    def join(lines, into):
-        for t in lines:
-            if not t.strip():
-                continue
-            if t.startswith(' ') and into:
-                into[-1] += ' ' + t.strip()
-            else:
-                into.append(t.strip())
-    logical = []
-    if old:
-        # Hasta la 1.2 iban en la rejilla global, por encima de las barras.
-        join([row_text(line[lab_col:]) for line in grid[:min(b[0] for b in bars)]], logical)
-    elif beside(fh):
-        # 1.3: cada rótulo centrado en su fila, con su propio origen vertical.
-        # Se prueba de más a menos líneas: vale la que se lee entera.
-        for r in range(nrows):
-            for n in range(fh // CH, 0, -1):
-                lines = [row_text(line[lab_col:])
-                         for line in decode_grid(img, k, r * fh + (fh - n * CH) // 2, n)]
-                if all(t.strip() for t in lines):
-                    one = []
-                    join(lines, one)
-                    logical.append(' '.join(one))
-                    break
-    else:
-        # 1.3, frames de menos de 8 px de alto: todo está en ROWS, en orden.
-        logical = [t.replace(':', ' ·', 1) for t in zones.get('ROWS', [])]
-        extras = {}
-    if len(logical) != nrows:
-        raise SystemExit(f'Hay {len(logical)} rótulos para {nrows} filas.')
-    for t in logical:
-        def value(key):
-            m = re.search(key + r': ([^:·]*?)(?= ·| [A-Z/]+:|$)', t)
-            return m.group(1).strip() if m else None
-        row = {'name': t.split()[0].lower(), 'frames': int(value('FRAMES'))}
-        if value('PLAY') != 'STILL':
-            ms = [int(x) for x in value('MS/FRAME').split()]
-            row['ms'] = ms * row['frames'] if len(ms) == 1 else ms
-            row['loop'] = value('PLAY').lower()
-        for key in EXTRA_KEYS:                 # en el rótulo (hojas 1.1) o en ROWS (1.2)
-            v = value(key.upper())
-            v = v.lower() if v else extras.get(row['name'], {}).get(key)
-            if v:
-                row[key] = v
         card['rows'].append(row)
     return card
 
