@@ -26,7 +26,7 @@ import argparse, datetime, json, os, re, sys, unicodedata
 
 from PIL import Image
 
-FORMAT, VERSION = 'spritevpg', '2.4'
+FORMAT, VERSION = 'spritevpg', '2.5'
 URL = 'varialgate.github.io/specs/spritevpg'      # lo que se escribe en la barra final
 
 # ---------------------------------------------------------------- fuente ----
@@ -122,6 +122,9 @@ HFLIP = {'left': 'right', 'right': 'left', 'down-left': 'down-right', 'down-righ
 #             "extend": ["Contorno oscuro de 1 px…"]},
 #  "body": {"x": 5, "y": 0, "w": 21, "h": 32} o "auto",            (opcional)
 #  "pivot": {"x": 15, "y": 31} o "auto",                          (opcional)
+#  "palette": ["#12265D", "#175EA2", ...],   (opcional, 2.5: los colores más
+#      relevantes, elegidos por el autor y en su orden; hasta 32, y de la
+#      hoja. Si falta, `make` enseña los más usados, en cadena)
 #  "edited": "2026-11-24 10:32",   (opcional, 2.1: última edición, en UTC;
 #                                   `make` pone la hora actual si falta)
 #  "frame": {"w": 32, "h": 32}, "grid": {"columns": 6, "rows": 3},
@@ -170,7 +173,7 @@ def frames_in_row(sheet, r, cols, fw, fh):
     return n
 
 ZONES = ('ANIMATIONS', 'SHEET', 'SUBJECT', 'PALETTE', 'AGENTS')
-PALETTE_MAX = 32                   # con más colores se enseñan los más usados (2.3)
+PALETTE_MAX = 32                   # los colores que se enseñan, como mucho
 EXTRA_KEYS = ('facing', 'mirror')  # columnas de la tabla que solo van si alguna fila las usa
 AGENT_KEYS = ('implement', 'extend', 'note')
 
@@ -314,6 +317,8 @@ def render(sheet, card):
     notes = agents_lines(card, wide - 2)
     cells = names_lines(card, wide - 2)
     pal, shown = palette_shown(sheet)
+    if card.get('palette'):                       # 2.5: la que eligió el autor, en su orden
+        shown = [tuple(int(c[i:i + 2], 16) for i in (1, 3, 5)) for c in card['palette']]
     per = max(1, (wide - 1) // 8)                 # cada color: 7 celdas y un hueco
     pal_head = [f'COLORS: {len(pal)}'] + ([f'SHOWN: {len(shown)}'] if len(shown) < len(pal) else [])
     pal_lines = pal_head + [''] * (2 * -(-len(shown) // per))
@@ -596,6 +601,14 @@ def complete(card, sheet):
     # "body": "auto" mide el primer frame de la fila de referencia (la que se
     # llama "idle"; si no la hay, la primera); "pivot": "auto" es el centro de
     # su base.
+    # 2.5: la paleta que elige el autor. Tienen que ser colores de la hoja.
+    if card.get('palette'):
+        chosen = [str(c).upper() for c in card['palette']]
+        have = {hexcode(c) for c in palette_of(sheet.crop((0, 0, cols * fw, nrows * fh)))}
+        missing = [c for c in chosen if c not in have]
+        if missing:
+            raise SystemExit('error: palette: la hoja no tiene ' + ', '.join(missing))
+        out['palette'] = chosen
     # La última edición: la que diga la ficha; si no dice nada, ahora. Con
     # "edited": null no se escribe.
     edited = card['edited'] if 'edited' in card else now_utc()
@@ -658,7 +671,10 @@ def read(path, outdir, gifs=False):
     os.makedirs(outdir, exist_ok=True)
     base = slug(card['name'])
     sheet.save(os.path.join(outdir, f'{base}.sheet.png'))
-    # Los datos leídos, en el mismo JSON que acepta `make`.
+    # Los datos leídos, en el mismo JSON que acepta `make`. La paleta solo si
+    # es la que eligió el autor: la automática se vuelve a calcular.
+    auto = [hexcode(c) for c in palette_shown(sheet)[1]]
+    card = {k: v for k, v in card.items() if k != 'palette' or v != auto}
     json.dump(card, open(os.path.join(outdir, f'{base}.card.json'), 'w', encoding='utf-8'),
               ensure_ascii=False, indent=2)
     for r, row in enumerate(card['rows']):
@@ -681,6 +697,14 @@ def validate(card):
         err.append('format debe ser "spritevpg"')
     if not str(card.get('name', '')).strip():
         err.append('falta name')
+    if card.get('palette'):
+        pal = card['palette']
+        if len(pal) > PALETTE_MAX:
+            err.append(f'palette: {PALETTE_MAX} colores como mucho')
+        if len(set(pal)) != len(pal):
+            err.append('palette: hay colores repetidos')
+        if any(not re.fullmatch(r'#[0-9A-F]{6}', str(c)) for c in pal):
+            err.append('palette: cada color es #RRGGBB, en mayúsculas')
     if card.get('edited'):
         try:
             datetime.datetime.strptime(str(card['edited']), '%Y-%m-%d %H:%M')

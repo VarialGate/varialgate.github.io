@@ -1,6 +1,6 @@
 ---
 name: spritevpg
-description: Entender, recortar, validar, generar y ampliar sprite patterns SpriteVPG (Sprite Varial Pixel Gen) — hojas de sprites PNG con los frames limpios desde la esquina de arriba a la izquierda, una animación por fila con sus datos a la derecha en una tabla (nombre, frames, ms por frame, reproducción) cuyas cabeceras «NAME FRAMES MS/FRAME PLAY» van debajo de la última fila, y debajo las zonas SHEET (NAME, FRAME, GRID, PIVOT), SUBJECT (KIND, VIEW, FACING, MIRROR, DESC, BODY), PALETTE (los colores con su código) y, opcionalmente, AGENTS (indicaciones IMPLEMENT y EXTEND para una IA), y una barra final con «SPRITEVPG 2.4» (y, a su derecha, la fecha de la última edición) y, debajo, «VARIALGATE.GITHUB.IO/SPECS/SPRITEVPG». Úsalo cuando aparezca un fichero *.spritevpg.png o una hoja de sprites con ese aspecto, o cuando se pida crear, leer, importar en un motor, recortar, animar o añadir animaciones a una hoja de sprites en este formato.
+description: Entender, recortar, validar, generar y ampliar sprite patterns SpriteVPG (Sprite Varial Pixel Gen) — hojas de sprites PNG con los frames limpios desde la esquina de arriba a la izquierda, una animación por fila con sus datos a la derecha en una tabla (nombre, frames, ms por frame, reproducción) cuyas cabeceras «NAME FRAMES MS/FRAME PLAY» van debajo de la última fila, y debajo las zonas SHEET (NAME, FRAME, GRID, PIVOT), SUBJECT (KIND, VIEW, FACING, MIRROR, DESC, BODY), PALETTE (los colores con su código) y, opcionalmente, AGENTS (indicaciones IMPLEMENT y EXTEND para una IA), y una barra final con «SPRITEVPG 2.5» (y, a su derecha, la fecha de la última edición) y, debajo, «VARIALGATE.GITHUB.IO/SPECS/SPRITEVPG». Úsalo cuando aparezca un fichero *.spritevpg.png o una hoja de sprites con ese aspecto, o cuando se pida crear, leer, importar en un motor, recortar, animar o añadir animaciones a una hoja de sprites en este formato.
 ---
 
 # SpriteVPG: sprite patterns
@@ -37,10 +37,11 @@ es una etiqueta y un valor simple (`ETIQUETA: valor`), o una celda de una tabla 
   horizontal, si el dibujo se puede voltear), `DESC:` (frase breve) y el grupo `BODY` (`X`, `Y`, `WIDTH`, `HEIGHT`: lo
   que ocupa el cuerpo quieto dentro del frame). El frame suele ser mayor que el cuerpo, para que quepa la animación
   que más se sale.
-- **`PALETTE`**: `COLORS: n` y, debajo, una barra de cada color con su código `#RRGGBB`, con las rampas juntas (el más
-  oscuro primero y, después, cada vez el más parecido al anterior). Se
-  enseñan 32 como mucho: con más, los 32 con más píxeles, y una línea `SHOWN: 32` avisa de que no son todos.
-  **Úsala al ampliar la hoja**: son colores exactos.
+- **`PALETTE`**: `COLORS: n` y, debajo, una barra de cada color con su código `#RRGGBB`. Son los colores más
+  relevantes de la hoja, 32 como mucho, en el orden que quiso su autor; si se enseñan menos de los que hay, una
+  línea `SHOWN: n` lo avisa. **Úsala al ampliar la hoja**: son colores exactos. Al generar una, si sabes cuáles
+  son los colores importantes (las rampas con las que está dibujada), dáselos a `make` en `"palette": [...]`, en
+  el orden en que deben verse; si no, `make` enseña los más usados, cada uno junto al más parecido.
 - **`AGENTS`** (opcional): las indicaciones del autor para la IA que trabaje con esta hoja, una por línea, texto
   libre, cada una con su etiqueta:
   - `IMPLEMENT:` qué debe programar quien use la hoja en un juego o una app: efectos que añade la
@@ -52,7 +53,7 @@ es una etiqueta y un valor simple (`ETIQUETA: valor`), o una celda de una tabla 
   después, un nombre por celda en el orden de las columnas; `_` es «sin nombre»). Son únicos en toda la hoja. En
   el JSON, `"names": ["sword", "wooden_shield", "_", "brass_key"]` en la fila; `read` guarda cada frame con su
   nombre.
-- **Barra final**, en dos líneas: `SPRITEVPG 2.4` y, debajo, `VARIALGATE.GITHUB.IO/SPECS/SPRITEVPG`. En la primera, a la derecha, puede ir la última edición de la hoja: `2026-11-24 09:30 UTC` (en el JSON, `"edited": "2026-11-24 09:30"`). `make` pone la hora actual si el JSON no trae `edited`; al modificar una hoja, quita o actualiza ese dato para que la fecha sea la del cambio.
+- **Barra final**, en dos líneas: `SPRITEVPG 2.5` y, debajo, `VARIALGATE.GITHUB.IO/SPECS/SPRITEVPG`. En la primera, a la derecha, puede ir la última edición de la hoja: `2026-11-24 09:30 UTC` (en el JSON, `"edited": "2026-11-24 09:30"`). `make` pone la hora actual si el JSON no trae `edited`; al modificar una hoja, quita o actualiza ese dato para que la fecha sea la del cambio.
 - Texto en mayúsculas con la fuente SpriteVPG 4×6, en celdas de 5×8 px, tinta `#1F2A44` sobre papel `#F3EEDD`. Lo
   leído vuelve en mayúsculas.
 
