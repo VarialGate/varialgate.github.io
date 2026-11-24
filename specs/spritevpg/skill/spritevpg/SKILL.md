@@ -39,6 +39,7 @@ es una etiqueta y un valor simple (`ETIQUETA: valor`), o una celda de una tabla 
   que más se sale.
 - **`PALETTE`**: `COLORS: n` y, debajo, una barra de cada color con su código `#RRGGBB`, de oscuro a claro. Se
   enseñan 32 como mucho: con más, los 32 con más píxeles, y una línea `SHOWN: 32` avisa de que no son todos.
+  **Úsala al ampliar la hoja**: son colores exactos.
 - **`AGENTS`** (opcional): las indicaciones del autor para la IA que trabaje con esta hoja, una por línea, texto
   libre, cada una con su etiqueta:
   - `IMPLEMENT:` qué debe programar quien use la hoja en un juego o una app: efectos que añade la
