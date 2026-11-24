@@ -1,6 +1,6 @@
 ---
 name: spritevpg
-description: Entender, recortar, validar, generar y ampliar sprite patterns SpriteVPG (Sprite Varial Pixel Gen) — hojas de sprites PNG con los frames limpios desde la esquina de arriba a la izquierda, una animación por fila con sus datos a la derecha en una tabla (nombre, frames, ms por frame, reproducción) cuyas cabeceras «NAME FRAMES MS/FRAME PLAY» van debajo de la última fila, y debajo las zonas SHEET (NAME, FRAME, GRID, PIVOT), SUBJECT (KIND, VIEW, FACING, MIRROR, DESC, BODY), PALETTE (los colores con su código) y, opcionalmente, AGENTS (indicaciones IMPLEMENT y EXTEND para una IA), y una barra final con «SPRITEVPG 2.1» (y, a su derecha, la fecha de la última edición) y, debajo, «VARIALGATE.GITHUB.IO/SPECS/SPRITEVPG». Úsalo cuando aparezca un fichero *.spritevpg.png o una hoja de sprites con ese aspecto, o cuando se pida crear, leer, importar en un motor, recortar, animar o añadir animaciones a una hoja de sprites en este formato.
+description: Entender, recortar, validar, generar y ampliar sprite patterns SpriteVPG (Sprite Varial Pixel Gen) — hojas de sprites PNG con los frames limpios desde la esquina de arriba a la izquierda, una animación por fila con sus datos a la derecha en una tabla (nombre, frames, ms por frame, reproducción) cuyas cabeceras «NAME FRAMES MS/FRAME PLAY» van debajo de la última fila, y debajo las zonas SHEET (NAME, FRAME, GRID, PIVOT), SUBJECT (KIND, VIEW, FACING, MIRROR, DESC, BODY), PALETTE (los colores con su código) y, opcionalmente, AGENTS (indicaciones IMPLEMENT y EXTEND para una IA), y una barra final con «SPRITEVPG 2.2» (y, a su derecha, la fecha de la última edición) y, debajo, «VARIALGATE.GITHUB.IO/SPECS/SPRITEVPG». Úsalo cuando aparezca un fichero *.spritevpg.png o una hoja de sprites con ese aspecto, o cuando se pida crear, leer, importar en un motor, recortar, animar o añadir animaciones a una hoja de sprites en este formato.
 ---
 
 # SpriteVPG: sprite patterns
@@ -45,7 +45,12 @@ es una etiqueta y un valor simple (`ETIQUETA: valor`), o una celda de una tabla 
     aplicación (sombra, brillo, parpadeo), en qué frame pasa algo;
   - `EXTEND:` qué respetar al ampliarla: estilo, proporciones, lo que no debe cambiar;
   - `NOTE:` cualquier otra cosa.
-- **Barra final**, en dos líneas: `SPRITEVPG 2.1` y, debajo, `VARIALGATE.GITHUB.IO/SPECS/SPRITEVPG`. En la primera, a la derecha, puede ir la última edición de la hoja: `2026-11-24 09:30 UTC` (en el JSON, `"edited": "2026-11-24 09:30"`). `make` pone la hora actual si el JSON no trae `edited`; al modificar una hoja, quita o actualiza ese dato para que la fecha sea la del cambio.
+- **`NAMES`** (opcional, la primera zona bajo los frames): el nombre de cada dibujo de una fila, para colecciones
+  de gráficos. Una línea por fila: `ITEMS: SWORD WOODEN_SHIELD _ BRASS_KEY` (la clave es el nombre de la fila;
+  después, un nombre por celda en el orden de las columnas; `_` es «sin nombre»). Son únicos en toda la hoja. En
+  el JSON, `"names": ["sword", "wooden_shield", "_", "brass_key"]` en la fila; `read` guarda cada frame con su
+  nombre.
+- **Barra final**, en dos líneas: `SPRITEVPG 2.2` y, debajo, `VARIALGATE.GITHUB.IO/SPECS/SPRITEVPG`. En la primera, a la derecha, puede ir la última edición de la hoja: `2026-11-24 09:30 UTC` (en el JSON, `"edited": "2026-11-24 09:30"`). `make` pone la hora actual si el JSON no trae `edited`; al modificar una hoja, quita o actualiza ese dato para que la fecha sea la del cambio.
 - Texto en mayúsculas con la fuente SpriteVPG 4×6, en celdas de 5×8 px, tinta `#1F2A44` sobre papel `#F3EEDD`. Lo
   leído vuelve en mayúsculas.
 

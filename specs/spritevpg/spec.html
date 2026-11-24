@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Especificación SpriteVPG 2.1 · Varial Gate</title>
-<meta name="description" content="Especificación de SpriteVPG 2.1: hojas de sprites (sprite patterns) con los frames limpios desde la esquina, una animación por fila y lo imprescindible para cortarlas y animarlas escrito en la propia imagen.">
+<title>Especificación SpriteVPG 2.2 · Varial Gate</title>
+<meta name="description" content="Especificación de SpriteVPG 2.2: hojas de sprites (sprite patterns) con los frames limpios desde la esquina, una animación por fila y lo imprescindible para cortarlas y animarlas escrito en la propia imagen.">
 <meta name="theme-color" content="#0b0a14">
 <link rel="stylesheet" href="spritevpg.css">
 </head>
@@ -19,12 +19,12 @@
   </nav>
 </header>
 
-<p class="eyebrow">ESPECIFICACIÓN 2.1</p>
+<p class="eyebrow">ESPECIFICACIÓN 2.2</p>
 <h1 class="pixel-title">SPRITEVPG</h1>
 <p class="lead">Sprite Varial Pixel Gen: una hoja de sprites que dice ella misma cómo se corta y cómo se anima. Los
 frames van limpios desde la esquina de arriba a la izquierda, una animación por fila, y sus datos van escritos al
 lado y debajo, estructurados para que no haya que interpretar nada.</p>
-<p class="muted">Versión 2.1 · 24-11-2026 · Varial Gate. Las palabras <span class="kw">DEBE</span>,
+<p class="muted">Versión 2.2 · 25-11-2026 · Varial Gate. Las palabras <span class="kw">DEBE</span>,
 <span class="kw">NO DEBE</span>, <span class="kw">DEBERÍA</span> y <span class="kw">PUEDE</span> tienen el sentido
 habitual de las especificaciones (RFC 2119).</p>
 
@@ -45,6 +45,7 @@ habitual de las especificaciones (RFC 2119).</p>
   <a class="sub" href="#z-palette">5.4 PALETTE</a>
   <a class="sub" href="#z-agents">5.5 AGENTS</a>
   <a class="sub" href="#barra">5.6 Barra final</a>
+  <a class="sub" href="#z-names">5.7 NAMES</a>
   <a href="#vistas">6. Las vistas</a>
   <a href="#leer">7. Leer un sprite pattern</a>
   <a href="#herramienta">8. La herramienta</a>
@@ -77,7 +78,7 @@ en celdas fijas.</p>
 
 <h2 id="vista"><span class="n">2</span>Un vistazo</h2>
 <figure class="sheet">
-  <img class="px pattern" src="example/caballero.spritevpg@4x.png" width="1140" alt="Sprite pattern de ejemplo: tres filas de frames de un caballero azul. A la derecha de cada fila, sus datos en columnas: IDLE, 2, 400, LOOP; WALK, 6, 110, LOOP; ATTACK, 4, 80 120 90 160, ONCE; y debajo de la última, las cabeceras NAME, FRAMES, MS/FRAME y PLAY. Bajo cada columna de frames, su número, del 1 al 6. Debajo, la zona SHEET (NAME, FRAME con WIDTH y HEIGHT, GRID con COLUMNS y ROWS, PIVOT con X e Y), la zona SUBJECT (KIND, VIEW, FACING, MIRROR, DESC y BODY con X, Y, WIDTH y HEIGHT), la zona PALETTE con 15 colores y sus códigos, y la zona AGENTS con dos indicaciones IMPLEMENT y tres EXTEND. Al final, la barra con SPRITEVPG 2.1 y, a la derecha, la fecha y la hora de la última edición; debajo, la dirección de la especificación." loading="lazy">
+  <img class="px pattern" src="example/caballero.spritevpg@4x.png" width="1140" alt="Sprite pattern de ejemplo: tres filas de frames de un caballero azul. A la derecha de cada fila, sus datos en columnas: IDLE, 2, 400, LOOP; WALK, 6, 110, LOOP; ATTACK, 4, 80 120 90 160, ONCE; y debajo de la última, las cabeceras NAME, FRAMES, MS/FRAME y PLAY. Bajo cada columna de frames, su número, del 1 al 6. Debajo, la zona SHEET (NAME, FRAME con WIDTH y HEIGHT, GRID con COLUMNS y ROWS, PIVOT con X e Y), la zona SUBJECT (KIND, VIEW, FACING, MIRROR, DESC y BODY con X, Y, WIDTH y HEIGHT), la zona PALETTE con 15 colores y sus códigos, y la zona AGENTS con dos indicaciones IMPLEMENT y tres EXTEND. Al final, la barra con SPRITEVPG 2.2 y, a la derecha, la fecha y la hora de la última edición; debajo, la dirección de la especificación." loading="lazy">
   <figcaption>El ejemplo, ampliado ×4 (el damero lo pone esta página bajo lo transparente). Original:
   <a href="example/caballero.spritevpg.png">caballero.spritevpg.png</a> (380×376).</figcaption>
 </figure>
@@ -364,7 +365,7 @@ el idioma de quien lo escribe. Cada indicación lleva delante cuándo se aplica:
 </ul>
 
 <h3 id="barra"><span class="n">5.6</span>La barra final</h3>
-<div class="paper">SPRITEVPG 2.1                 2026-11-24 09:30 UTC
+<div class="paper">SPRITEVPG 2.2                 2026-11-24 09:30 UTC
 VARIALGATE.GITHUB.IO/SPECS/SPRITEVPG</div>
 <p>Las dos últimas líneas de texto de la imagen, en negativo y a todo el ancho: en la primera, <code>SPRITEVPG</code> y
 la versión; en la segunda, la dirección de esta especificación (sin <code>https://</code>, para que la imagen pueda
@@ -375,6 +376,29 @@ una celda antes del final), la fecha y la hora en que se editó la hoja por últ
 forma: <code>AAAA-MM-DD HH:MM UTC</code>. Sirve para saber cuál de dos copias es la más reciente. Quien modifica
 la hoja y vuelve a escribir el patrón <span class="kw">DEBERÍA</span> actualizarla; un lector que no la conoce la
 ignora (la versión sigue siendo lo que va justo después de <code>SPRITEVPG</code>).</p>
+
+<h3 id="z-names"><span class="n">5.7</span><code>NAMES</code>: el nombre de cada dibujo</h3>
+<div class="paper"> NAMES
+ ITEMS:    SWORD WOODEN_SHIELD HEALTH_POTION BRASS_KEY
+           LEATHER_HELMET MAGIC_RING
+ ITEMS_2:  GOLD_COIN _ BLUE_GEM AMULET</div>
+<p>Opcional, desde la 2.2. En una colección de gráficos (objetos, iconos, piezas de un escenario) cada celda es una
+cosa distinta, y la fila solo tiene un nombre. La zona <code>NAMES</code> dice cómo se llama cada dibujo:</p>
+<ul>
+  <li><strong>Una línea por fila que nombra sus dibujos.</strong> La clave es el nombre de la fila (el de la
+    columna <code>NAME</code> de la tabla); después, <strong>un nombre por celda, separados por un espacio, en el
+    orden de las columnas</strong>: el primero es el de la columna 1. Si no caben en una línea siguen debajo,
+    sangrados, como cualquier valor.</li>
+  <li>Una fila que nombra sus dibujos <span class="kw">DEBE</span> dar tantos nombres como frames tiene. El que
+    no tiene nombre se escribe <code>_</code>. Una fila que no aparece en la zona no los nombra.</li>
+  <li>Los nombres siguen las reglas de los de fila: <code>A-Z</code>, <code>0-9</code>, <code>_</code> y
+    <code>-</code>, sin espacios. <span class="kw">DEBEN</span> ser <strong>únicos en toda la hoja</strong>, para
+    que un programa pueda pedir <code>sword</code> sin decir en qué fila está.</li>
+  <li>La zona va <strong>la primera bajo los frames</strong> (después de <code>ANIMATIONS</code>, si la hay, y
+    antes de <code>SHEET</code>), a todo el ancho, y solo se dibuja si alguna fila nombra sus dibujos.</li>
+  <li>Vale para cualquier fila, también una animación (nombrar un frame: <code>windup</code>, <code>hit</code>),
+    aunque está pensada para las de <code>PLAY</code> <code>STILL</code>.</li>
+</ul>
 
 <h2 id="vistas"><span class="n">6</span>Las vistas</h2>
 <p>El valor de <code>VIEW</code> es una de estas seis. Forman parte del formato para que todo el mundo llame igual a
@@ -459,6 +483,7 @@ por fila) y los datos que hay que escribir, en un JSON pequeño:</p>
     { "name": "attack", "ms": [80, 120, 90, 160], "loop": "once" }
   ]
 }</code></pre>
+<p class="muted">Los nombres de los dibujos de una fila (5.7): <code>{"name": "items", "names": ["sword", "_", "brass_key"]}</code>. Al leer, cada frame con nombre se guarda con él (<code>items/sword.png</code>).</p>
 <p class="muted">La última edición (5.6) la pone <code>make</code> con la hora actual. Para fijarla, <code>"edited": "2026-11-24 09:30"</code> (UTC); con <code>"edited": null</code> no se escribe.</p>
 <p>Una entrada de <code>rows</code> por fila, en orden. <code>ms</code>: un número (todos los frames igual) o una lista
 (uno por frame); sin <code>ms</code>, la fila son imágenes sueltas. Una fila puede llevar su <code>"facing"</code> y su
@@ -485,6 +510,8 @@ cambiar y volver a generar.</p>
 <p>O recortar antes con <code>spritevpg.py read</code> (sección 8).</p>
 
 <h2 id="futuro"><span class="n">10</span>Versiones y lo que queda fuera</h2>
+<p><strong>2.2</strong> (25-11-2026) añade la zona <code>NAMES</code> (5.7), con el nombre de cada dibujo de una
+fila; un lector anterior la salta, como cualquier zona que no conoce.</p>
 <p><strong>2.1</strong> (24-11-2026) añade la última edición a la barra final (5.6); nada más cambia, y un lector
 2.0 lee una hoja 2.1 sin tocar nada.</p>
 <p><strong>2.0</strong> es la primera versión estable. Las 1.x fueron borradores con otra forma de escribir los datos
@@ -511,7 +538,7 @@ haga falta se cuenta en <code>AGENTS</code>.</p>
 
 </main>
 </div>
-<footer>SpriteVPG 2.1 · <a href="/">Varial Gate</a> · Especificación y fuente de uso libre; el ejemplo, CC BY 4.0.</footer>
+<footer>SpriteVPG 2.2 · <a href="/">Varial Gate</a> · Especificación y fuente de uso libre; el ejemplo, CC BY 4.0.</footer>
 </div>
 </body>
 </html>
