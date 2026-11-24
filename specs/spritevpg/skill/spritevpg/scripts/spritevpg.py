@@ -22,11 +22,11 @@ Solo necesita Pillow. Los datos se leen del propio dibujo (cada carácter cae
 en una celda fija y se reconoce comparando píxeles): funciona con PNG sin
 metadatos y con copias ampliadas a escala entera.
 """
-import argparse, json, os, re, sys, unicodedata
+import argparse, datetime, json, os, re, sys, unicodedata
 
 from PIL import Image
 
-FORMAT, VERSION = 'spritevpg', '2.0'
+FORMAT, VERSION = 'spritevpg', '2.1'
 URL = 'varialgate.github.io/specs/spritevpg'      # lo que se escribe en la barra final
 
 # ---------------------------------------------------------------- fuente ----
@@ -122,6 +122,8 @@ HFLIP = {'left': 'right', 'right': 'left', 'down-left': 'down-right', 'down-righ
 #             "extend": ["Contorno oscuro de 1 px…"]},
 #  "body": {"x": 5, "y": 0, "w": 21, "h": 32} o "auto",            (opcional)
 #  "pivot": {"x": 15, "y": 31} o "auto",                          (opcional)
+#  "edited": "2026-11-24 10:32",   (opcional, 2.1: última edición, en UTC;
+#                                   `make` pone la hora actual si falta)
 #  "frame": {"w": 32, "h": 32}, "grid": {"columns": 6, "rows": 3},
 #  "rows": [{"name": "idle", "frames": 2, "ms": [400, 400], "loop": "loop"}, ...]}
 # Una fila sin "ms" son imágenes sueltas (no es una animación).
@@ -343,11 +345,13 @@ def render(sheet, card):
         for j, t in enumerate(lines):
             draw_text(px, c0 + 1, row + 1 + j, t, INK)
 
-    def bar_line(text, row):                       # barra final, maciza
+    def bar_line(text, row, right=''):             # barra final, maciza
         for y in range(row * CH, (row + 1) * CH):
             for x in range(W):
                 px[x, y] = INK
         draw_text(px, 1, row, text, PAPER)
+        if right:                                  # 2.1: la última edición, a la derecha
+            draw_text(px, wide - 1 - len(right), row, right, PAPER)
 
     if not bes:
         zone('ANIMATIONS', 0, wide, an, tlines + [head])
@@ -369,7 +373,7 @@ def render(sheet, card):
         draw_text(px, col, row + 1, hexcode(c), INK)
     if notes:
         zone('AGENTS', 0, wide, ag, notes)
-    bar_line(spec, bar)
+    bar_line(spec, bar, norm(card['edited'] + ' UTC') if card.get('edited') else '')
     bar_line(link, bar + 1)
     return img
 
@@ -420,6 +424,11 @@ def read_card(path):
     if int(version.split('.')[0]) != 2:
         raise SystemExit(f'Versión {version}: esta herramienta lee SpriteVPG 2.x.')
     return read_card_v2(img, k, grid), k
+
+EDITED = re.compile(r'(\d{4}-\d\d-\d\d \d\d:\d\d) UTC\s*$')
+
+def now_utc():
+    return datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%d %H:%M')
 
 def tree(lines):
     """Las líneas de una zona como datos: `CLAVE: valor` es un dato; una línea
@@ -473,6 +482,9 @@ def read_card_v2(img, k, grid):
     fw, fh = int(sh['FRAME']['WIDTH']), int(sh['FRAME']['HEIGHT'])
     cols, nrows = int(sh['GRID']['COLUMNS']), int(sh['GRID']['ROWS'])
     card = {'format': FORMAT, 'version': version, 'name': sh['NAME']}
+    stamp = EDITED.search(row_text(grid[-2], True))    # 2.1: «AAAA-MM-DD HH:MM UTC», a la derecha
+    if stamp:
+        card['edited'] = stamp.group(1)
     for key in ('KIND', 'VIEW', 'FACING', 'MIRROR'):
         if su.get(key):
             card[key.lower()] = su[key].lower()
@@ -537,6 +549,11 @@ def complete(card, sheet):
     # "body": "auto" mide el primer frame de la fila de referencia (la que se
     # llama "idle"; si no la hay, la primera); "pivot": "auto" es el centro de
     # su base.
+    # La última edición: la que diga la ficha; si no dice nada, ahora. Con
+    # "edited": null no se escribe.
+    edited = card['edited'] if 'edited' in card else now_utc()
+    if edited:
+        out['edited'] = edited
     body, pivot = card.get('body'), card.get('pivot')
     if body == 'auto' or (pivot == 'auto' and not body):
         names = [str(r.get('name', '')).lower() for r in card['rows']]
@@ -613,6 +630,11 @@ def validate(card):
         err.append('format debe ser "spritevpg"')
     if not str(card.get('name', '')).strip():
         err.append('falta name')
+    if card.get('edited'):
+        try:
+            datetime.datetime.strptime(str(card['edited']), '%Y-%m-%d %H:%M')
+        except ValueError:
+            err.append('edited debe ser "AAAA-MM-DD HH:MM" (UTC)')
     for key, known in (('kind', KINDS), ('view', VIEWS), ('facing', DIRS)):
         if card.get(key) and card[key] not in known:
             err.append(f'{key} no válido: {card[key]} (valen: {", ".join(known)})')
@@ -668,7 +690,8 @@ def summary(card):
         elif m:
             out += f', volteada: {m}'
         return out
-    out = [f'{card["name"]} · {FORMAT} {card.get("version")}'] + ([what] if what else []) + \
+    out = [f'{card["name"]} · {FORMAT} {card.get("version")}'
+           + (f' · editada el {card["edited"]} UTC' if card.get('edited') else '')] + ([what] if what else []) + \
         ([card['description']] if card.get('description') else []) + [
         f'Frames de {fw}x{fh} en {card["grid"]["columns"]}x{card["grid"]["rows"]}, desde 0,0. '
         f'El frame de la fila r y la columna c está en x = c*{fw}, y = r*{fh}.']

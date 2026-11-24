@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Especificación SpriteVPG 2.0 · Varial Gate</title>
-<meta name="description" content="Especificación de SpriteVPG 2.0: hojas de sprites (sprite patterns) con los frames limpios desde la esquina, una animación por fila y lo imprescindible para cortarlas y animarlas escrito en la propia imagen.">
+<title>Especificación SpriteVPG 2.1 · Varial Gate</title>
+<meta name="description" content="Especificación de SpriteVPG 2.1: hojas de sprites (sprite patterns) con los frames limpios desde la esquina, una animación por fila y lo imprescindible para cortarlas y animarlas escrito en la propia imagen.">
 <meta name="theme-color" content="#0b0a14">
 <link rel="stylesheet" href="spritevpg.css">
 </head>
@@ -19,12 +19,12 @@
   </nav>
 </header>
 
-<p class="eyebrow">ESPECIFICACIÓN 2.0</p>
+<p class="eyebrow">ESPECIFICACIÓN 2.1</p>
 <h1 class="pixel-title">SPRITEVPG</h1>
 <p class="lead">Sprite Varial Pixel Gen: una hoja de sprites que dice ella misma cómo se corta y cómo se anima. Los
 frames van limpios desde la esquina de arriba a la izquierda, una animación por fila, y sus datos van escritos al
 lado y debajo, estructurados para que no haya que interpretar nada.</p>
-<p class="muted">Versión 2.0 · 23-11-2026 · Varial Gate. Las palabras <span class="kw">DEBE</span>,
+<p class="muted">Versión 2.1 · 24-11-2026 · Varial Gate. Las palabras <span class="kw">DEBE</span>,
 <span class="kw">NO DEBE</span>, <span class="kw">DEBERÍA</span> y <span class="kw">PUEDE</span> tienen el sentido
 habitual de las especificaciones (RFC 2119).</p>
 
@@ -77,7 +77,7 @@ en celdas fijas.</p>
 
 <h2 id="vista"><span class="n">2</span>Un vistazo</h2>
 <figure class="sheet">
-  <img class="px pattern" src="example/caballero.spritevpg@4x.png" width="1140" alt="Sprite pattern de ejemplo: tres filas de frames de un caballero azul. A la derecha de cada fila, sus datos en columnas: IDLE, 2, 400, LOOP; WALK, 6, 110, LOOP; ATTACK, 4, 80 120 90 160, ONCE; y debajo de la última, las cabeceras NAME, FRAMES, MS/FRAME y PLAY. Bajo cada columna de frames, su número, del 1 al 6. Debajo, la zona SHEET (NAME, FRAME con WIDTH y HEIGHT, GRID con COLUMNS y ROWS, PIVOT con X e Y), la zona SUBJECT (KIND, VIEW, FACING, MIRROR, DESC y BODY con X, Y, WIDTH y HEIGHT), la zona PALETTE con 15 colores y sus códigos, y la zona AGENTS con dos indicaciones IMPLEMENT y tres EXTEND. Al final, la barra con SPRITEVPG 2.0 y, debajo, la dirección de la especificación." loading="lazy">
+  <img class="px pattern" src="example/caballero.spritevpg@4x.png" width="1140" alt="Sprite pattern de ejemplo: tres filas de frames de un caballero azul. A la derecha de cada fila, sus datos en columnas: IDLE, 2, 400, LOOP; WALK, 6, 110, LOOP; ATTACK, 4, 80 120 90 160, ONCE; y debajo de la última, las cabeceras NAME, FRAMES, MS/FRAME y PLAY. Bajo cada columna de frames, su número, del 1 al 6. Debajo, la zona SHEET (NAME, FRAME con WIDTH y HEIGHT, GRID con COLUMNS y ROWS, PIVOT con X e Y), la zona SUBJECT (KIND, VIEW, FACING, MIRROR, DESC y BODY con X, Y, WIDTH y HEIGHT), la zona PALETTE con 15 colores y sus códigos, y la zona AGENTS con dos indicaciones IMPLEMENT y tres EXTEND. Al final, la barra con SPRITEVPG 2.1 y, a la derecha, la fecha y la hora de la última edición; debajo, la dirección de la especificación." loading="lazy">
   <figcaption>El ejemplo, ampliado ×4 (el damero lo pone esta página bajo lo transparente). Original:
   <a href="example/caballero.spritevpg.png">caballero.spritevpg.png</a> (380×376).</figcaption>
 </figure>
@@ -364,12 +364,17 @@ el idioma de quien lo escribe. Cada indicación lleva delante cuándo se aplica:
 </ul>
 
 <h3 id="barra"><span class="n">5.6</span>La barra final</h3>
-<div class="paper">SPRITEVPG 2.0
+<div class="paper">SPRITEVPG 2.1                 2026-11-24 09:30 UTC
 VARIALGATE.GITHUB.IO/SPECS/SPRITEVPG</div>
 <p>Las dos últimas líneas de texto de la imagen, en negativo y a todo el ancho: en la primera, <code>SPRITEVPG</code> y
 la versión; en la segunda, la dirección de esta especificación (sin <code>https://</code>, para que la imagen pueda
 ser más estrecha). Identifican el formato, dicen dónde leer los detalles y sirven para calcular la escala de una
 copia ampliada. La imagen mide, como mínimo, lo que ocupa esa dirección: 38 celdas, 190 px.</p>
+<p><strong>Última edición</strong> (opcional, desde la 2.1): en la primera línea, pegada al borde derecho (termina
+una celda antes del final), la fecha y la hora en que se editó la hoja por última vez, en UTC y siempre con esta
+forma: <code>AAAA-MM-DD HH:MM UTC</code>. Sirve para saber cuál de dos copias es la más reciente. Quien modifica
+la hoja y vuelve a escribir el patrón <span class="kw">DEBERÍA</span> actualizarla; un lector que no la conoce la
+ignora (la versión sigue siendo lo que va justo después de <code>SPRITEVPG</code>).</p>
 
 <h2 id="vistas"><span class="n">6</span>Las vistas</h2>
 <p>El valor de <code>VIEW</code> es una de estas seis. Forman parte del formato para que todo el mundo llame igual a
@@ -411,7 +416,8 @@ tamaño original la letra mide 6 px de alto.</p>
 <ol>
   <li><strong>Escala.</strong> Para <code>k = 1, 2, 3…</code>: si el ancho es múltiplo de <code>5k</code> y el alto de
     <code>8k</code>, leer las dos últimas líneas de celdas. Si van en negativo y la primera empieza por
-    <code>SPRITEVPG</code>, esa es la escala, y lo que sigue, la versión.</li>
+    <code>SPRITEVPG</code>, esa es la escala, y la palabra que sigue, la versión. Si la línea termina en
+    <code>AAAA-MM-DD HH:MM UTC</code>, es la última edición.</li>
   <li><strong>Texto.</strong> Leer las celdas de 5×8 desde arriba a la izquierda, comparándolas con la tabla de la
     fuente y anotando cuáles van en negativo.</li>
   <li><strong>Zonas.</strong> Cada tramo en negativo cuyo texto es una sola palabra es el título de una zona. La
@@ -453,6 +459,7 @@ por fila) y los datos que hay que escribir, en un JSON pequeño:</p>
     { "name": "attack", "ms": [80, 120, 90, 160], "loop": "once" }
   ]
 }</code></pre>
+<p class="muted">La última edición (5.6) la pone <code>make</code> con la hora actual. Para fijarla, <code>"edited": "2026-11-24 09:30"</code> (UTC); con <code>"edited": null</code> no se escribe.</p>
 <p>Una entrada de <code>rows</code> por fila, en orden. <code>ms</code>: un número (todos los frames igual) o una lista
 (uno por frame); sin <code>ms</code>, la fila son imágenes sueltas. Una fila puede llevar su <code>"facing"</code> y su
 <code>"mirror"</code> (<code>{ "name": "walk_side", "ms": 110, "loop": "loop", "facing": "right", "mirror": "left" }</code>);
@@ -478,6 +485,8 @@ cambiar y volver a generar.</p>
 <p>O recortar antes con <code>spritevpg.py read</code> (sección 8).</p>
 
 <h2 id="futuro"><span class="n">10</span>Versiones y lo que queda fuera</h2>
+<p><strong>2.1</strong> (24-11-2026) añade la última edición a la barra final (5.6); nada más cambia, y un lector
+2.0 lee una hoja 2.1 sin tocar nada.</p>
 <p><strong>2.0</strong> es la primera versión estable. Las 1.x fueron borradores con otra forma de escribir los datos
 (rótulos de fila en vez de tabla) y <strong>no se admiten</strong>: una hoja 1.x hay que volver a generarla.</p>
 <p><strong>Compatibilidad a partir de aquí.</strong> Dentro de la 2.x, una versión menor solo añadirá datos
@@ -502,7 +511,7 @@ haga falta se cuenta en <code>AGENTS</code>.</p>
 
 </main>
 </div>
-<footer>SpriteVPG 2.0 · <a href="/">Varial Gate</a> · Especificación y fuente de uso libre; el ejemplo, CC BY 4.0.</footer>
+<footer>SpriteVPG 2.1 · <a href="/">Varial Gate</a> · Especificación y fuente de uso libre; el ejemplo, CC BY 4.0.</footer>
 </div>
 </body>
 </html>
