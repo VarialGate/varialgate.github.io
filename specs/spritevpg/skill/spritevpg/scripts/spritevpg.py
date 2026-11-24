@@ -26,7 +26,7 @@ import argparse, datetime, json, os, re, sys, unicodedata
 
 from PIL import Image
 
-FORMAT, VERSION = 'spritevpg', '2.3'
+FORMAT, VERSION = 'spritevpg', '2.4'
 URL = 'varialgate.github.io/specs/spritevpg'      # lo que se escribe en la barra final
 
 # ---------------------------------------------------------------- fuente ----
@@ -266,8 +266,9 @@ def palette_of(sheet):
 
 def palette_shown(sheet):
     """(todos los colores, los que se enseñan). Hasta 32, todos; con más
-    (2.3), los 32 con más píxeles (en empate, el más oscuro primero), también
-    de oscuro a claro."""
+    (2.3), los 32 con más píxeles (en empate, el más oscuro primero). Se
+    enseñan en cadena (2.4): el más oscuro y, después, cada vez el más
+    parecido de los que quedan."""
     data = sheet.get_flattened_data() if hasattr(sheet, 'get_flattened_data') else sheet.getdata()
     count = {}
     for p in data:
@@ -275,10 +276,22 @@ def palette_shown(sheet):
             count[p[:3]] = count.get(p[:3], 0) + 1
     lum = lambda c: (299 * c[0] + 587 * c[1] + 114 * c[2], c)
     every = sorted(count, key=lum)
-    if len(every) <= PALETTE_MAX:
-        return every, every
-    top = sorted(count, key=lambda c: (-count[c],) + lum(c))[:PALETTE_MAX]
-    return every, sorted(top, key=lum)
+    top = every if len(every) <= PALETTE_MAX else \
+        sorted(count, key=lambda c: (-count[c],) + lum(c))[:PALETTE_MAX]
+    return every, palette_chain(top)
+
+def palette_chain(colors):
+    """El orden de la paleta (2.4): empieza por el más oscuro y sigue, cada
+    vez, por el color más cercano al último (distancia al cuadrado en RGB);
+    en empate, el más oscuro. Así las rampas quedan juntas."""
+    lum = lambda c: (299 * c[0] + 587 * c[1] + 114 * c[2], c)
+    rest = sorted(colors, key=lum)
+    out = [rest.pop(0)] if rest else []
+    while rest:
+        a = out[-1]
+        k = min(range(len(rest)), key=lambda i: (sum((x - y) ** 2 for x, y in zip(a, rest[i])),) + lum(rest[i]))
+        out.append(rest.pop(k))
+    return out
 
 def hexcode(c):
     return '#%02X%02X%02X' % tuple(c)
