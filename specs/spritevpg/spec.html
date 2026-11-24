@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Especificación SpriteVPG 2.3 · Varial Gate</title>
-<meta name="description" content="Especificación de SpriteVPG 2.3: hojas de sprites (sprite patterns) con los frames limpios desde la esquina, una animación por fila y lo imprescindible para cortarlas y animarlas escrito en la propia imagen.">
+<title>Especificación SpriteVPG 2.4 · Varial Gate</title>
+<meta name="description" content="Especificación de SpriteVPG 2.4: hojas de sprites (sprite patterns) con los frames limpios desde la esquina, una animación por fila y lo imprescindible para cortarlas y animarlas escrito en la propia imagen.">
 <meta name="theme-color" content="#0b0a14">
 <link rel="stylesheet" href="spritevpg.css">
 </head>
@@ -19,12 +19,12 @@
   </nav>
 </header>
 
-<p class="eyebrow">ESPECIFICACIÓN 2.3</p>
+<p class="eyebrow">ESPECIFICACIÓN 2.4</p>
 <h1 class="pixel-title">SPRITEVPG</h1>
 <p class="lead">Sprite Varial Pixel Gen: una hoja de sprites que dice ella misma cómo se corta y cómo se anima. Los
 frames van limpios desde la esquina de arriba a la izquierda, una animación por fila, y sus datos van escritos al
 lado y debajo, estructurados para que no haya que interpretar nada.</p>
-<p class="muted">Versión 2.3 · 25-11-2026 · Varial Gate. Las palabras <span class="kw">DEBE</span>,
+<p class="muted">Versión 2.4 · 25-11-2026 · Varial Gate. Las palabras <span class="kw">DEBE</span>,
 <span class="kw">NO DEBE</span>, <span class="kw">DEBERÍA</span> y <span class="kw">PUEDE</span> tienen el sentido
 habitual de las especificaciones (RFC 2119).</p>
 
@@ -78,7 +78,7 @@ en celdas fijas.</p>
 
 <h2 id="vista"><span class="n">2</span>Un vistazo</h2>
 <figure class="sheet">
-  <img class="px pattern" src="example/caballero.spritevpg@4x.png" width="1140" alt="Sprite pattern de ejemplo: tres filas de frames de un caballero azul. A la derecha de cada fila, sus datos en columnas: IDLE, 2, 400, LOOP; WALK, 6, 110, LOOP; ATTACK, 4, 80 120 90 160, ONCE; y debajo de la última, las cabeceras NAME, FRAMES, MS/FRAME y PLAY. Bajo cada columna de frames, su número, del 1 al 6. Debajo, la zona SHEET (NAME, FRAME con WIDTH y HEIGHT, GRID con COLUMNS y ROWS, PIVOT con X e Y), la zona SUBJECT (KIND, VIEW, FACING, MIRROR, DESC y BODY con X, Y, WIDTH y HEIGHT), la zona PALETTE con 15 colores y sus códigos, y la zona AGENTS con dos indicaciones IMPLEMENT y tres EXTEND. Al final, la barra con SPRITEVPG 2.3 y, a la derecha, la fecha y la hora de la última edición; debajo, la dirección de la especificación." loading="lazy">
+  <img class="px pattern" src="example/caballero.spritevpg@4x.png" width="1140" alt="Sprite pattern de ejemplo: tres filas de frames de un caballero azul. A la derecha de cada fila, sus datos en columnas: IDLE, 2, 400, LOOP; WALK, 6, 110, LOOP; ATTACK, 4, 80 120 90 160, ONCE; y debajo de la última, las cabeceras NAME, FRAMES, MS/FRAME y PLAY. Bajo cada columna de frames, su número, del 1 al 6. Debajo, la zona SHEET (NAME, FRAME con WIDTH y HEIGHT, GRID con COLUMNS y ROWS, PIVOT con X e Y), la zona SUBJECT (KIND, VIEW, FACING, MIRROR, DESC y BODY con X, Y, WIDTH y HEIGHT), la zona PALETTE con 15 colores y sus códigos, y la zona AGENTS con dos indicaciones IMPLEMENT y tres EXTEND. Al final, la barra con SPRITEVPG 2.4 y, a la derecha, la fecha y la hora de la última edición; debajo, la dirección de la especificación." loading="lazy">
   <figcaption>El ejemplo, ampliado ×4 (el damero lo pone esta página bajo lo transparente). Original:
   <a href="example/caballero.spritevpg.png">caballero.spritevpg.png</a> (380×376).</figcaption>
 </figure>
@@ -329,16 +329,18 @@ no lleva nada que sobresalga: si lleva una lanza, <code>BODY</code> <span class=
 sacar de los píxeles los valores exactos: es lo que necesita una IA para ampliar la hoja sin inventar tonos.</p>
 <ul>
   <li><code>COLORS</code>: cuántos colores distintos tienen los frames (sin contar lo transparente).</li>
-  <li>Debajo va <strong>siempre</strong> la paleta, de oscuro a claro: por cada color, una <strong>barra del
+  <li>Debajo va <strong>siempre</strong> la paleta: por cada color, una <strong>barra del
     color</strong> de 7 celdas de ancho con un borde de tinta y, en la línea de debajo, su código
     <code>#RRGGBB</code>. Cada color ocupa 8 celdas de ancho y caben tantos por fila como dé el ancho de la
     imagen.</li>
   <li>Se enseñan <strong>32 colores como mucho</strong>. Con más (desde la 2.3), los <strong>32 más usados</strong>:
-    los que tienen más píxeles en la zona de frames y, a igualdad de píxeles, el más oscuro primero (el orden de
-    abajo). En ese caso, bajo <code>COLORS</code> va una línea <code>SHOWN: 32</code>, que avisa de que la paleta
+    los que tienen más píxeles en la zona de frames y, a igualdad de píxeles, el más oscuro primero. En ese caso, bajo <code>COLORS</code> va una línea <code>SHOWN: 32</code>, que avisa de que la paleta
     dibujada es una parte: quien amplía la hoja puede usarla, pero no son todos sus colores.</li>
-  <li>El orden es por luminosidad (<code>299·R + 587·G + 114·B</code>) y, a igualdad, por <code>R</code>,
-    <code>G</code>, <code>B</code>.</li>
+  <li><strong>El orden</strong> (desde la 2.4) junta las rampas: el primero es el <strong>más oscuro</strong> y
+    cada siguiente es el <strong>más parecido al anterior</strong> de los que quedan. «Más oscuro» es menor
+    luminosidad (<code>299·R + 587·G + 114·B</code>; a igualdad, menor <code>R</code>, <code>G</code>,
+    <code>B</code>); «más parecido», menor distancia <code>ΔR² + ΔG² + ΔB²</code> y, a igualdad, el más oscuro.
+    El orden es solo para quien mira: un lector no <span class="kw">DEBE</span> depender de él.</li>
 </ul>
 
 <h3 id="z-agents"><span class="n">5.5</span><code>AGENTS</code>: indicaciones para una IA</h3>
@@ -369,7 +371,7 @@ el idioma de quien lo escribe. Cada indicación lleva delante cuándo se aplica:
 </ul>
 
 <h3 id="barra"><span class="n">5.6</span>La barra final</h3>
-<div class="paper">SPRITEVPG 2.3                 2026-11-24 09:30 UTC
+<div class="paper">SPRITEVPG 2.4                 2026-11-24 09:30 UTC
 VARIALGATE.GITHUB.IO/SPECS/SPRITEVPG</div>
 <p>Las dos últimas líneas de texto de la imagen, en negativo y a todo el ancho: en la primera, <code>SPRITEVPG</code> y
 la versión; en la segunda, la dirección de esta especificación (sin <code>https://</code>, para que la imagen pueda
@@ -514,6 +516,8 @@ cambiar y volver a generar.</p>
 <p>O recortar antes con <code>spritevpg.py read</code> (sección 8).</p>
 
 <h2 id="futuro"><span class="n">10</span>Versiones y lo que queda fuera</h2>
+<p><strong>2.4</strong> (25-11-2026): la paleta se ordena en cadena, cada color junto al más parecido, en lugar de
+por luminosidad (5.4).</p>
 <p><strong>2.3</strong> (25-11-2026): la paleta se dibuja siempre; con más de 32 colores, los 32 más usados y una
 línea <code>SHOWN</code> (5.4). Antes, con más de 32 solo se escribía cuántos eran.</p>
 <p><strong>2.2</strong> (25-11-2026) añade la zona <code>NAMES</code> (5.7), con el nombre de cada dibujo de una
@@ -544,7 +548,7 @@ haga falta se cuenta en <code>AGENTS</code>.</p>
 
 </main>
 </div>
-<footer>SpriteVPG 2.3 · <a href="/">Varial Gate</a> · Especificación y fuente de uso libre; el ejemplo, CC BY 4.0.</footer>
+<footer>SpriteVPG 2.4 · <a href="/">Varial Gate</a> · Especificación y fuente de uso libre; el ejemplo, CC BY 4.0.</footer>
 </div>
 </body>
 </html>
