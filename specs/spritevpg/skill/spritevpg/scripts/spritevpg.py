@@ -26,7 +26,7 @@ import argparse, datetime, json, os, re, sys, unicodedata
 
 from PIL import Image
 
-FORMAT, VERSION = 'spritevpg', '2.2'
+FORMAT, VERSION = 'spritevpg', '2.3'
 URL = 'varialgate.github.io/specs/spritevpg'      # lo que se escribe en la barra final
 
 # ---------------------------------------------------------------- fuente ----
@@ -170,7 +170,7 @@ def frames_in_row(sheet, r, cols, fw, fh):
     return n
 
 ZONES = ('ANIMATIONS', 'SHEET', 'SUBJECT', 'PALETTE', 'AGENTS')
-PALETTE_MAX = 32                   # con más colores solo se escribe cuántos son
+PALETTE_MAX = 32                   # con más colores se enseñan los más usados (2.3)
 EXTRA_KEYS = ('facing', 'mirror')  # columnas de la tabla que solo van si alguna fila las usa
 AGENT_KEYS = ('implement', 'extend', 'note')
 
@@ -264,6 +264,22 @@ def palette_of(sheet):
         if hasattr(sheet, 'get_flattened_data') else {p[:3] for p in sheet.getdata() if p[3] >= 128}
     return sorted(cols, key=lambda c: (299 * c[0] + 587 * c[1] + 114 * c[2], c))
 
+def palette_shown(sheet):
+    """(todos los colores, los que se enseñan). Hasta 32, todos; con más
+    (2.3), los 32 con más píxeles (en empate, el más oscuro primero), también
+    de oscuro a claro."""
+    data = sheet.get_flattened_data() if hasattr(sheet, 'get_flattened_data') else sheet.getdata()
+    count = {}
+    for p in data:
+        if p[3] >= 128:
+            count[p[:3]] = count.get(p[:3], 0) + 1
+    lum = lambda c: (299 * c[0] + 587 * c[1] + 114 * c[2], c)
+    every = sorted(count, key=lum)
+    if len(every) <= PALETTE_MAX:
+        return every, every
+    top = sorted(count, key=lambda c: (-count[c],) + lum(c))[:PALETTE_MAX]
+    return every, sorted(top, key=lum)
+
 def hexcode(c):
     return '#%02X%02X%02X' % tuple(c)
 
@@ -284,10 +300,10 @@ def render(sheet, card):
     right = subject_lines(card, wide - half - 3) if has_subject else []
     notes = agents_lines(card, wide - 2)
     cells = names_lines(card, wide - 2)
-    pal = palette_of(sheet)
+    pal, shown = palette_shown(sheet)
     per = max(1, (wide - 1) // 8)                 # cada color: 7 celdas y un hueco
-    shown = pal if len(pal) <= PALETTE_MAX else []
-    pal_lines = [f'COLORS: {len(pal)}'] + [''] * (2 * -(-len(shown) // per))
+    pal_head = [f'COLORS: {len(pal)}'] + ([f'SHOWN: {len(shown)}'] if len(shown) < len(pal) else [])
+    pal_lines = pal_head + [''] * (2 * -(-len(shown) // per))
     # Filas de texto: cabeceras de la tabla, zonas y barra final.
     hdr = -(-(AH + 4) // CH)
     an = hdr + 2 if bes else hdr                  # ANIMATIONS, si la tabla no cabe junto a las filas
@@ -378,7 +394,7 @@ def render(sheet, card):
         zone('SUBJECT', half + 1, wide, top, right)
     zone('PALETTE', 0, wide, pz, pal_lines)
     for i, c in enumerate(shown):                  # barra de color y, debajo, su código
-        col, row = 1 + (i % per) * 8, pz + 2 + 2 * (i // per)
+        col, row = 1 + (i % per) * 8, pz + 1 + len(pal_head) + 2 * (i // per)
         x0, x1, y0 = col * CW, col * CW + 7 * CW - 2, row * CH
         for y in range(y0, y0 + 7):
             for x in range(x0, x1 + 1):
