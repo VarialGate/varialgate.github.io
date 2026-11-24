@@ -26,7 +26,7 @@ import argparse, datetime, json, os, re, sys, unicodedata
 
 from PIL import Image
 
-FORMAT, VERSION = 'spritevpg', '2.1'
+FORMAT, VERSION = 'spritevpg', '2.2'
 URL = 'varialgate.github.io/specs/spritevpg'      # lo que se escribe en la barra final
 
 # ---------------------------------------------------------------- fuente ----
@@ -126,6 +126,8 @@ HFLIP = {'left': 'right', 'right': 'left', 'down-left': 'down-right', 'down-righ
 #                                   `make` pone la hora actual si falta)
 #  "frame": {"w": 32, "h": 32}, "grid": {"columns": 6, "rows": 3},
 #  "rows": [{"name": "idle", "frames": 2, "ms": [400, 400], "loop": "loop"}, ...]}
+# 2.2: una fila puede llevar "names": un nombre por dibujo ("_" si no tiene),
+# únicos en toda la hoja: {"name": "items", "names": ["sword", "_", "key"]}.
 # Una fila sin "ms" son imágenes sueltas (no es una animación).
 # 1.1: una fila puede llevar "facing" (manda sobre el de la hoja) y "mirror"
 # (una dirección, o "none" si esa fila no se voltea aunque la hoja sí). Una
@@ -219,6 +221,13 @@ def agent_notes(card):
         a = {'note': a}
     return [(k.upper(), t) for k in AGENT_KEYS for t in a.get(k, [])]
 
+def names_lines(card, width):
+    """2.2: el nombre de cada dibujo de una fila (zona NAMES). Una línea por
+    fila con nombres: la clave es el nombre de la fila y, después, un nombre
+    por celda en el orden de las columnas; «_» es «sin nombre»."""
+    pairs = [(norm(r['name']), ' '.join(r['names'])) for r in card['rows'] if r.get('names')]
+    return keyed(pairs, width) if pairs else []
+
 def agents_lines(card, width):
     notes = agent_notes(card)
     return keyed(notes, width) if notes else []
@@ -274,6 +283,7 @@ def render(sheet, card):
     left = sheet_lines(card, half - 2)
     right = subject_lines(card, wide - half - 3) if has_subject else []
     notes = agents_lines(card, wide - 2)
+    cells = names_lines(card, wide - 2)
     pal = palette_of(sheet)
     per = max(1, (wide - 1) // 8)                 # cada color: 7 celdas y un hueco
     shown = pal if len(pal) <= PALETTE_MAX else []
@@ -281,7 +291,8 @@ def render(sheet, card):
     # Filas de texto: cabeceras de la tabla, zonas y barra final.
     hdr = -(-(AH + 4) // CH)
     an = hdr + 2 if bes else hdr                  # ANIMATIONS, si la tabla no cabe junto a las filas
-    top = an if bes else an + 1 + len(tlines) + 1 + 1
+    nm = an if bes else an + 1 + len(tlines) + 1 + 1     # NAMES, si alguna fila nombra sus dibujos
+    top = nm + (1 + len(cells) + 1 if cells else 0)
     pz = top + 1 + max(len(left), len(right)) + 1
     ag = pz + 1 + len(pal_lines) + 1
     bar = ag + (1 + len(notes) + 1 if notes else 0)
@@ -355,6 +366,8 @@ def render(sheet, card):
 
     if not bes:
         zone('ANIMATIONS', 0, wide, an, tlines + [head])
+    if cells:
+        zone('NAMES', 0, wide, nm, cells)
     zone('SHEET', 0, half, top, left)
     if 'PIVOT' in left:                            # leyenda: la muesca, junto a su nombre
         y0 = (top + 1 + left.index('PIVOT')) * CH
@@ -537,6 +550,11 @@ def read_card_v2(img, k, grid):
             if v.get(key.upper(), '-') not in ('-', ''):
                 row[key] = v[key.upper()].lower()
         card['rows'].append(row)
+    # 2.2: los nombres de los dibujos de cada fila.
+    by_row = {r['name']: r for r in card['rows']}
+    for key, val in tree(zones.get('NAMES', [])).items():
+        if key.lower() in by_row and isinstance(val, str) and val.split():
+            by_row[key.lower()]['names'] = [x.lower() for x in val.split()]
     return card
 
 # ---------------------------------------------------------------- make/read -
@@ -579,6 +597,8 @@ def complete(card, sheet):
         for key in ('facing', 'mirror'):
             if row.get(key):
                 new[key] = row[key].lower()
+        if row.get('names') and any(x and x != '_' for x in row['names']):
+            new['names'] = [str(x or '_').lower() for x in row['names']]
         out['rows'].append(new)
     return out
 
@@ -616,8 +636,10 @@ def read(path, outdir, gifs=False):
         fr = [sheet.crop((c * fw, r * fh, (c + 1) * fw, (r + 1) * fh)) for c in range(row['frames'])]
         d = os.path.join(outdir, row['name'])
         os.makedirs(d, exist_ok=True)
-        for c, f in enumerate(fr):
-            f.save(os.path.join(d, f'{c}.png'))
+        named = row.get('names') or []
+        for c, f in enumerate(fr):                 # con nombre, el fichero se llama como el dibujo
+            n = named[c] if c < len(named) and named[c] != '_' else str(c)
+            f.save(os.path.join(d, f'{n}.png'))
         if gifs and row.get('ms'):
             big = [f.resize((fw * 4, fh * 4), Image.NEAREST) for f in fr]
             big[0].save(os.path.join(outdir, f'{row["name"]}.gif'), save_all=True, append_images=big[1:],
@@ -657,8 +679,17 @@ def validate(card):
     rows = card.get('rows', [])
     if card.get('grid', {}).get('rows') != len(rows):
         err.append('grid.rows no coincide con el número de filas')
-    names = set()
+    names, cells = set(), set()
     for r, row in enumerate(rows):
+        if 'names' in row:                         # 2.2: un nombre por dibujo, únicos en la hoja
+            if len(row['names']) != row.get('frames'):
+                err.append(f'fila {r}: hace falta un nombre por frame («_» si no tiene)')
+            for x in row['names']:
+                if not re.fullmatch(r'[a-z0-9_\-]+', str(x)):
+                    err.append(f'fila {r}: el nombre «{x}» solo admite a-z, 0-9, _ y -')
+                elif x != '_' and x in cells:
+                    err.append(f'fila {r}: nombre de dibujo repetido en la hoja ({x})')
+                cells.add(x)
         n = row.get('name', '')
         if not re.fullmatch(r'[a-z0-9_\-]+', n):
             err.append(f'fila {r}: name solo admite a-z, 0-9, _ y -')
